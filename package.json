@@ -16,6 +16,8 @@
     "deploy": "npm run ota:prepare && wrangler deploy --config wrangler.jsonc",
     "android:sync": "npm run build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "npm run ios:sync && cap open ios",
     "db:new": "npx supabase@2 migration new",
     "db:status": "npx supabase@2 migration list",
     "db:push": "npx supabase@2 db push"
@@ -42,6 +44,7 @@
     "@capacitor/android": "^8.5.2",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "8.5.2",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/google.maps": "^3.66.5",

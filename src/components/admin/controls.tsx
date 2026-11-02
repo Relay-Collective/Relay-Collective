@@ -8,9 +8,9 @@ import { compactButton, focusRing } from '../workspace/styles'
 
 export function SearchField({ value, onChange, label, placeholder }: { value: string; onChange: (v: string) => void; label: string; placeholder: string }) {
   return (
-    <div className="relative w-full shrink-0 xl:w-72">
-      <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
-      <input type="search" className={`${input} min-h-11 pl-11`} placeholder={placeholder} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
+    <div className="relative w-full shrink-0 sm:max-w-sm 2xl:w-72">
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" aria-hidden />
+      <input type="search" className={`${input} min-h-11 pl-10 text-[15px]`} placeholder={placeholder} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   )
 }
@@ -25,7 +25,7 @@ export interface FilterOption<K extends string> {
 // One choice from a short list, as toggle buttons. Counts are shown only once they're known.
 export function FilterTabs<K extends string>({ options, value, onChange, label }: { options: FilterOption<K>[]; value: K; onChange: (id: K) => void; label: string }) {
   return (
-    <div role="group" aria-label={label} className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 pb-1 xl:pb-0">
+    <div role="group" aria-label={label} className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 pb-1 max-xl:pr-8 max-xl:[mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] 2xl:pb-0">
       {options.map((o) => {
         const on = o.id === value
         return (
@@ -34,15 +34,15 @@ export function FilterTabs<K extends string>({ options, value, onChange, label }
             type="button"
             aria-pressed={on}
             onClick={() => onChange(o.id)}
-            className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition ${focusRing} ${
-              on ? 'bg-rc-navy text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
+            className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition-colors duration-150 ease-out-quart ${focusRing} ${
+              on ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px_var(--color-brand-200)]' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
             }`}
           >
             {o.label}
             {o.count !== undefined && (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums ${
-                  on ? 'bg-white/20 text-white' : o.alert && o.count ? 'bg-sun-400 text-ink' : 'bg-slate-100 text-slate-600'
+                  on ? 'bg-white text-brand-700' : o.alert && o.count ? 'bg-sun-400 text-ink' : 'bg-slate-100 text-slate-600'
                 }`}
               >
                 {o.count}
@@ -55,9 +55,10 @@ export function FilterTabs<K extends string>({ options, value, onChange, label }
   )
 }
 
-// The bar above a table: filters on one side, search on the other
+// The bar above a table: filters on one side, search on the other. Until there's room for both on one line,
+// search sits on its own row under the filters, so neither squeezes the other.
 export function Toolbar({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-3 border-b border-slate-100 p-3 sm:p-4 xl:flex-row xl:items-center xl:justify-between">{children}</div>
+  return <div className="flex flex-col gap-3 border-b border-slate-100 p-3 sm:p-4 2xl:flex-row 2xl:items-center 2xl:justify-between">{children}</div>
 }
 
 export function Pagination({ index, pages, total, size, onPage, noun }: { index: number; pages: number; total: number; size: number; onPage: (i: number) => void; noun: [string, string] }) {
@@ -139,7 +140,7 @@ export function DetailList({ rows }: { rows: [label: string, value: ReactNode][]
       {rows.map(([label, value]) => (
         <div key={label} className="grid gap-1 px-5 py-3 text-sm sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-4">
           <dt className="font-medium text-slate-500">{label}</dt>
-          <dd className="min-w-0 break-words text-rc-navy">{value ?? <span className="text-slate-400">Not recorded</span>}</dd>
+          <dd className="min-w-0 break-words text-rc-navy">{value ?? <span className="text-slate-500">Not recorded</span>}</dd>
         </div>
       ))}
     </dl>
@@ -148,7 +149,7 @@ export function DetailList({ rows }: { rows: [label: string, value: ReactNode][]
 
 // "Oct 4, 2026" (and the time in a tooltip), or nothing when the record has no date
 export function DateText({ at, withTime }: { at?: string; withTime?: boolean }) {
-  if (!at) return <span className="text-slate-400">Not recorded</span>
+  if (!at) return <span className="text-slate-500">Not recorded</span>
   const d = new Date(at)
   const text = withTime
     ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })

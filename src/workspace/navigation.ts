@@ -10,12 +10,15 @@ export const WORKSPACE_NAV: NavGroup[] = [
     items: [
       { to: paths.overview, label: 'Overview', icon: LayoutDashboard, end: true },
       { to: paths.requests, label: 'Requests', icon: Inbox, badge: 'attention' },
-      { to: paths.services, label: 'Services', icon: Blocks, end: true },
     ],
   },
   {
+    // The working modules first, then the page that lists every module, planned ones included
     label: 'Services',
-    items: LIVE_MODULES.map((m) => ({ to: m.to, label: m.name, icon: m.icon })),
+    items: [
+      ...LIVE_MODULES.map((m) => ({ to: m.to, label: m.name, icon: m.icon })),
+      { to: paths.services, label: 'All services', icon: Blocks, end: true },
+    ],
   },
   {
     label: 'Organization',

@@ -71,7 +71,7 @@ export function SidebarShell({ storageKey, sidebar, header, banner, footer, bott
 
       <aside
         aria-label="Sidebar"
-        className={`no-print fixed inset-y-0 left-0 z-30 hidden border-r border-slate-200 bg-white pt-[var(--safe-top)] md:block md:w-[4.5rem] ${collapsed ? '' : 'lg:w-64'}`}
+        className={`no-print fixed inset-y-0 left-0 z-30 hidden border-r border-slate-200 bg-white pt-[var(--safe-top)] transition-[width] duration-[220ms] ease-out-quart md:block md:w-[4.5rem] ${collapsed ? '' : 'lg:w-64'}`}
       >
         {sidebar({ mode: collapsed ? 'rail' : 'responsive', onToggleCollapse: toggleCollapsed })}
       </aside>
@@ -80,7 +80,7 @@ export function SidebarShell({ storageKey, sidebar, header, banner, footer, bott
         {sidebar({ mode: 'full', onNavigate: closeDrawer })}
       </NavDrawer>
 
-      <div className="flex min-h-screen flex-col md:pl-[var(--shell-inset)]">
+      <div className="flex min-h-screen flex-col transition-[padding] duration-[220ms] ease-out-quart md:pl-[var(--shell-inset)]">
         {header({ onOpenMenu: () => setDrawerOpen(true), menuOpen: drawerOpen })}
         {banner}
         <main id="app-main" tabIndex={-1} className={`mx-auto w-full ${maxWidth} flex-1 px-4 pb-24 pt-6 focus:outline-none sm:px-6 lg:px-8 lg:pt-8`}>
@@ -122,7 +122,7 @@ function NavDrawer({ open, onClose, children }: { open: boolean; onClose: () => 
       aria-label="Navigation"
       onClose={onClose}
       onClick={(e) => e.target === e.currentTarget && onClose()} // a tap on the backdrop
-      className="no-print m-0 h-full max-h-none w-[min(20rem,85vw)] max-w-none bg-white p-0 pt-[var(--safe-top)] backdrop:bg-rc-navy/40 open:animate-step-back md:hidden"
+      className="no-print m-0 h-full max-h-none w-[min(20rem,85vw)] max-w-none rc-drawer bg-white p-0 pt-[var(--safe-top)] shadow-[8px_0_32px_-8px_rgb(17_24_32/0.2)] md:hidden"
     >
       <div className="relative h-full">
         <button

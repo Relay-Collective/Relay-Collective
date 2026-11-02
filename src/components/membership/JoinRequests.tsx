@@ -42,7 +42,7 @@ export function JoinRequests({ org }: { org: Organization | undefined }) {
       sortValue: (r) => r.applicantEmail,
       cell: (r) => <span className="text-slate-600">{r.applicantEmail}</span>,
     },
-    { id: 'position', header: 'Requested position', cell: (r) => r.requestedPosition ?? <span className="text-slate-400">Not given</span> },
+    { id: 'position', header: 'Requested position', cell: (r) => r.requestedPosition ?? <span className="text-slate-500">Not given</span> },
     { id: 'date', header: 'Submitted', sortValue: (r) => r.createdAt, cell: (r) => <DateText at={r.createdAt} /> },
     { id: 'status', header: 'Status', cell: (r) => <RequestStatusBadge status={r.status} /> },
     {

@@ -8,9 +8,9 @@ export const card = 'rounded-xl border border-slate-200 bg-white p-6'
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2'
 
-export const button = `inline-flex min-h-12 select-none items-center whitespace-nowrap justify-center gap-2 rounded-full px-5 text-base font-semibold transition duration-150 ${focusRing} active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50`
+export const button = `inline-flex min-h-12 select-none items-center whitespace-nowrap justify-center gap-2 rounded-full px-5 text-base font-semibold transition duration-150 ease-out-quart ${focusRing} active:scale-[0.97] active:duration-75 disabled:pointer-events-none disabled:opacity-50`
 export const primaryButton = `${button} bg-ink text-white hover:bg-brand-700 active:bg-brand-800`
-export const secondaryButton = `${button} border border-slate-300 bg-white text-ink hover:border-ink/60 hover:bg-slate-50`
+export const secondaryButton = `${button} border border-slate-300 bg-white text-ink hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100`
 export const ghostButton = `${button} text-slate-700 hover:bg-slate-100 hover:text-ink`
 export const dangerButton = `${button} bg-red-600 text-white hover:bg-red-700 active:bg-red-800`
 export const dangerOutlineButton = `${button} border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50`

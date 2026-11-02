@@ -52,7 +52,7 @@ export function DeleteMyAccount({ user, onClose }: { user: User; onClose: () => 
     <dialog
       ref={dialog}
       aria-labelledby="delete-my-account-title"
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-6 text-ink shadow-xl backdrop:bg-slate-900/50"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-6 text-ink rc-dialog shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
       onCancel={(e) => {
         if (busy) e.preventDefault()
         else onClose()

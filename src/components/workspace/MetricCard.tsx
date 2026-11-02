@@ -1,4 +1,5 @@
-import { ArrowRight, type LucideIcon } from 'lucide-react'
+import { ArrowUpRight, type LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Skeleton } from './states'
 import { focusRing } from './styles'
@@ -12,33 +13,47 @@ interface Props {
   alert?: boolean | 'amber' // red: something's wrong; amber: work is waiting
 }
 
-// One headline number that opens the list behind it. Phones get a compact row, so the work below shows sooner.
+// A row of headline numbers in one panel, split by hairlines rather than set out as separate cards.
+// Each cell is a subgrid of three rows (label, number, hint), so numbers line up even when a label wraps.
+// Each cell carries a left and top edge; the grid is pulled 1px under the frame so the outer ones disappear,
+// which keeps the lines right at any column count, including a last row that isn't full.
+export function MetricGroup({ className = '', children }: { className?: string; children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className={`-ml-px -mt-px grid ${className}`}>{children}</div>
+    </div>
+  )
+}
+
+// One headline number that opens the list behind it. Lives inside a MetricGroup.
 export function MetricCard({ label, value, hint, icon: Icon, to, alert }: Props) {
   const loading = value === undefined
   const raised = alert && !!value
-  const look = alert === 'amber'
-    ? { card: 'border-amber-300 bg-sun-50', icon: 'bg-sun-100 text-amber-900', hint: 'font-semibold text-amber-900' }
-    : { card: 'border-red-300 bg-red-50/40', icon: 'bg-red-100 text-red-700', hint: 'font-semibold text-red-700' }
+  const look =
+    alert === 'amber'
+      ? { cell: 'bg-sun-50 hover:bg-sun-100/70', icon: 'text-amber-800', hint: 'font-semibold text-amber-900' }
+      : { cell: 'bg-red-50/60 hover:bg-red-50', icon: 'text-red-700', hint: 'font-semibold text-red-700' }
   return (
     <Link
       to={to}
       aria-label={loading ? `${label}: loading` : `${label}: ${value}. ${hint}`}
-      className={`group flex h-full items-center gap-3 rounded-xl border bg-white p-3 transition hover:border-slate-400 sm:flex-col sm:items-stretch sm:gap-0 sm:p-5 ${focusRing} ${
-        raised ? look.card : 'border-slate-200'
+      className={`group relative row-span-3 grid min-w-0 grid-rows-subgrid content-start border-l border-t border-slate-200 px-4 py-4 transition-colors duration-150 ease-out-quart sm:px-5 sm:py-5 ${focusRing} focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0 ${
+        raised ? look.cell : 'hover:bg-slate-50'
       }`}
     >
-      <span className="hidden items-start justify-between gap-2 sm:flex">
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${raised ? look.icon : 'bg-brand-50 text-rc-blue'}`} aria-hidden>
-          <Icon className="h-5 w-5" />
-        </span>
-        <ArrowRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-rc-navy" aria-hidden />
+      <span className="flex items-start gap-2 pr-5" aria-hidden>
+        <Icon className={`mt-px h-4 w-4 shrink-0 ${raised ? look.icon : 'text-slate-400'}`} strokeWidth={2.25} />
+        <span className="min-w-0 text-[13px] font-semibold leading-tight text-slate-600">{label}</span>
       </span>
-      <span className="block shrink-0 font-heading text-2xl font-bold tabular-nums tracking-tight text-rc-navy sm:mt-4 sm:text-3xl" aria-hidden>
+      <ArrowUpRight
+        className="absolute right-3 top-3.5 h-4 w-4 text-slate-300 opacity-0 transition duration-150 ease-out-quart group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-rc-navy group-hover:opacity-100 group-focus-visible:opacity-100 max-sm:hidden"
+        aria-hidden
+      />
+      <span className="mt-3 block self-end font-heading text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-rc-navy sm:text-[34px]" aria-hidden>
         {loading ? <Skeleton className="h-8 w-12" /> : value}
       </span>
-      <span className="block min-w-0" aria-hidden>
-        <span className="block text-sm font-semibold leading-snug text-slate-700 sm:mt-1">{label}</span>
-        <span className={`mt-0.5 block text-xs ${raised ? look.hint : 'text-slate-500'}`}>{hint}</span>
+      <span className={`mt-2 block self-start text-[13px] leading-snug ${raised ? look.hint : 'text-slate-500'}`} aria-hidden>
+        {hint}
       </span>
     </Link>
   )

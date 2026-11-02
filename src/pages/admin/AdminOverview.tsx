@@ -1,11 +1,11 @@
-import { ArrowRight, BadgeCheck, Building2, Car, ChevronRight, CircleCheck, ClipboardCheck, Flag, History, MessagesSquare, PartyPopper, Route, Truck, Users } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, Car, Check, ChevronRight, CircleCheck, ClipboardCheck, Flag, History, MessagesSquare, Route, TriangleAlert, Truck, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { adminPaths } from '../../admin/paths'
 import { DateText } from '../../components/admin/controls'
 import { ActivityRow } from '../../components/admin/ActivityRow'
 import { VerificationBadge } from '../../components/admin/VerificationBadge'
-import { MetricCard } from '../../components/workspace/MetricCard'
+import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { AvailabilityPill, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
@@ -31,6 +31,7 @@ interface Task {
   at?: string
   to: string
   action: string
+  urgent?: boolean // a ride with no driver: someone is waiting, so it leads the list and reads red
 }
 
 // The admin's landing page: what needs a decision, how the network is doing, and what changed lately
@@ -75,14 +76,21 @@ export function AdminOverview() {
     }
   }
   if (rides.data) {
-    for (const r of rides.data.filter((x) => rideStage(x) === 'noDriver')) {
+    const stuck = rides.data.filter((x) => rideStage(x) === 'noDriver').sort((a, b) => a.pickupTime.localeCompare(b.pickupTime))
+    for (const r of stuck) {
       tasks.push({
         id: `ride:${r.id}`,
         type: 'Transportation · no driver available',
         icon: <Truck className="h-4 w-4" />,
         subject: orgName(r.orgId) ?? 'Partner organization',
         detail: `To ${r.destinationName}, ${formatDayTime(r.pickupTime)}`,
-        status: <span className="text-xs font-semibold text-red-700">Needs the organization</span>,
+        status: (
+          <span className="inline-flex items-center gap-1 rounded-full bg-care-red px-2 py-0.5 text-xs font-bold text-white">
+            <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+            No driver available
+          </span>
+        ),
+        urgent: true,
         at: r.createdAt,
         to: adminPaths.ride(r.id),
         action: 'View ride',
@@ -102,6 +110,9 @@ export function AdminOverview() {
       action: 'Review',
     })
   }
+  // Nothing goes quiet: rides without a driver lead, so the list limit can never push them out of view
+  tasks.sort((a, b) => Number(!!b.urgent) - Number(!!a.urgent))
+  const urgentCount = tasks.filter((t) => t.urgent).length
   const tasksLoading = !orgs.data || !drivers.data
 
   const activity = orgs.data && drivers.data ? registrationActivity(orgs.data, drivers.data).slice(0, ACTIVITY_LIMIT) : undefined
@@ -122,7 +133,7 @@ export function AdminOverview() {
             <SectionError message="We couldn't load the platform totals. Please try again." />
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <MetricGroup className="grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
           <MetricCard
             label="Organizations"
             value={metrics?.organizations}
@@ -154,7 +165,7 @@ export function AdminOverview() {
             icon={CircleCheck}
             to={`${adminPaths.transportation}?stage=completed`}
           />
-        </div>
+        </MetricGroup>
       </section>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5 xl:items-start">
@@ -162,7 +173,12 @@ export function AdminOverview() {
           <div className={panelHead}>
             <h2 id="attention-title" className={`${panelTitle} flex items-center gap-2`}>
               Requires attention
-              {tasks.length > 0 && <span className="rounded-full bg-sun-400 px-2 py-0.5 text-xs font-bold tabular-nums text-ink">{tasks.length}</span>}
+              {tasks.length > 0 && (
+                <span className={`rounded-full px-2 py-0.5 font-sans text-xs font-bold tabular-nums ${urgentCount ? 'bg-care-red text-white' : 'bg-sun-400 text-ink'}`}>
+                  {tasks.length}
+                  {urgentCount > 0 && <span className="sr-only">, {urgentCount} urgent</span>}
+                </span>
+              )}
             </h2>
             <Link to={adminPaths.approvals} className={panelLink}>
               Approvals <ArrowRight className="h-4 w-4" aria-hidden />
@@ -173,13 +189,13 @@ export function AdminOverview() {
           ) : orgs.error && !orgs.data ? (
             <SectionError message="We couldn't load what needs attention. Please try again." />
           ) : tasks.length === 0 ? (
-            <EmptyState icon={<PartyPopper className="h-6 w-6" />} title="Nothing needs attention." text="No applications are waiting, and no recent issues were reported." />
+            <EmptyState compact icon={<Check strokeWidth={2.5} />} title="Nothing needs attention." text="No applications are waiting, and no recent issues were reported." />
           ) : (
             <ul className="divide-y divide-slate-100">
               {tasks.slice(0, ATTENTION_LIMIT).map((t) => (
                 <li key={t.id}>
-                  <Link to={t.to} className={`group flex items-center gap-3 px-5 py-3.5 transition hover:bg-slate-50 ${focusRing} focus-visible:ring-inset`}>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600" aria-hidden>
+                  <Link to={t.to} className={`group flex items-center gap-3 px-5 py-3.5 transition-colors duration-150 ease-out-quart ${t.urgent ? 'bg-red-50/50 hover:bg-red-50' : 'hover:bg-slate-50'} ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0`}>
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${t.urgent ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`} aria-hidden>
                       {t.icon}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -230,7 +246,7 @@ export function AdminOverview() {
           {!activity ? (
             orgs.error || drivers.error ? <SectionError /> : <SkeletonRows rows={4} label="Loading activity" />
           ) : activity.length === 0 ? (
-            <EmptyState icon={<History className="h-6 w-6" />} title="No recorded activity yet" text="Registrations and review decisions will appear here." />
+            <EmptyState compact tone="neutral" icon={<History />} title="No recorded activity yet" text="Registrations and review decisions will appear here." />
           ) : (
             <ol className="divide-y divide-slate-100">
               {activity.map((e) => (

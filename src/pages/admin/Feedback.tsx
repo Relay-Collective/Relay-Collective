@@ -6,7 +6,7 @@ import { RELEASES } from '../../changelog'
 import { DateText, FilterTabs, Pagination, SearchField, Toolbar, type FilterOption } from '../../components/admin/controls'
 import { FeedbackPriorityBadge, FeedbackStatusBadge, FeedbackTypeLabel } from '../../components/feedback/FeedbackBadges'
 import { input, secondaryButton } from '../../components/ui'
-import { MetricCard } from '../../components/workspace/MetricCard'
+import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
 import { compactButton, focusRing, panel } from '../../components/workspace/styles'
@@ -114,13 +114,13 @@ export function Feedback() {
           <SectionError message="We couldn't load the feedback totals. Please try again." />
         </section>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        <MetricGroup className="grid-cols-2 lg:grid-cols-5">
           <MetricCard label="Total submissions" value={counts?.total} hint="Across every workspace" icon={MessagesSquare} to={adminPaths.feedback} />
           <MetricCard label="New" value={counts?.new} hint="Not reviewed yet" icon={CircleDot} to={`${adminPaths.feedback}?status=new`} alert="amber" />
           <MetricCard label="Under review" value={counts?.underReview} hint="Being looked into" icon={Search} to={`${adminPaths.feedback}?status=under_review`} />
           <MetricCard label="In progress" value={counts?.inProgress} hint="Being worked on" icon={LoaderCircle} to={`${adminPaths.feedback}?status=in_progress`} />
           <MetricCard label="Resolved" value={counts?.resolved} hint="Addressed" icon={CircleCheck} to={`${adminPaths.feedback}?status=resolved`} />
-        </div>
+        </MetricGroup>
       )}
 
       <section aria-label="Feedback" className={panel}>
@@ -287,7 +287,7 @@ function FeedbackTable({ rows }: { rows: AdminFeedbackRow[] }) {
                 <td className={`${td} max-w-40`}>
                   <Submitter row={row} />
                 </td>
-                <td className={`${td} hidden max-w-40 truncate text-slate-700 xl:table-cell`}>{row.organization?.name ?? <span className="text-slate-400">None</span>}</td>
+                <td className={`${td} hidden max-w-40 truncate text-slate-700 xl:table-cell`}>{row.organization?.name ?? <span className="text-slate-500">None</span>}</td>
                 <td className={td}>
                   <FeedbackPriorityBadge priority={row.priority} />
                 </td>

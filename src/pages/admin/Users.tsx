@@ -57,9 +57,9 @@ export function Users() {
         </Link>
       ),
     },
-    { id: 'email', header: 'Email', className: 'hidden lg:table-cell', sortValue: (u) => u.email, cell: (u) => <span className="break-all text-slate-700">{u.email}</span> },
+    { id: 'email', header: 'Email', className: 'hidden lg:table-cell', sortValue: (u) => u.email, cell: (u) => <span className="block max-w-[15rem] truncate text-slate-700" title={u.email}>{u.email}</span> },
     { id: 'role', header: 'Role', sortValue: (u) => USER_KIND[u.role], cell: (u) => USER_KIND[u.role] },
-    { id: 'org', header: 'Organization', className: 'hidden xl:table-cell', sortValue: (u) => orgName(u.orgId), cell: (u) => orgName(u.orgId) ?? <span className="text-slate-400">—</span> },
+    { id: 'org', header: 'Organization', className: 'hidden xl:table-cell', sortValue: (u) => orgName(u.orgId), cell: (u) => orgName(u.orgId) ?? <span className="text-slate-500">—</span> },
     { id: 'status', header: 'Status', cell: status },
     {
       id: 'action',

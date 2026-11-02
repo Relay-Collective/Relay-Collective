@@ -34,7 +34,7 @@ export function ConfirmDialog({ open, title, body, confirmLabel, tone = 'primary
         e.preventDefault() // Escape: close through state, and never while busy
         if (!busy) onCancel()
       }}
-      className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-xl p-6 text-rc-navy shadow-xl backdrop:bg-rc-navy/40"
+      className="m-auto w-[min(30rem,calc(100vw-2rem))] rc-dialog rounded-xl p-6 text-rc-navy shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
     >
       <h2 id={titleId} className="font-heading text-xl font-bold">
         {title}

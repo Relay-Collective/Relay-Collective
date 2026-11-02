@@ -19,7 +19,7 @@ export function Team() {
     { id: 'members', label: 'Members' },
     ...(isAdmin
       ? [
-          { id: 'requests' as const, label: 'Join Requests', count: pendingJoinRequests },
+          { id: 'requests' as const, label: 'Join requests', count: pendingJoinRequests },
           { id: 'invitations' as const, label: 'Invitations' },
         ]
       : []),
@@ -44,7 +44,7 @@ export function Team() {
 
   return (
     <div>
-      <PageHeader title="Team & Memberships" description="Manage the people who have access to your organization's Relay Collective workspace." />
+      <PageHeader title="Team and memberships" description="Manage the people who have access to your organization's Relay Collective workspace." />
 
       <section className={panel}>
         <div role="tablist" aria-label="Team" className="-mb-px flex gap-1 overflow-x-auto border-b border-slate-200 px-3" onKeyDown={onKeyDown}>
@@ -63,8 +63,8 @@ export function Team() {
                 aria-controls={`team-panel-${t.id}`}
                 tabIndex={on ? 0 : -1}
                 onClick={() => select(t.id)}
-                className={`inline-flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition ${focusRing} ${
-                  on ? 'border-rc-blue text-rc-blue' : 'border-transparent text-slate-600 hover:text-rc-navy'
+                className={`inline-flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition-colors duration-150 ease-out-quart ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0 ${
+                  on ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-rc-navy'
                 }`}
               >
                 {t.label}

@@ -8,7 +8,7 @@ import { actionReason, dayLabel } from '../../logic/rideInsights'
 import { passengersLabel, rideBadgeLabel, riderLabel, SENT_ON_TRANSIT_LABEL } from '../../logic/rideText'
 import type { Ride } from '../../types'
 import { STATUS_ICON, StatusBadge } from '../StatusBadge'
-import { card, input, primaryButton, secondaryButton } from '../ui'
+import { card, input, secondaryButton } from '../ui'
 import { paths } from '../../workspace/paths'
 
 export interface DriverInfo {
@@ -77,8 +77,8 @@ export function RideList({ attention, upcoming, past, driverOf, now, tab = 'upco
                 tabIndex={on ? 0 : -1}
                 onClick={() => setPicked(t.id)}
                 onKeyDown={(e) => onTabKey(e, i)}
-                className={`flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                  on ? 'border-brand-600 text-ink' : 'border-transparent text-slate-500 hover:text-ink'
+                className={`flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition-colors duration-150 ease-out-quart focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-brand-500 ${
+                  on ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-ink'
                 }`}
               >
                 {t.label}
@@ -113,7 +113,7 @@ export function RideList({ attention, upcoming, past, driverOf, now, tab = 'upco
                 title="No upcoming rides"
                 text="Book a ride and it shows up here, grouped by day."
                 action={
-                  <Link to={paths.newRide} className={primaryButton}>
+                  <Link to={paths.newRide} className={secondaryButton}>
                     Request a ride
                   </Link>
                 }

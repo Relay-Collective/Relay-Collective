@@ -166,7 +166,13 @@ Shared classes live in `src/components/ui.ts`, `src/components/workspace/styles.
 - **Focus:** 3px `brand-500` ring with a 2px offset. Never removed.
 - **Tables** (`DataTable`): scroll inside their own frame on tablets; phones get a card list. Never widen the page.
 - **What's New** (`VersionBadge`): a white chip with an electric sparkle and the version; phones show only the icon and version. The dialog leads with the current release on porcelain (title in Space Grotesk, summary in Instrument Serif), then earlier releases, each with "Give feedback on this update".
-- **Empty states:** one friendly line and one action.
+- **Empty states:** one friendly line and one action. An all-clear ("You're all caught up.") is the compact one-row `EmptyState`: green check when the empty list is good news, grey when the list simply hasn't started. It never takes the space of real work.
+- **Console header** (`ShellHeader`): one 56px line, `Organization › Section`, then the page's actions and the account menu. Phones show the section only. The page's h1 stays the only heading.
+- **Metric strip** (`MetricGroup` + `MetricCard`): one bordered panel split by hairlines, never a row of separate cards. Each cell is a three-row subgrid (label with a 16px icon, number, hint), so numbers line up when a label wraps. A raised cell is tinted red (something's wrong) or sun (work waiting), with the hint in words.
+- **Attention first:** each overview opens with what needs the person. Items lead with care red when someone is waiting (a ride with no driver), sun for queues; urgent items sort first so a list limit can never hide them.
+- **Activity:** a day-grouped timeline, icons on one hairline, time of day on the right.
+- **Filters and tabs:** filters are pills with the electric selected state (`brand-50`, `brand-700` text, `brand-200` inner edge). Section tabs are underlined in `brand-600`. On narrow screens a scrolling strip fades at its right edge.
+- **Page header meta:** context such as the date or a reference sits under the h1, never above it.
 
 ## 7. Imagery and iconography
 
@@ -219,6 +225,8 @@ The public site keeps its own `rcl-` classes for motion and layout, and uses the
 
 Motion in the consoles is quick and quiet: hover transitions, the dialog and drawer entrances, and the status ring. The public hero plays one ride once. Everything respects reduced motion.
 
+Console motion tokens (`index.css`): `ease-out-quart` for hovers and presses (150ms; presses scale to 0.97), `ease-out-expo` for things that move into place. The sidebar collapses over 220ms. Every `<dialog>` carries `rc-dialog` (rises 8px and fades in over 240ms, fades out on close, backdrop midnight at 40%); the phone drawer carries `rc-drawer` (slides from the left). Both use `@starting-style` and `allow-discrete`, so the native top layer still owns focus and Escape.
+
 **Delight rules (v0.3).** Delight has to carry information, or it doesn't ship.
 
 - **The road shows progress.** On a `RideCard` the pickup dot fills once a driver confirms, a small dot travels the road while the client is in the car, and the whole route turns green on arrival. The next-pickup panel shows the same stages as four stops (`RideProgress`, `rideStage`).
@@ -257,6 +265,7 @@ Still open: Inter as the body face (kept by choice) and motion (left alone by ch
 
 ## Changelog
 
+- **v1.1 (2026-11-02):** The signed-in consoles are refined, with no change to the palette, type or logo. One console header (`ShellHeader`, 56px, breadcrumb) replaces three. The sidebar collapse is animated, and sign out and collapse share the footer row. Workspace navigation groups Transportation and All services under Services. Overviews open with what needs attention, then a hairline metric strip (`MetricGroup`), a day-grouped activity timeline, and a compact services list. The org home shows the next pickup when there is one. Rides with no driver lead the admin attention list in care red. All dialogs share one entrance and exit, and the drawer slides in. Filters use the electric selected state. Page meta moves under the title. The volunteer tab bar marks the current tab with a pill as well as colour. Placeholder dashes and "Not recorded" move from slate-400 to slate-500 for contrast. The account menu button reaches 44px.
 - **v1.0.6 (2026-11-01):** Relay Loop re-laid. Stations and workspace now sit in a grid, so nothing overlaps at any width, and the track is measured from that grid with logo-proportioned corners. Bottom stations share one stacked rhythm. The planned station is renamed "Resource sharing". Phones get the same loop in place of the old stacked hook layout. The relay lap is driven by position, so stations light wherever they sit, and it starts once the picture is in view.
 - **v1.0.5 (2026-11-01):** The hero becomes the Relay Loop. The logo's two hooks, at 12x, form one track (with a white road lane) around the workspace, which now has a slim icon rail. Each part of the platform is a station on the track: Volunteers in the open handoff, and the planned module on the bottom-left gap, drawn as sleepers. A cantaloupe relay point runs one lap on load, lighting each station, and Community impact's check fills in when it arrives. Pointer parallax by layer (flat translation). The measured connectors are gone.
 - **v1.0.4 (2026-11-01):** Landing copy and weighting move from transportation to shared infrastructure. The intro states the thesis ("Every nonprofit rebuilds the same tools. Let's build them once."). The capabilities grid leads with the shared foundation on the midnight surface, and Transportation becomes the first module card. The showcase workspace spans modules: people and roles instead of a single ride, and a planned module marked in the sidebar. The steps, impact points, closing CTA and nav ("Modules") follow. Same visual system throughout.

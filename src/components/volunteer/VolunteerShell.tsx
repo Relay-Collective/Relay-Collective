@@ -1,4 +1,4 @@
-import { Menu, MessageSquarePlus } from 'lucide-react'
+import { MessageSquarePlus } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { VolunteerProvider } from '../../context/VolunteerProvider'
 import { useApp } from '../../hooks/useApp'
@@ -10,7 +10,8 @@ import { VOLUNTEER_FEEDBACK_NAV, VOLUNTEER_HELP_NAV, volunteerNav, volunteerTabs
 import { volunteerPaths } from '../../volunteer/paths'
 import { AccountMenu } from '../AccountMenu'
 import { SidebarNav } from '../shell/SidebarNav'
-import { DRAWER_ID, SidebarShell, type SidebarSlotProps } from '../shell/SidebarShell'
+import { ShellHeader } from '../shell/ShellHeader'
+import { SidebarShell, type SidebarSlotProps } from '../shell/SidebarShell'
 import { AppFooter, LoadErrorBanner, PendingApprovalNotice, RideNotices } from '../ShellNotices'
 import { focusRing } from '../workspace/styles'
 
@@ -77,25 +78,9 @@ function VolunteerSidebar(props: SidebarSlotProps) {
 function VolunteerHeader({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
   const { pathname } = useLocation()
   return (
-    <header className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white pt-[var(--safe-top)]">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={onOpenMenu}
-          aria-label="Open navigation"
-          aria-expanded={menuOpen}
-          aria-controls={DRAWER_ID}
-          className={`-ml-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rc-navy hover:bg-slate-100 md:hidden ${focusRing}`}
-        >
-          <Menu className="h-6 w-6" aria-hidden />
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-slate-500">Volunteer workspace</p>
-          <p className="truncate font-heading text-base font-bold text-rc-navy sm:text-lg">{volunteerTitle(pathname)}</p>
-        </div>
-        <AccountMenu />
-      </div>
-    </header>
+    <ShellHeader onOpenMenu={onOpenMenu} menuOpen={menuOpen} context="Volunteer workspace" title={volunteerTitle(pathname)}>
+      <AccountMenu />
+    </ShellHeader>
   )
 }
 
@@ -112,19 +97,28 @@ function VolunteerTabBar() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `relative flex min-h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold ${focusRing} ${
-                  isActive ? 'text-rc-blue' : 'text-slate-600'
+                `group/tab relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors duration-150 ease-out-quart ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0 ${
+                  isActive ? 'text-brand-700' : 'text-slate-600 active:text-rc-navy'
                 }`
               }
             >
-              <Icon className="h-5 w-5" aria-hidden />
-              {label}
-              {badge && count > 0 && (
+              {({ isActive }) => (
                 <>
-                  <span className="absolute right-[calc(50%-1.25rem)] top-2 rounded-full bg-sun-400 px-1.5 text-[11px] font-bold tabular-nums text-ink" aria-hidden>
-                    {count}
+                  {/* The current tab is marked by shape as well as colour: a soft pill behind its icon */}
+                  <span
+                    className={`relative flex h-8 w-14 items-center justify-center rounded-full transition-[background-color,scale] duration-200 ease-out-expo group-active/tab:scale-95 ${
+                      isActive ? 'bg-brand-50 shadow-[inset_0_0_0_1px_var(--color-brand-100)]' : ''
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} aria-hidden />
+                    {badge && count > 0 && (
+                      <span className="absolute -right-0.5 -top-1 min-w-5 rounded-full bg-sun-400 px-1.5 text-center text-[11px] font-bold leading-5 tabular-nums text-ink ring-2 ring-white" aria-hidden>
+                        {count}
+                      </span>
+                    )}
                   </span>
-                  <span className="sr-only">, {count} waiting</span>
+                  {label}
+                  {badge && count > 0 && <span className="sr-only">, {count} waiting</span>}
                 </>
               )}
             </NavLink>

@@ -50,7 +50,7 @@ export function DataTable<T>({ caption, columns, rows, rowKey, card, initialSort
       <div className="relative hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{caption}</caption>
-          <thead className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">
             <tr>
               {columns.map((c) => {
                 const active = sort?.id === c.id
@@ -81,9 +81,9 @@ export function DataTable<T>({ caption, columns, rows, rowKey, card, initialSort
           </thead>
           <tbody className="divide-y divide-slate-100">
             {sorted.map((row) => (
-              <tr key={rowKey(row)} className={highlight?.(row) ? 'bg-amber-50/50' : 'hover:bg-slate-50/70'}>
+              <tr key={rowKey(row)} className={`transition-colors duration-150 ease-out-quart ${highlight?.(row) ? 'bg-amber-50/50' : 'hover:bg-slate-50/80'}`}>
                 {columns.map((c) => (
-                  <td key={c.id} className={`px-4 py-3 align-middle first:pl-5 last:pr-5 ${c.align === 'right' ? 'text-right' : ''} ${c.className ?? ''}`}>
+                  <td key={c.id} className={`px-4 py-3.5 align-middle first:pl-5 last:pr-5 ${c.align === 'right' ? 'text-right' : ''} ${c.className ?? ''}`}>
                     {c.cell(row)}
                   </td>
                 ))}

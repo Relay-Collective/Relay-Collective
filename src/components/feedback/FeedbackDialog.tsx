@@ -141,7 +141,7 @@ export function FeedbackDialog({ user, request, onClosed }: Props) {
         requestClose()
       }}
       onClick={(e) => e.target === e.currentTarget && requestClose()} // a click on the backdrop
-      className="workspace m-auto max-h-[calc(100dvh-2rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-hidden rounded-2xl bg-white p-0 text-rc-navy shadow-xl backdrop:bg-rc-navy/40 open:flex open:flex-col motion-safe:open:animate-fade-up motion-safe:open:[animation-duration:250ms]"
+      className="workspace m-auto max-h-[calc(100dvh-2rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none overflow-hidden rc-dialog rounded-xl bg-white p-0 text-rc-navy shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)] open:flex open:flex-col"
     >
       {view === 'sent' && outcome ? (
         <div className="overflow-y-auto px-6 py-8 text-center sm:px-10">

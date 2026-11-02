@@ -15,9 +15,9 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
     <ul className="p-2">
       {actions.map(({ to, label, detail, icon: Icon }) => (
         <li key={to}>
-          <Link to={to} className={`group flex items-center gap-3 rounded-lg p-3 transition hover:bg-slate-50 ${focusRing}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-rc-blue" aria-hidden>
-              <Icon className="h-5 w-5" />
+          <Link to={to} className={`group flex items-center gap-3 rounded-lg p-3 transition-colors duration-150 ease-out-quart hover:bg-slate-50 ${focusRing}`}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors duration-150 ease-out-quart group-hover:bg-brand-50 group-hover:text-rc-blue" aria-hidden>
+              <Icon className="h-[18px] w-[18px]" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-rc-navy">{label}</span>

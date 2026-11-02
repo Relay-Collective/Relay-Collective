@@ -46,11 +46,16 @@ export function OpportunityList({ limit, showMap = false }: { limit?: number; sh
       ) : !offers.data ? (
         <VolunteerLoadError />
       ) : all.length === 0 ? (
-        <EmptyState
-          icon={<Inbox className="h-6 w-6" />}
-          title="There are no transportation requests available to you right now."
-          text="New requests that fit your vehicle, cities, and availability show up here on their own."
-        />
+        <div className="rounded-xl border border-slate-200 bg-white">
+          {/* On the overview this is one quiet row; the full list page keeps the larger version */}
+          <EmptyState
+            compact={!!limit}
+            tone="neutral"
+            icon={<Inbox className={limit ? undefined : 'h-6 w-6'} />}
+            title={limit ? 'No ride requests right now' : 'There are no transportation requests available to you right now.'}
+            text="New requests that fit your vehicle, cities, and availability show up here on their own."
+          />
+        </div>
       ) : (
         <>
           {shown.map(({ offer, ride }) => {

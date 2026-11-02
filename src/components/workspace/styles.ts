@@ -6,7 +6,8 @@ export const focusRing = 'focus-visible:outline-none focus-visible:ring-[3px] fo
 export const panel = 'rounded-xl border border-slate-200 bg-white'
 
 // The heading row inside a panel
-export const panelHead = 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-5 py-4'
+// The heading block takes the room, so a short link beside it stays on its line instead of wrapping below
+export const panelHead = 'flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-slate-100 px-5 py-4 [&>:first-child]:min-w-0 [&>:first-child]:flex-[1_1_10rem]'
 export const panelTitle = 'font-heading text-[17px] font-semibold tracking-[-0.01em] text-ink'
 
 // A link in a panel's heading row, e.g. "View all"

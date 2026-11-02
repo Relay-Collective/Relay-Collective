@@ -7,7 +7,23 @@ import { compactButton } from './styles'
 // The three states every data-backed section can be in besides "here's your data".
 // Nothing is ever shown as a zero while it is still loading or failed to load.
 
-export function EmptyState({ icon, title, text, action }: { icon: ReactNode; title: string; text?: string; action?: ReactNode }) {
+// compact: one quiet row, for "all clear" states that shouldn't take the space of real work.
+// Green only when the empty list is good news (nothing waiting); grey when it simply hasn't started.
+export function EmptyState({ icon, title, text, action, compact, tone = 'clear' }: { icon: ReactNode; title: string; text?: string; action?: ReactNode; compact?: boolean; tone?: 'clear' | 'neutral' }) {
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3 px-5 py-4">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full [&>svg]:h-[18px] [&>svg]:w-[18px] ${tone === 'clear' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`} aria-hidden>
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-rc-navy">{title}</span>
+          {text && <span className="block text-sm text-slate-600">{text}</span>}
+        </span>
+        {action && <span className="shrink-0">{action}</span>}
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col items-center px-4 py-10 text-center">
       <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-rc-mint text-rc-teal-ink" aria-hidden>

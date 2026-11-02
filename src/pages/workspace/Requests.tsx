@@ -64,7 +64,7 @@ export function Requests() {
 
       <section aria-label="Requests" className={panel}>
         <div className="flex flex-col gap-3 border-b border-slate-100 p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div role="group" aria-label="Show" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:pb-0">
+          <div role="group" aria-label="Show" className="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 pb-1 max-xl:pr-8 max-xl:[mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] lg:pb-0">
             {REQUEST_VIEWS.map((v) => {
               const on = v.id === view
               return (
@@ -73,15 +73,15 @@ export function Requests() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => pickView(v.id)}
-                  className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition ${focusRing} ${
-                    on ? 'bg-rc-navy text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
+                  className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition-colors duration-150 ease-out-quart ${focusRing} ${
+                    on ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px_var(--color-brand-200)]' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
                   }`}
                 >
                   {v.label}
                   {rides.data && (
                     <span
                       className={`rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums ${
-                        on ? 'bg-white/20 text-white' : v.id === 'attention' && counts.attention ? 'bg-care-red text-white' : 'bg-slate-100 text-slate-600'
+                        on && !(v.id === 'attention' && counts.attention) ? 'bg-white text-brand-700' : v.id === 'attention' && counts.attention ? 'bg-care-red text-white' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {counts[v.id]}
@@ -92,10 +92,10 @@ export function Requests() {
             })}
           </div>
           <div className="relative lg:w-72">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" aria-hidden />
             <input
               type="search"
-              className={`${input} min-h-11 pl-11`}
+              className={`${input} min-h-11 pl-10 text-[15px]`}
               placeholder="Search by place or reference"
               aria-label="Search requests by place or reference"
               value={query}
@@ -210,7 +210,7 @@ function RequestTable({ rides, driverOf, now }: TableProps) {
                   )}
                 </td>
                 <td className="px-3 py-3.5 whitespace-nowrap text-slate-700">{pickupText(r, now)}</td>
-                <td className="hidden px-3 py-3.5 text-slate-700 lg:table-cell">{driverName(r, driverOf(r)) ?? <span className="text-slate-400">—</span>}</td>
+                <td className="hidden px-3 py-3.5 text-slate-700 lg:table-cell">{driverName(r, driverOf(r)) ?? <span className="text-slate-500">—</span>}</td>
                 <td className="px-5 py-3.5 text-right">
                   <Link
                     to={paths.ride(r.id)}

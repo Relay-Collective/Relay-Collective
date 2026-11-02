@@ -85,7 +85,7 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
                   {active && <Check className="h-4 w-4 text-brand-600" strokeWidth={3} aria-hidden />}
                   {p.label}
                 </span>
-                <span className="block text-xs text-slate-500">{p.detail}</span>
+                <span className={`block text-xs ${active ? 'text-slate-700' : 'text-slate-500'}`}>{p.detail}</span>
               </button>
             )
           })}

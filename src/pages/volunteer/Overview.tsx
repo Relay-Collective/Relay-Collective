@@ -1,11 +1,11 @@
-import { ArrowRight, CalendarCheck, CalendarClock, CircleCheck, CircleDot, Hourglass, Inbox, PartyPopper, Route, TriangleAlert } from 'lucide-react'
+import { ArrowRight, CalendarCheck, CalendarClock, Check, ChevronRight, CircleCheck, CircleDot, Hourglass, Inbox, Route, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { RequestStatusCard } from '../../components/RequestStatusCard'
 import { AssignmentRow } from '../../components/volunteer/AssignmentRow'
 import { OpportunityList } from '../../components/volunteer/OpportunityList'
 import { VolunteerLoadError } from '../../components/volunteer/states'
 import { VerificationSummary } from '../../components/volunteer/VerificationSummary'
-import { MetricCard } from '../../components/workspace/MetricCard'
+import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { EmptyState, Skeleton, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
@@ -49,8 +49,8 @@ export function Overview() {
 
   const header = (
     <PageHeader
-      eyebrow={date}
       title={first ? `${greeting}, ${first}.` : `${greeting}.`}
+      eyebrow={date}
       description="Your time makes a difference. Here's what's happening in your workspace."
     />
   )
@@ -81,8 +81,49 @@ export function Overview() {
   const ridesLoading = !rides.data && !rides.error
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {header}
+
+      {/* First: anything that needs this volunteer. A clear day is one quiet line. */}
+      <section aria-labelledby="action-title" className={`${panel} overflow-hidden ${actions.length > 0 ? 'border-amber-300' : ''}`}>
+        {!offers.data && !offers.error ? (
+          <SkeletonRows rows={2} label="Loading tasks" />
+        ) : actions.length === 0 ? (
+          <>
+            <h2 id="action-title" className="sr-only">
+              Action required
+            </h2>
+            <EmptyState compact icon={<Check strokeWidth={2.5} />} title="You're all caught up." text="Nothing needs you right now." />
+          </>
+        ) : (
+          <>
+            <div className={`${panelHead} border-amber-200 bg-sun-50`}>
+              <h2 id="action-title" className={`${panelTitle} flex items-center gap-2`}>
+                Action required
+                <span className="rounded-full bg-sun-400 px-2 py-0.5 font-sans text-xs font-bold tabular-nums text-ink">{actions.length}</span>
+              </h2>
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {actions.map((a) => (
+                <li key={`${a.kind}-${a.rideId ?? ''}`}>
+                  <Link to={actionLink(a)} className={`group flex items-start gap-3 px-5 py-4 transition-colors duration-150 ease-out-quart hover:bg-slate-50 ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0`}>
+                    {a.urgent ? (
+                      <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
+                    ) : (
+                      <CircleDot className="mt-0.5 h-5 w-5 shrink-0 text-rc-blue" aria-hidden />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold text-rc-navy">{a.title}</span>
+                      <span className="block text-sm text-slate-600">{a.detail}</span>
+                    </span>
+                    <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-slate-400 transition duration-150 ease-out-quart group-hover:translate-x-0.5 group-hover:text-rc-navy" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
 
       <section aria-labelledby="metrics-title">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
@@ -91,7 +132,7 @@ export function Overview() {
           </h2>
           {(rides.error || offers.error) && <p className="text-sm text-red-700">Some numbers couldn't load.</p>}
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MetricGroup className="grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Requests to answer"
             value={offers.data?.length}
@@ -103,7 +144,7 @@ export function Overview() {
           <MetricCard label="Under way" value={groups?.active.length} hint="Trips you've started" icon={Route} to={`${paths.rides}?tab=active`} />
           <MetricCard label="Upcoming rides" value={groups?.upcoming.length} hint="Accepted, not started" icon={CalendarCheck} to={`${paths.rides}?tab=upcoming`} />
           <MetricCard label="Completed rides" value={impact?.ridesCompleted} hint="Passengers dropped off" icon={CircleCheck} to={`${paths.rides}?tab=completed`} />
-        </div>
+        </MetricGroup>
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
@@ -125,8 +166,10 @@ export function Overview() {
               <VolunteerLoadError />
             ) : commitments.length === 0 ? (
               <EmptyState
-                icon={<CalendarClock className="h-6 w-6" />}
-                title="You don't have any upcoming commitments."
+                compact
+                tone="neutral"
+                icon={<CalendarClock />}
+                title="No upcoming commitments"
                 text="When you accept a ride request, it shows up here."
               />
             ) : (
@@ -147,7 +190,7 @@ export function Overview() {
                 <p className="text-sm text-slate-500">Transportation requests sent to you</p>
               </div>
               <Link to={paths.opportunities} className={panelLink}>
-                All requests <ArrowRight className="h-4 w-4" aria-hidden />
+                All opportunities <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
             <OpportunityList limit={OPPORTUNITY_LIMIT} />
@@ -155,37 +198,6 @@ export function Overview() {
         </div>
 
         <div className="space-y-6">
-          <section aria-labelledby="action-title" className={panel}>
-            <div className={panelHead}>
-              <h2 id="action-title" className={`${panelTitle} flex items-center gap-2`}>
-                Action required
-                {actions.length > 0 && <span className="rounded-full bg-sun-400 px-2 py-0.5 text-xs font-bold tabular-nums text-ink">{actions.length}</span>}
-              </h2>
-            </div>
-            {!offers.data && !offers.error ? (
-              <SkeletonRows rows={2} label="Loading tasks" />
-            ) : actions.length === 0 ? (
-              <EmptyState icon={<PartyPopper className="h-6 w-6" />} title="You're all caught up." text="Nothing needs you right now." />
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {actions.map((a) => (
-                  <li key={`${a.kind}-${a.rideId ?? ''}`}>
-                    <Link to={actionLink(a)} className={`flex items-start gap-3 px-5 py-4 hover:bg-slate-50 ${focusRing}`}>
-                      {a.urgent ? (
-                        <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
-                      ) : (
-                        <CircleDot className="mt-0.5 h-5 w-5 shrink-0 text-rc-blue" aria-hidden />
-                      )}
-                      <span className="min-w-0">
-                        <span className="block font-semibold text-rc-navy">{a.title}</span>
-                        <span className="block text-sm text-slate-600">{a.detail}</span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
 
           {driver && <RequestStatusCard driver={driver} showSettingsLink />}
 

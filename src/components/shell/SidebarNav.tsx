@@ -71,12 +71,12 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
           onClick={onNavigate}
           title={mode === 'full' ? undefined : entry.label}
           className={({ isActive }) =>
-            `relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold transition ${center} ${focusRing} ${
-              isActive ? 'bg-brand-50 text-rc-blue' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
+            `group/nav relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold transition-colors duration-150 ease-out-quart ${center} ${focusRing} ${
+              isActive ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px_var(--color-brand-100)]' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
             }`
           }
         >
-          <Icon className="h-5 w-5 shrink-0" aria-hidden />
+          <Icon className="h-5 w-5 shrink-0 transition-transform duration-150 ease-out-quart group-active/nav:scale-90" aria-hidden />
           <span className={`min-w-0 flex-1 truncate ${words}`}>{entry.label}</span>
           {count > 0 && (
             <>
@@ -96,15 +96,15 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
 
   return (
     <div className="flex h-full flex-col">
-      <div className={`flex h-16 shrink-0 items-center px-4 ${center}`}>
+      <div className={`flex h-14 shrink-0 items-center px-4 ${center}`}>
         <Link to={home.to} onClick={onNavigate} className={`inline-flex min-h-11 items-center gap-2.5 rounded-lg ${focusRing}`} aria-label={home.label}>
           <LogoMark className="h-8 w-8" />
           <span className={`${wordmark} text-[18px] ${onlyFull}`}>Relay Collective</span>
         </Link>
       </div>
 
-      <div className="px-3 pb-3">
-        <div className={`flex items-center gap-3 rounded-xl border border-slate-200 bg-rc-canvas p-2.5 ${center}`}>
+      <div className="px-3 pb-4 pt-1">
+        <div className={`flex items-center gap-3 rounded-xl border border-slate-200 bg-rc-canvas p-2 ${center}`}>
           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-heading text-sm font-bold ${context.className}`} aria-hidden>
             {contextIcon ?? context.initials}
           </span>
@@ -146,7 +146,7 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
                     onClick()
                   }}
                   title={mode === 'full' ? undefined : label}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-rc-navy ${center} ${focusRing}`}
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-slate-600 transition-colors duration-150 ease-out-quart hover:bg-slate-100 hover:text-rc-navy ${center} ${focusRing}`}
                 >
                   <Icon className="h-5 w-5 shrink-0" aria-hidden />
                   <span className={`min-w-0 flex-1 truncate text-left ${words}`}>{label}</span>
@@ -155,29 +155,28 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
             ))}
           </ul>
         )}
-        {onToggleCollapse && (
+        <div className={`flex gap-0.5 ${mode === 'full' ? '' : mode === 'rail' ? 'flex-col' : 'flex-col lg:flex-row'}`}>
           <button
             type="button"
-            onClick={onToggleCollapse}
-            className={`hidden min-h-11 w-full items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-rc-navy lg:flex ${center} ${focusRing}`}
-            aria-label={mode === 'rail' ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={mode === 'rail' ? 'Expand sidebar' : undefined}
+            onClick={() => void signOut()}
+            title={mode === 'full' ? undefined : 'Sign out'}
+            className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-slate-600 transition-colors duration-150 ease-out-quart hover:bg-red-50 hover:text-red-700 ${center} ${focusRing}`}
           >
-            {mode === 'rail' ? <PanelLeftOpen className="h-5 w-5 shrink-0" aria-hidden /> : <PanelLeftClose className="h-5 w-5 shrink-0" aria-hidden />}
-            <span className={words} aria-hidden>
-              Collapse
-            </span>
+            <LogOut className="h-5 w-5 shrink-0" aria-hidden />
+            <span className={words}>Sign out</span>
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          title={mode === 'full' ? undefined : 'Sign out'}
-          className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-[15px] font-semibold text-slate-600 transition hover:bg-red-50 hover:text-red-700 ${center} ${focusRing}`}
-        >
-          <LogOut className="h-5 w-5 shrink-0" aria-hidden />
-          <span className={words}>Sign out</span>
-        </button>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className={`hidden min-h-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors duration-150 ease-out-quart hover:bg-slate-100 hover:text-rc-navy lg:flex ${mode === 'rail' ? 'w-full' : 'lg:w-11'} ${focusRing}`}
+              aria-label={mode === 'rail' ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={mode === 'rail' ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {mode === 'rail' ? <PanelLeftOpen className="h-5 w-5 shrink-0" aria-hidden /> : <PanelLeftClose className="h-5 w-5 shrink-0" aria-hidden />}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -6,7 +6,7 @@ import { DataTable, type Column } from '../../components/admin/DataTable'
 import { FilterTabs, Notice, SearchField, Toolbar } from '../../components/admin/controls'
 import { VerificationBadge } from '../../components/admin/VerificationBadge'
 import { StatusBadge } from '../../components/StatusBadge'
-import { MetricCard } from '../../components/workspace/MetricCard'
+import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { AvailabilityPill } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
@@ -69,7 +69,7 @@ export function Transportation() {
     { id: 'org', header: 'Organization', sortValue: (r) => orgName(r.orgId), cell: (r) => orgName(r.orgId) ?? '—' },
     { id: 'status', header: 'Status', sortValue: (r) => r.status, cell: (r) => <StatusBadge status={r.status} label={rideBadgeLabel(r)} /> },
     { id: 'pickup', header: 'Pickup', sortValue: (r) => r.pickupTime, cell: (r) => <span className="whitespace-nowrap">{formatDayTime(r.pickupTime)}</span> },
-    { id: 'driver', header: 'Driver', className: 'hidden xl:table-cell', cell: (r) => driverName(r.driverId) ?? <span className="text-slate-400">—</span> },
+    { id: 'driver', header: 'Driver', className: 'hidden xl:table-cell', cell: (r) => driverName(r.driverId) ?? <span className="text-slate-500">—</span> },
     {
       id: 'action',
       header: '',
@@ -111,13 +111,15 @@ export function Transportation() {
         description="Oversee ride requests, the driver pool, and transport providers. Organizations book and drivers drive; this view is for monitoring and investigating."
       />
 
-      <section aria-label="Transportation metrics" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section aria-label="Transportation metrics">
+        <MetricGroup className="grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
         <MetricCard label="Finding a driver" value={rides.data && counts.waiting} hint="Drivers are being asked" icon={Clock} to={`${adminPaths.transportation}?stage=waiting`} />
         <MetricCard label="No driver available" value={rides.data && counts.noDriver} hint="Waiting on the organization" icon={TriangleAlert} to={`${adminPaths.transportation}?stage=noDriver`} alert />
         <MetricCard label="Scheduled" value={rides.data && counts.scheduled} hint="A driver has accepted" icon={Route} to={`${adminPaths.transportation}?stage=scheduled`} />
         <MetricCard label="Under way" value={rides.data && counts.underWay} hint="Driver on the way or riding" icon={CarFront} to={`${adminPaths.transportation}?stage=underWay`} />
         <MetricCard label="Completed" value={rides.data && counts.completed} hint="All loaded rides" icon={CircleCheck} to={`${adminPaths.transportation}?stage=completed`} />
         <MetricCard label="Drivers to review" value={pendingDrivers} hint="Verification queue" icon={BadgeCheck} to={`${adminPaths.approvals}?view=drivers`} alert="amber" />
+      </MetricGroup>
       </section>
 
       {rides.data && rides.data.length >= ALL_RIDES_LIMIT && (

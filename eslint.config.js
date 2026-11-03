@@ -8,7 +8,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   // android: generated native project. supabase/functions: Edge Functions run on Deno, not in the browser.
   // worker: Cloudflare Worker entry, not the Vite React app.
-  globalIgnores(['dist', 'android', 'supabase/functions', 'worker']),
+  globalIgnores(['dist', 'dist-e2e', 'playwright-report', 'test-results', 'android', 'supabase/functions', 'worker']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -19,6 +19,19 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  // Playwright tests run in Node. Their fixtures call `use()`, which isn't a React hook,
+  // and a fixture with no dependencies is written `async ({}, use) => …`.
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-refresh/only-export-components': 'off',
+      'no-empty-pattern': ['error', { allowObjectPatternsAsParameters: true }],
     },
   },
 ])

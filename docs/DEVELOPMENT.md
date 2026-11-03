@@ -125,6 +125,8 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 | `npm test` | Run the unit tests in `tests/` (ride rules, summaries, memberships, onboarding, feedback, account deletion, CareRide). |
 | `npm run test:coverage` | Run the same unit tests with Node's built-in coverage. Prints a table and writes `coverage/lcov.info`. |
 | `npm run test:db` | Run every migration in an embedded Postgres and test the feedback, membership and account-deletion rules against it. |
+| `npm run test:e2e` | Run the Playwright browser tests against a mock build. Run `npx playwright install chromium` once first. See [E2E_TESTING.md](E2E_TESTING.md). |
+| `npm run test:e2e:ui` | Open Playwright's UI mode to run and step through browser tests. `test:e2e:smoke`, `test:e2e:headed` and `test:e2e:report` also exist. |
 | `npm run build` | Run TypeScript project checks and create the production build in `dist/`. |
 | `npm run preview` | Serve an existing production build locally. |
 | `npm run deploy` | Zip the current `dist/` as an Android live-update bundle, then deploy with Wrangler. Run `npm run build` first. |
@@ -137,7 +139,7 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 
 ### Continuous integration
 
-**Relay Collective CI** ([ci.yml](../.github/workflows/ci.yml)) runs on every pull request into `main`, on every push to `main`, and from **Actions → Run workflow**. It has two jobs, `quality` (lint, unit tests with coverage, type-check and build) and `database-tests`. It uses no secrets and never deploys. The Android APK workflow runs separately. Jobs, coverage baseline, database-test limits, branch protection, Dependabot and the deployment plan are in [CI_CD.md](CI_CD.md).
+**Relay Collective CI** ([ci.yml](../.github/workflows/ci.yml)) runs on every pull request into `main`, on every push to `main`, and from **Actions → Run workflow**. It has three jobs: `quality` (lint, unit tests with coverage, type-check and build), `database-tests`, and `e2e-tests` (Playwright browser tests on the mock backend). It uses no secrets and never deploys. The Android APK workflow runs separately. Jobs, coverage baseline, database-test limits, branch protection, Dependabot and the deployment plan are in [CI_CD.md](CI_CD.md).
 
 ### Deployment
 
@@ -254,7 +256,7 @@ Relay Collective covers essential, non-emergency transportation. Booking screens
 
 ## Contributing
 
-Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm run lint`, `npm test`, `npm run test:db`, and `npm run build` before submitting code changes. Relay Collective CI runs the same checks on your pull request.
+Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm run lint`, `npm test`, `npm run test:db`, `npm run build`, and `npm run test:e2e` before submitting code changes. Relay Collective CI runs the same checks on your pull request. If you change a label, heading or flow, update the browser test that uses it ([E2E_TESTING.md](E2E_TESTING.md)).
 
 Use fictional data when developing or sharing screenshots. For product changes, prioritize clear language, usable mobile layouts, and an explicit next step when a ride cannot be covered.
 

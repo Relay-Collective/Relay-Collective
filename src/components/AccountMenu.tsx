@@ -49,7 +49,8 @@ export function AccountMenu() {
         <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${tone.solid}`} aria-hidden>
           {initials(currentUser.name)}
         </span>
-        <span className="hidden max-w-40 truncate text-sm font-semibold text-ink sm:block">{currentUser.name}</span>
+        {/* Visually hidden on small screens, but still the button's name for screen readers */}
+        <span className="sr-only max-w-40 truncate text-sm font-semibold text-ink sm:not-sr-only sm:block">{currentUser.name}</span>
         <ChevronDown className={`h-4 w-4 text-slate-500 transition ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
 

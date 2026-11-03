@@ -6,23 +6,25 @@ How Relay Collective checks every change, and how that relates to Cloudflare and
 
 | Workflow | File | Runs on | Does |
 | --- | --- | --- | --- |
-| **Relay Collective CI** | [ci.yml](../.github/workflows/ci.yml) | Pull requests into `main`, pushes to `main`, **Run workflow** | Lint, unit tests with coverage, type-check and production build, database tests. Never deploys. |
+| **Relay Collective CI** | [ci.yml](../.github/workflows/ci.yml) | Pull requests into `main`, pushes to `main`, **Run workflow** | Lint, unit tests with coverage, type-check and production build, database tests, browser tests. Never deploys. |
 | **Android debug APK** | [android.yml](../.github/workflows/android.yml) | Every pull request, **Run workflow** | Builds the debug APK and uploads it as `careride-debug-apk`. |
 | **Cloudflare Workers Builds** | Cloudflare dashboard, not this repository | Pushes to `main` (production) and other branches (preview) | Builds and deploys the website and the Android live-update zip. |
 
 ## Relay Collective CI
 
-Two jobs run in parallel on `ubuntu-latest`, each with Node from [`.nvmrc`](../.nvmrc), the npm cache, and `npm ci`:
+Three jobs run in parallel on `ubuntu-latest`, each with Node from [`.nvmrc`](../.nvmrc), the npm cache, and `npm ci`:
 
 | Job (status check name) | Steps | Timeout |
 | --- | --- | --- |
 | `quality` | `npm run lint` → `npm run test:coverage` → `npm run build` | 15 min |
 | `database-tests` | `npm run test:db` | 15 min |
+| `e2e-tests` | `npx playwright install --with-deps --only-shell chromium` → `npm run test:e2e` | 20 min |
 
 - **Every failing step fails its job.** In `quality`, lint, tests and build each run even when an earlier one failed, so one push shows every problem at once. Nothing uses `continue-on-error`.
 - **`npm run test:coverage` is the unit test run.** It runs the same files as `npm test`, so CI doesn't run them twice.
-- **`npm run build` is the TypeScript check.** `tsc -b` checks the app and the Node config projects before Vite builds. No `VITE_*` variables are set, so CI builds the demo (mock) version.
+- **`npm run build` is the TypeScript check.** `tsc -b` checks the app, the Node config files, and the Playwright tests before Vite builds. No `VITE_*` variables are set, so CI builds the demo (mock) version.
 - **Each job writes a summary** on the run page: the result of each check and, for `quality`, a coverage table. The lcov file is uploaded as the **unit-test-coverage** artifact and kept for 14 days.
+- **Browser tests run against a mock build on the runner.** `e2e-tests` builds the app with the demo backend and serves it on `127.0.0.1`. The tests block every other address, so they never reach Supabase, Cloudflare, or a live API. The HTML report is uploaded as **playwright-report** (14 days). When a test fails, its screenshots, plus the trace and video of its retry, go in **playwright-failures** (7 days). See [E2E_TESTING.md](E2E_TESTING.md).
 - **Superseded runs are cancelled** only on pull requests: a new push to a PR cancels that PR's older run. Each push to `main` and each manual run gets its own group, so none of those is cancelled.
 
 ### Security
@@ -42,6 +44,8 @@ npm run lint
 npm run test:coverage   # or npm test, without coverage
 npm run test:db
 npm run build
+npx playwright install chromium   # once
+npm run test:e2e
 ```
 
 **`.env.local` affects only your local build.** CI has no `.env.local`. To build what CI builds, use `VITE_DATA_BACKEND=mock npm run build`.
@@ -55,6 +59,7 @@ npm run build
 | Unit tests with coverage | The `✖` lines and the assertion diff | A rule changed without its test, or a test depends on the clock or time zone. Runners use UTC. |
 | Type-check and production build | `error TS…` lines | A type error. `npm run build` reproduces it. |
 | Database tests | The failing test name and the Postgres error | A migration changed an access rule, or a new migration doesn't apply cleanly after the earlier ones. |
+| Browser tests (Playwright) | The test's error in the log, then the **playwright-report** and **playwright-failures** artifacts | A label, heading or flow changed without its test, or a new uncaught error in the page. See [E2E_TESTING.md](E2E_TESTING.md#troubleshooting). |
 
 ## Unit tests
 
@@ -138,11 +143,12 @@ The old GitHub Actions workflows that mirrored `main` to a fork for deployment w
 Not configured by this change: it needs a repository administrator. Under **Settings → Branches → Add branch ruleset** (or **Branch protection rules**) for `main`:
 
 1. **Require a pull request before merging.** Require at least **1 approval**. Turn on **Dismiss stale approvals when new commits are pushed**.
-2. **Require status checks to pass.** Add these two checks, which appear in the search box after CI has run once on a pull request:
+2. **Require status checks to pass.** Add these three checks, which appear in the search box after CI has run once on a pull request:
    - `quality`
    - `database-tests`
+   - `e2e-tests`
 
-   In the PR checks list they appear as **Relay Collective CI / quality** and **Relay Collective CI / database-tests**. Optionally add `apk` (Android debug APK) if a broken APK build should block merging.
+   In the PR checks list they appear as **Relay Collective CI / quality**, **Relay Collective CI / database-tests** and **Relay Collective CI / e2e-tests**. Add `e2e-tests` only after it has passed on GitHub at least once, so it's registered and known to be stable. Optionally add `apk` (Android debug APK) if a broken APK build should block merging.
 3. Turn on **Require branches to be up to date before merging**, so checks run against the latest `main`.
 4. Turn on **Require conversation resolution before merging**.
 5. **Block force pushes** and **restrict deletions** on `main`.

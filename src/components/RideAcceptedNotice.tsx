@@ -3,13 +3,12 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { useData } from '../hooks/useData'
-import { acceptedMessage } from '../logic/acceptedMessage'
+import { acceptedMessage, riderLabel } from '../modules/careride/domain'
 import { ridePath } from '../logic/homeFor'
-import { riderLabel } from '../logic/rideText'
 import { dataService } from '../services'
 import type { Ride } from '../types'
 import { markSeen, readSeen } from './seenNotices'
-import { rideIdFromPath } from '../workspace/paths'
+import { rideIdFromPath } from '../modules/careride/paths'
 
 // Only recent answers pop up; older ones are on the rides list.
 const RECENT_MS = 12 * 3_600_000

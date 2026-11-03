@@ -1,6 +1,6 @@
-import { driverRideStatusLabel, rideBadgeLabel } from '../../logic/rideText'
+import { driverRideStatusLabel, rideBadgeLabel } from '../../modules/careride/domain'
 import type { Ride } from '../../types'
-import { StatusBadge } from '../StatusBadge'
+import { StatusBadge } from '../../modules/careride'
 
 // A ride's status in the driver's words: "On your way", "At pickup", "Driving to drop-off"
 export function RideStatusBadge({ ride }: { ride: Ride }) {

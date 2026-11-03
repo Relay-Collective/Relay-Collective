@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { adminPaths } from '../../admin/paths'
 import { useAdmin } from '../../hooks/useAdmin'
 import type { AdminEvent, AdminEventKind } from '../../logic/adminSummary'
-import { timeAgo } from '../../logic/requestSummary'
 import { focusRing } from '../workspace/styles'
+import { timeAgo } from '../../logic/formatTime'
 
 const LOOK: Record<AdminEventKind, { icon?: LucideIcon; tone: string }> = {
   REGISTERED: { tone: 'bg-brand-50 text-rc-blue' },

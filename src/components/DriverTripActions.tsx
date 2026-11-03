@@ -5,7 +5,7 @@ import { driverEtaPhrase, PICKUP_OFFSET_MINUTES, pickupOffsetLabel, TRAVEL_ETA_M
 import { formatTime } from '../logic/formatTime'
 import { useNow } from '../hooks/useNow'
 import { directionsBetween, directionsTo, isRealAddress } from '../logic/maps'
-import { describePickup } from '../logic/pickupTime'
+import { describePickup } from '../modules/careride/domain'
 import { useDriverLocation } from '../hooks/useMaps'
 import { ExternalLink } from '../native/ExternalLink'
 import { dataService } from '../services'

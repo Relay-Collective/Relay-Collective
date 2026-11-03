@@ -9,11 +9,12 @@ import {
   requestMetrics,
   requestReference,
   sortForView,
-} from '../src/logic/requestSummary'
+} from '../src/modules/careride/logic/requestSummary'
 import type { Ride } from '../src/types'
-import { paths, rideIdFromPath } from '../src/workspace/paths'
+import { inCareRide, rideIdFromPath } from '../src/modules/careride/paths'
+import { paths } from '../src/workspace/paths'
 import { ACTIVE_MODULES, CARERIDE, FEATURED_PLANNED, PLANNED_MODULES } from '../src/workspace/modules'
-import { inCareRide, workspaceTitle } from '../src/workspace/navigation'
+import { workspaceTitle } from '../src/workspace/navigation'
 
 const NOW = new Date('2026-10-20T12:00:00.000Z')
 const hoursFromNow = (h: number) => new Date(NOW.getTime() + h * 3600_000).toISOString()

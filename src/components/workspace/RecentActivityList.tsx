@@ -1,8 +1,7 @@
 import { Ban, Bus, CalendarPlus, CarFront, Check, CircleCheck, SearchX, UserX, type LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { formatTime } from '../../logic/formatTime'
-import { ACTIVITY_TEXT, type ActivityItem, type ActivityKind } from '../../logic/requestSummary'
-import { dayLabel } from '../../logic/rideInsights'
+import { dayLabel, formatTime } from '../../logic/formatTime'
+import { ACTIVITY_TEXT, type ActivityItem, type ActivityKind } from '../../modules/careride/domain'
 import { paths } from '../../workspace/paths'
 import { focusRing } from './styles'
 

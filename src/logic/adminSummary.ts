@@ -1,5 +1,5 @@
 import type { Driver, Organization, Ride, RideFeedback, User, VerificationStatus } from '../types'
-import { isFinished } from './rideInsights'
+import { isFinished } from '../modules/careride/domain'
 
 // What the platform admin console says about the network. Every number and list comes from records
 // the backend already keeps; nothing here is estimated or filled in.

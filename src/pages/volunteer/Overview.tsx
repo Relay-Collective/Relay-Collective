@@ -1,6 +1,6 @@
 import { ArrowRight, CalendarCheck, CalendarClock, Check, ChevronRight, CircleCheck, CircleDot, Hourglass, Inbox, Route, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { CareRideMark } from '../../components/brand/CareRideMark'
+import { CareRideMark } from '../../modules/careride/brand'
 import { RequestStatusCard } from '../../components/RequestStatusCard'
 import { AssignmentRow } from '../../components/volunteer/AssignmentRow'
 import { OpportunityList } from '../../components/volunteer/OpportunityList'
@@ -13,10 +13,10 @@ import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../compon
 import { useApp } from '../../hooks/useApp'
 import { useNow } from '../../hooks/useNow'
 import { useVolunteer } from '../../hooks/useVolunteer'
-import { greetingFor } from '../../logic/rideInsights'
 import { commitmentsFrom, impactSummary, volunteerActions, type ActionKind, type VolunteerAction } from '../../logic/volunteerSummary'
 import { canDrive } from '../../volunteer/participation'
 import { volunteerPaths as paths } from '../../volunteer/paths'
+import { greetingFor } from '../../logic/formatTime'
 
 const COMMITMENT_LIMIT = 3
 const OPPORTUNITY_LIMIT = 2

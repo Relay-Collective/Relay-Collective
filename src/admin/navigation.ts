@@ -1,5 +1,5 @@
 import { Activity, Blocks, Building2, ClipboardCheck, Flag, LayoutDashboard, MessagesSquare, Settings, Users } from 'lucide-react'
-import { CareRideMark } from '../components/brand/CareRideMark'
+import { CareRideMark } from '../modules/careride/brand'
 import type { NavGroup } from '../components/shell/SidebarNav'
 import { adminPaths } from './paths'
 

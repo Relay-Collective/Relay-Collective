@@ -97,7 +97,7 @@ The interface describes operations such as `requestRide`, `listDestinations`, an
 | [src/pages/auth/register/Register.tsx](src/pages/auth/register/Register.tsx) | Registration workflow | Support email confirmation and resumable onboarding |
 | [src/pages/auth/register/Done.tsx](src/pages/auth/register/Done.tsx) | Assumes signup means signed in | Show the actual confirmation and approval state |
 | [src/components/RequireAuth.tsx](src/components/RequireAuth.tsx) and [src/App.tsx](src/App.tsx) | Signed-in route access | Add role-specific route guards |
-| [src/pages/partner/RequestRide.tsx](src/pages/partner/RequestRide.tsx) | Booking, editing, return trips, draft storage | Use trusted booking operations and review draft privacy |
+| [src/modules/careride/pages/RequestRide.tsx](src/modules/careride/pages/RequestRide.tsx) | Booking, editing, return trips, draft storage | Use trusted booking operations and review draft privacy |
 | [src/logic/dispatch.ts](src/logic/dispatch.ts) and [src/logic/matchDrivers.ts](src/logic/matchDrivers.ts) | Offer timing and eligibility | Implement authoritative backend equivalents |
 | [src/components/form/FileField.tsx](src/components/form/FileField.tsx) | Retains only the selected filename | Retain actual files and show upload state |
 | [src/pages/admin/Accounts.tsx](src/pages/admin/Accounts.tsx) | Password reset and account deletion | Replace temporary-password sharing with supported recovery |

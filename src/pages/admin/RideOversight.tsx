@@ -2,15 +2,13 @@ import { Flag, Info, ShieldCheck, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { adminPaths } from '../../admin/paths'
 import { Breadcrumbs, DateText, DetailList } from '../../components/admin/controls'
-import { RideHistory } from '../../components/RideHistory'
-import { StatusBadge } from '../../components/StatusBadge'
+import { RideHistory, StatusBadge } from '../../modules/careride'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
 import { panel, panelHead, panelTitle } from '../../components/workspace/styles'
 import { useAdmin } from '../../hooks/useAdmin'
 import { formatDayTime } from '../../logic/formatTime'
-import { requestReference } from '../../logic/requestSummary'
-import { passengersLabel, rideBadgeLabel } from '../../logic/rideText'
+import { passengersLabel, requestReference, rideBadgeLabel } from '../../modules/careride/domain'
 
 // One ride, for investigating: where it is, who's involved, and every change made to it.
 // Rider names, notes, and pickup instructions are left off: oversight doesn't need them.

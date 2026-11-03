@@ -1,6 +1,6 @@
 import { ArrowRight, Building2, CalendarPlus, Check, CircleAlert, CircleCheck, Clock, History, Inbox, MapPin, Route, TriangleAlert, UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { NextPickup } from '../../components/dashboard/NextPickup'
+import { NextPickup } from '../../modules/careride'
 import { ActionRequiredList } from '../../components/workspace/ActionRequiredList'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
@@ -14,11 +14,11 @@ import { primaryButton } from '../../components/ui'
 import { useApp } from '../../hooks/useApp'
 import { useNow } from '../../hooks/useNow'
 import { useWorkspace } from '../../hooks/useWorkspace'
-import { actionItems, COMPLETED_WINDOW_DAYS, recentActivity, requestMetrics } from '../../logic/requestSummary'
-import { byPickup, greetingFor, isFinished, needsAction } from '../../logic/rideInsights'
+import { actionItems, byPickup, COMPLETED_WINDOW_DAYS, isFinished, needsAction, recentActivity, requestMetrics } from '../../modules/careride/domain'
 import type { House, Organization, User } from '../../types'
 import { CARERIDE, FEATURED_PLANNED } from '../../workspace/modules'
 import { paths } from '../../workspace/paths'
+import { greetingFor } from '../../logic/formatTime'
 
 const ACTION_LIMIT = 5
 const ACTIVITY_LIMIT = 8

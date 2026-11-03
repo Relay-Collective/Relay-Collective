@@ -122,7 +122,8 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 | `npm ci` | Install dependencies from the committed lockfile. |
 | `npm run dev` | Start the local Vite development server. |
 | `npm run lint` | Run ESLint. |
-| `npm test` | Run the ride-rule and feedback tests. |
+| `npm test` | Run the unit tests in `tests/` (ride rules, summaries, memberships, onboarding, feedback, account deletion, CareRide). |
+| `npm run test:coverage` | Run the same unit tests with Node's built-in coverage. Prints a table and writes `coverage/lcov.info`. |
 | `npm run test:db` | Run every migration in an embedded Postgres and test the feedback, membership and account-deletion rules against it. |
 | `npm run build` | Run TypeScript project checks and create the production build in `dist/`. |
 | `npm run preview` | Serve an existing production build locally. |
@@ -134,7 +135,13 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 
 `npm test` covers matching, offer expiry, the give-up clock, no-shows, and which rides a closing partner account cancels. Those checks run against the TypeScript rules the demo uses. The SQL functions are the rules for the shared backend, so a change to one side needs the same change on the other. For ride behavior, also exercise the partner and driver workflows in separate tabs, including declines, cancellations, and uncovered requests.
 
+### Continuous integration
+
+**Relay Collective CI** ([ci.yml](../.github/workflows/ci.yml)) runs on every pull request into `main`, on every push to `main`, and from **Actions → Run workflow**. It has two jobs, `quality` (lint, unit tests with coverage, type-check and build) and `database-tests`. It uses no secrets and never deploys. The Android APK workflow runs separately. Jobs, coverage baseline, database-test limits, branch protection, Dependabot and the deployment plan are in [CI_CD.md](CI_CD.md).
+
 ### Deployment
+
+Cloudflare Workers Builds deploys `main` from this repository; GitHub Actions does not deploy. See [CI_CD.md](CI_CD.md#deployment).
 
 The repository includes [wrangler.jsonc](../wrangler.jsonc) for Cloudflare Workers. Static files still serve from `dist/` with single-page application fallback. A Worker script is included so the Cloudflare dashboard can attach variables and secrets. `/api/*` is reserved for that Worker.
 
@@ -247,7 +254,7 @@ Relay Collective covers essential, non-emergency transportation. Booking screens
 
 ## Contributing
 
-Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm test`, `npm run lint`, and `npm run build` before submitting code changes.
+Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm run lint`, `npm test`, `npm run test:db`, and `npm run build` before submitting code changes. Relay Collective CI runs the same checks on your pull request.
 
 Use fictional data when developing or sharing screenshots. For product changes, prioritize clear language, usable mobile layouts, and an explicit next step when a ride cannot be covered.
 

@@ -32,9 +32,9 @@ jobs:
           # The obsolete "tools" package is gone; installing it fails CI.
           packages: platform-tools platforms;android-36 build-tools;36.0.0 build-tools;35.0.0
 
+      # Lint and unit tests run in ci.yml (Relay Collective CI) on the same pull
+      # requests. The APK build below still runs `tsc -b` through `npm run build`.
       - run: npm ci
-      - run: npm test
-      - run: npm run lint
       # Vite bakes VITE_* into the APK. Fork PRs do not receive secrets, so those
       # builds stay on demo data. Same-repo PRs and workflow_dispatch use secrets
       # when they are set. Never add the Supabase service-role key here.

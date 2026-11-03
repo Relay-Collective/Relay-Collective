@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # One weekly PR for all minor and patch npm updates. Each major update gets its
+  # own PR so it can be reviewed on its own. Nothing merges automatically.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  # Keeps the SHA-pinned actions in .github/workflows current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ['*']

@@ -11,6 +11,22 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.7',
+    date: '2026-11-03',
+    title: 'Relay Collective 1.7',
+    summary: 'One connected platform, built from modules.',
+    changes: [
+      'Relay Collective is now organized into modules that all share your organization, team and access. Transportation is the first, and it is called CareRide.',
+      'Your overview has a new Your modules section. CareRide shows how your rides are going, with one button to open it. Volunteer coordination and Resource sharing are shown as planned. They can’t be used yet.',
+      'The sidebar now has two groups. Workspace holds Overview, Organization and Team. Your modules holds CareRide and All modules. The count of rides that need attention now shows beside CareRide.',
+      'CareRide has its own header and tabs: Overview, Requests, New ride, Destinations and History. Requests and History are now inside CareRide. Old links and bookmarks still open the same pages.',
+      'The organization name at the top of every page now takes you back to your overview.',
+      'Your overview also shows your organization, your pickup location and your role at a glance, and Quick actions has a link to your team.',
+      'Volunteer drivers will see CareRide in their sidebar and on their overview. Rides, requests and availability work the same as before.',
+      'Nothing about how rides are booked, matched, accepted or cancelled has changed.',
+    ],
+  },
+  {
     version: '1.6',
     date: '2026-10-31',
     title: 'Introducing Relay Collective 1.6',

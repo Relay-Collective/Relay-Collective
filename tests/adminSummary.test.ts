@@ -154,7 +154,7 @@ test('table helpers sort missing values last and keep pages in range', () => {
 test('admin titles follow the address', () => {
   assert.equal(adminTitle(adminPaths.overview), 'Dashboard')
   assert.equal(adminTitle(adminPaths.review('drivers', 'd1')), 'Approvals')
-  assert.equal(adminTitle(adminPaths.ride('r1')), 'Transportation')
+  assert.equal(adminTitle(adminPaths.ride('r1')), 'CareRide')
 })
 
 test('only a platform admin can list every ride, and reviews record who decided and when', async () => {

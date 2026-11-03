@@ -2,7 +2,7 @@ import { ArrowRight, BadgeCheck, CircleX, Clock, Info, MapPin, UsersRound } from
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/workspace/PageHeader'
-import { AvailabilityPill } from '../../components/workspace/ServiceModuleCard'
+import { ModuleBadge, ModuleIconTile } from '../../components/workspace/ServiceModuleCard'
 import { Skeleton } from '../../components/workspace/states'
 import { OrganizationVisibilitySettings } from '../../components/membership/OrganizationVisibilitySettings'
 import { RoleBadge } from '../../components/membership/MemberRoleSelector'
@@ -10,7 +10,7 @@ import { panel, panelHead, panelLink, panelTitle } from '../../components/worksp
 import { useApp } from '../../hooks/useApp'
 import { useWorkspace } from '../../hooks/useWorkspace'
 import type { VerificationStatus } from '../../types'
-import { LIVE_MODULES } from '../../workspace/modules'
+import { ACTIVE_MODULES } from '../../workspace/modules'
 import { paths } from '../../workspace/paths'
 
 const VERIFICATION: Record<VerificationStatus, { text: string; icon: typeof BadgeCheck; className: string }> = {
@@ -84,20 +84,23 @@ export function OrganizationProfile() {
         <section aria-labelledby="org-services-title" className={panel}>
           <div className={panelHead}>
             <h2 id="org-services-title" className={panelTitle}>
-              Services
+              Modules
             </h2>
             <Link to={paths.services} className={panelLink}>
-              All services <ArrowRight className="h-4 w-4" aria-hidden />
+              All modules <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
           <ul className="divide-y divide-slate-100">
-            {LIVE_MODULES.map((m) => (
+            {ACTIVE_MODULES.map((m) => (
               <li key={m.id} className="flex items-center gap-3 px-5 py-3">
-                <m.icon className="h-5 w-5 text-rc-teal-ink" aria-hidden />
-                <Link to={m.to} className="flex-1 font-semibold text-rc-navy hover:underline">
-                  {m.name}
-                </Link>
-                <AvailabilityPill availability="live" />
+                <ModuleIconTile module={m} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <Link to={m.route} className="font-semibold text-rc-navy hover:underline">
+                    {m.name}
+                  </Link>
+                  <span className="block text-sm text-slate-500">{m.category}</span>
+                </span>
+                <ModuleBadge status="active" />
               </li>
             ))}
           </ul>

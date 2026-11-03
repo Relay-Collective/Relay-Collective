@@ -1,4 +1,5 @@
 import { CalendarCheck, CalendarClock, CircleHelp, Inbox, LayoutDashboard, MessagesSquare, Settings, Truck, UserRound, type LucideIcon } from 'lucide-react'
+import { CareRideMark } from '../components/brand/CareRideMark'
 import type { NavEntry, NavGroup } from '../components/shell/SidebarNav'
 import { volunteerPaths as paths } from './paths'
 
@@ -18,7 +19,8 @@ export function volunteerNav(approved: boolean): NavGroup[] {
           : []),
       ],
     },
-    { label: 'My services', items: [{ to: paths.transport, label: 'Transportation', icon: Truck }] },
+    // Driving is part of CareRide, the transportation module. It is not the planned Volunteer coordination module.
+    { label: 'Your modules', items: [{ to: paths.transport, label: 'CareRide', icon: CareRideMark }] },
     {
       label: 'Personal',
       items: [
@@ -55,7 +57,7 @@ export function volunteerTabs(approved: boolean): TabEntry[] {
 // The page name shown in the header, from the most specific matching address
 const TITLES: [prefix: string, title: string][] = [
   [paths.rides, 'My rides'],
-  [paths.transport, 'Transportation'],
+  [paths.transport, 'CareRide'],
   [paths.opportunities, 'Opportunities'],
   [paths.commitments, 'My commitments'],
   [paths.availability, 'Availability'],

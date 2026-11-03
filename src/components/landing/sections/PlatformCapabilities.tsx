@@ -17,10 +17,10 @@ export function PlatformCapabilities() {
       <div className={container}>
         <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <h2 id="solutions-heading" className={h2Small}>
-            One foundation. Many <Accent>services.</Accent>
+            One connected platform. Multiple ways to make an <Accent>impact.</Accent>
           </h2>
           <p className="max-w-sm font-dm text-[17px] leading-relaxed text-midnight-soft">
-            Every module runs on the same accounts, roles, and requests. Transportation is the first, and it works today.
+            Every module runs on the same accounts, roles, and requests. CareRide, for transportation, is the first, and it works today.
           </p>
         </Reveal>
 
@@ -54,7 +54,7 @@ export function PlatformCapabilities() {
             </div>
           </Reveal>
 
-          {/* Transportation: the first module, and the proof the foundation works */}
+          {/* CareRide (transportation): the first module, and the proof the foundation works */}
           <Reveal as="article" delay={100} className="lg:col-span-5" aria-labelledby="cap-transport">
             <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] border border-hairline bg-white p-7 sm:p-9">
               <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-electric sm:-right-14 sm:-top-14 sm:h-36 sm:w-36" aria-hidden />
@@ -79,7 +79,7 @@ export function PlatformCapabilities() {
               </ol>
               <div className="mt-auto pt-6">
                 <SmartLink href={LINKS.transportTour} className={textLink}>
-                  Take the transportation tour <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+                  Take the CareRide tour <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
                 </SmartLink>
               </div>
             </div>
@@ -146,7 +146,7 @@ function CardHead({ capability, onDark = false }: { capability: Capability; onDa
 // Layers stacking on one base: the foundation stays, the services above it grow. Only the solid layer exists today.
 function GrowthDiagram() {
   const layers = [
-    { label: 'Transportation', live: true },
+    { label: 'CareRide · transportation', live: true },
     { label: 'Volunteer roles' },
     { label: 'Resource sharing' },
     { label: 'Cross-organization services' },

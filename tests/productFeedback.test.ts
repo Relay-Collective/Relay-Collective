@@ -60,7 +60,7 @@ describe('feedback rules', () => {
 
   test('the related page reads as a place in the app', () => {
     assert.equal(rules.pageLabel('/workspace'), 'Organization workspace · Overview')
-    assert.equal(rules.pageLabel('/workspace/transportation/rides/:id'), 'Organization workspace · Transportation')
+    assert.equal(rules.pageLabel('/workspace/transportation/rides/:id'), 'Organization workspace · CareRide')
     assert.equal(rules.pageLabel('/volunteer/availability'), 'Volunteer workspace · Availability')
     assert.equal(rules.pageLabel('/admin/feedback'), 'Admin console · Feedback')
   })

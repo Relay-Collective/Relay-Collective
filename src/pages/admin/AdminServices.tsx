@@ -1,18 +1,18 @@
-import { ArrowRight, Truck } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { adminPaths } from '../../admin/paths'
 import { PageHeader } from '../../components/workspace/PageHeader'
-import { AvailabilityPill, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
+import { ModuleBadge, ModuleIconTile, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { panel, panelTitle } from '../../components/workspace/styles'
-import { PLANNED_MODULES } from '../../workspace/modules'
+import { CARERIDE, PLANNED_MODULES } from '../../workspace/modules'
 
 // The platform's service modules. Modules aren't switched on or off per organization yet, so there are no toggles here.
 export function AdminServices() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Services"
-        description="Relay Collective is built as service modules on one shared foundation of organizations, accounts, and requests."
+        title="Modules"
+        description="Relay Collective is built as service modules on one shared platform of organizations, accounts, and requests."
       />
 
       <section aria-labelledby="live-title">
@@ -21,18 +21,17 @@ export function AdminServices() {
         </h2>
         <article className={`${panel} max-w-xl p-5`}>
           <div className="flex items-start justify-between gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-rc-mint text-rc-teal-ink" aria-hidden>
-              <Truck className="h-6 w-6" />
-            </span>
-            <AvailabilityPill availability="live" />
+            <ModuleIconTile module={CARERIDE} />
+            <ModuleBadge status="active" />
           </div>
-          <h3 className="mt-4 font-heading text-lg font-bold text-rc-navy">Transportation coordination</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            The existing MVP foundation. Partner organizations request rides for the people they support, verified drivers accept them, and
+          <h3 className="mt-4 font-heading text-lg font-bold text-rc-navy">{CARERIDE.name}</h3>
+          <p className="text-sm font-medium text-slate-500">{CARERIDE.tagline}</p>
+          <p className="mt-2 text-sm text-slate-600">
+            The first module, and the existing MVP. Partner organizations request rides for the people they support, verified drivers accept them, and
             staff follow each trip to drop-off. Every partner organization can use it once registered.
           </p>
           <Link to={adminPaths.transportation} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-rc-blue hover:underline">
-            Manage transportation <ArrowRight className="h-4 w-4" aria-hidden />
+            Manage CareRide <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </article>
       </section>

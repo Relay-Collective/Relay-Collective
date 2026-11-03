@@ -146,24 +146,27 @@ export default function App() {
 
           <Route element={<RequireAccount />}>
             <Route path="/home" element={<RoleHome />} />
-            {/* Partner organizations: the organization workspace, with transportation as its first service */}
+            {/* Partner organizations: the organization workspace, with CareRide (transportation) as its first module */}
             <Route element={<RequireRole roles={['PARTNER']} />}>
               <Route path={onboardingPaths.application} element={<PendingApproval />} />
               <Route element={<RequireOrgNotRejected />}>
                 <Route element={<WorkspaceShell />}>
                   <Route path={paths.overview} element={<Overview />} />
-                  <Route path={paths.requests} element={<Requests />} />
                   <Route path={paths.services} element={<Services />} />
                   <Route path={paths.organization} element={<OrganizationProfile />} />
                   <Route path={paths.team} element={<Team />} />
                   <Route path={paths.help} element={<Help />} />
                   <Route path={paths.feedback} element={<MyFeedback />} />
                   <Route path={`${paths.feedback}/:id`} element={<MyFeedbackDetail />} />
-                  <Route path={paths.transport} element={<TransportLayout />}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="new" element={<RequestRide />} />
-                    <Route path="rides/:id" element={<RideDetail />} />
-                    <Route path="destinations" element={<Destinations />} />
+                  {/* CareRide, the transportation module. Its requests list keeps its old address, so links and bookmarks still work. */}
+                  <Route element={<TransportLayout />}>
+                    <Route path={paths.requests} element={<Requests />} />
+                    <Route path={paths.transport}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="new" element={<RequestRide />} />
+                      <Route path="rides/:id" element={<RideDetail />} />
+                      <Route path="destinations" element={<Destinations />} />
+                    </Route>
                   </Route>
                 </Route>
               </Route>

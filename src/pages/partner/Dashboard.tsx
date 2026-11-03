@@ -127,7 +127,7 @@ export function Dashboard() {
     <div className="space-y-6">
       <div>
         <PageHeader
-          title="Transportation overview"
+          title="Ride overview"
           description={summary}
           actions={
             <Link to={paths.newRide} className={primaryButton}>

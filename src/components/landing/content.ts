@@ -79,9 +79,9 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     id: 'transport',
-    area: 'Transportation',
+    area: 'CareRide · Transportation',
     title: 'Move people.',
-    text: 'The first module on the foundation. Staff request a ride, a verified driver accepts it, and it stays in view until drop-off.',
+    text: 'CareRide is the first module on the foundation. Staff request a ride, a verified driver accepts it, and it stays in view until drop-off.',
     status: 'Working today',
     availability: 'live',
     icon: CarFront,

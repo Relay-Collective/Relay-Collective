@@ -1,6 +1,6 @@
 import { LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import type { ComponentType, ReactNode, SVGProps } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { LogoMark, wordmark } from '../brand/LogoMark'
 import { useApp } from '../../hooks/useApp'
 import { focusRing } from '../workspace/styles'
@@ -11,8 +11,9 @@ export type SidebarMode = 'rail' | 'full' | 'responsive'
 export interface NavEntry {
   to: string
   label: string
-  icon: LucideIcon
+  icon: LucideIcon | ComponentType<SVGProps<SVGSVGElement>>
   end?: boolean // active only on this exact address, not the pages under it
+  match?: string[] // other addresses that also count as this entry, and the pages under them
   badge?: string // key into the sidebar's live counts
 }
 
@@ -51,6 +52,7 @@ interface Props {
 // The sidebar of a signed-in console: whose space it is, where you can go, and how to leave.
 export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, contextIcon, groups, footer, actions = [], badges = {} }: Props) {
   const { signOut } = useApp()
+  const { pathname } = useLocation()
 
   // Words show in full mode, and from the desktop breakpoint in responsive mode. They stay readable to screen readers.
   const words = mode === 'full' ? '' : mode === 'rail' ? 'sr-only' : 'sr-only lg:not-sr-only'
@@ -63,6 +65,7 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
     const count = badge?.count ?? 0
     const badgeTone = badge?.tone === 'waiting' ? 'bg-sun-400 text-ink' : 'bg-care-red text-white'
     const Icon = entry.icon
+    const matched = entry.match?.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? false
     return (
       <li key={entry.to}>
         <NavLink
@@ -70,11 +73,12 @@ export function SidebarNav({ mode, onNavigate, onToggleCollapse, home, context, 
           end={entry.end}
           onClick={onNavigate}
           title={mode === 'full' ? undefined : entry.label}
-          className={({ isActive }) =>
-            `group/nav relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold transition-colors duration-150 ease-out-quart ${center} ${focusRing} ${
+          className={({ isActive: exact }) => {
+            const isActive = exact || matched
+            return `group/nav relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-semibold transition-colors duration-150 ease-out-quart ${center} ${focusRing} ${
               isActive ? 'bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px_var(--color-brand-100)]' : 'text-slate-600 hover:bg-slate-100 hover:text-rc-navy'
             }`
-          }
+          }}
         >
           <Icon className="h-5 w-5 shrink-0 transition-transform duration-150 ease-out-quart group-active/nav:scale-90" aria-hidden />
           <span className={`min-w-0 flex-1 truncate ${words}`}>{entry.label}</span>

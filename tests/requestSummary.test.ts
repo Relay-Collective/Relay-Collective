@@ -12,7 +12,8 @@ import {
 } from '../src/logic/requestSummary'
 import type { Ride } from '../src/types'
 import { paths, rideIdFromPath } from '../src/workspace/paths'
-import { workspaceTitle } from '../src/workspace/navigation'
+import { ACTIVE_MODULES, CARERIDE, FEATURED_PLANNED, PLANNED_MODULES } from '../src/workspace/modules'
+import { inCareRide, workspaceTitle } from '../src/workspace/navigation'
 
 const NOW = new Date('2026-10-20T12:00:00.000Z')
 const hoursFromNow = (h: number) => new Date(NOW.getTime() + h * 3600_000).toISOString()
@@ -113,6 +114,24 @@ test('workspace paths and titles line up', () => {
   assert.equal(rideIdFromPath(paths.ride('abc')), 'abc')
   assert.equal(rideIdFromPath(paths.transport), undefined)
   assert.equal(workspaceTitle(paths.overview), 'Overview')
-  assert.equal(workspaceTitle(paths.ride('abc')), 'Transportation')
-  assert.equal(workspaceTitle(`${paths.requests}`), 'Requests')
+  // CareRide's pages, including the requests list at its old address, all sit under the module's name
+  assert.equal(workspaceTitle(paths.ride('abc')), 'CareRide')
+  assert.equal(workspaceTitle(`${paths.requests}`), 'CareRide')
+  assert.equal(workspaceTitle(paths.services), 'Modules')
+  assert.equal(inCareRide(paths.requests), true)
+  assert.equal(inCareRide(paths.destinations), true)
+  assert.equal(inCareRide(paths.team), false)
+})
+
+test('CareRide is the only active module, and opens the existing transportation home', () => {
+  assert.deepEqual(
+    ACTIVE_MODULES.map((m) => m.id),
+    ['careride'],
+  )
+  assert.equal(CARERIDE.route, paths.transport)
+  assert.ok(PLANNED_MODULES.every((m) => !('route' in m)))
+  assert.deepEqual(
+    FEATURED_PLANNED.map((m) => m.id),
+    ['volunteer-coordination', 'resource-sharing'],
+  )
 })

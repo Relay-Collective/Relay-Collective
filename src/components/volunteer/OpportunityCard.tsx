@@ -67,7 +67,7 @@ export function OpportunityCard({ offer, ride, from, changed, showMap = false, o
         )}
         <div className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500">
-            <span className="rounded-full bg-rc-mint px-2.5 py-0.5 text-xs font-semibold text-rc-teal-ink">Transportation</span>
+            <span className="rounded-full bg-rc-mint px-2.5 py-0.5 text-xs font-semibold text-rc-teal-ink">CareRide</span>
             {ride.type === 'ON_DEMAND' ? 'On demand' : 'Scheduled'}
             {ride.returnOfRideId && ' · Return trip'}
           </div>

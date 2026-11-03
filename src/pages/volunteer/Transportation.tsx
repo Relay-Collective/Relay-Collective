@@ -36,8 +36,8 @@ function TransportationHome() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="My services"
-        title="Transportation"
+        eyebrow="Transportation, with CareRide"
+        title="CareRide"
         description="Ride requests matched to your vehicle, cities, and availability, and the trips you've said yes to."
         actions={
           <>

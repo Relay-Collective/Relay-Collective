@@ -17,10 +17,11 @@ interface Props {
 // Each cell is a subgrid of three rows (label, number, hint), so numbers line up even when a label wraps.
 // Each cell carries a left and top edge; the grid is pulled 1px under the frame so the outer ones disappear,
 // which keeps the lines right at any column count, including a last row that isn't full.
-export function MetricGroup({ className = '', children }: { className?: string; children: ReactNode }) {
+// bare: no frame of its own, for a strip along the foot of a card. The top row's edge becomes the divider.
+export function MetricGroup({ className = '', bare, children }: { className?: string; bare?: boolean; children: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className={`-ml-px -mt-px grid ${className}`}>{children}</div>
+    <div className={bare ? 'overflow-hidden' : 'overflow-hidden rounded-xl border border-slate-200 bg-white'}>
+      <div className={`-ml-px grid ${bare ? '' : '-mt-px'} ${className}`}>{children}</div>
     </div>
   )
 }

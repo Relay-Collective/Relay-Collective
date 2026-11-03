@@ -1,4 +1,5 @@
-import { Activity, Blocks, Building2, ClipboardCheck, Flag, LayoutDashboard, MessagesSquare, Settings, Truck, Users } from 'lucide-react'
+import { Activity, Blocks, Building2, ClipboardCheck, Flag, LayoutDashboard, MessagesSquare, Settings, Users } from 'lucide-react'
+import { CareRideMark } from '../components/brand/CareRideMark'
 import type { NavGroup } from '../components/shell/SidebarNav'
 import { adminPaths } from './paths'
 
@@ -16,8 +17,9 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     label: 'Service management',
     items: [
-      { to: adminPaths.services, label: 'Services', icon: Blocks },
-      { to: adminPaths.transportation, label: 'Transportation', icon: Truck },
+      { to: adminPaths.services, label: 'Modules', icon: Blocks },
+      // Transportation operations: the CareRide module
+      { to: adminPaths.transportation, label: 'CareRide', icon: CareRideMark },
     ],
   },
   {
@@ -36,8 +38,8 @@ const TITLES: [prefix: string, title: string][] = [
   [adminPaths.organizations, 'Organizations'],
   [adminPaths.users, 'Users'],
   [adminPaths.approvals, 'Approvals'],
-  [adminPaths.services, 'Services'],
-  [adminPaths.transportation, 'Transportation'],
+  [adminPaths.services, 'Modules'],
+  [adminPaths.transportation, 'CareRide'],
   [adminPaths.activity, 'Activity'],
   [adminPaths.issues, 'Issues'],
   [adminPaths.feedback, 'Feedback'],

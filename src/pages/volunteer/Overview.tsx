@@ -1,5 +1,6 @@
 import { ArrowRight, CalendarCheck, CalendarClock, Check, ChevronRight, CircleCheck, CircleDot, Hourglass, Inbox, Route, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { CareRideMark } from '../../components/brand/CareRideMark'
 import { RequestStatusCard } from '../../components/RequestStatusCard'
 import { AssignmentRow } from '../../components/volunteer/AssignmentRow'
 import { OpportunityList } from '../../components/volunteer/OpportunityList'
@@ -127,8 +128,8 @@ export function Overview() {
 
       <section aria-labelledby="metrics-title">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="metrics-title" className={panelTitle}>
-            Transportation
+          <h2 id="metrics-title" className={`${panelTitle} flex items-center gap-2`}>
+            <CareRideMark tone="brand" className="h-5 w-5" /> CareRide
           </h2>
           {(rides.error || offers.error) && <p className="text-sm text-red-700">Some numbers couldn't load.</p>}
         </div>

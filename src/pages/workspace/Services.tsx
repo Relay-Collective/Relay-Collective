@@ -1,15 +1,15 @@
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { PlannedModuleCard, ServiceModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { panelTitle } from '../../components/workspace/styles'
-import { LIVE_MODULES, PLANNED_MODULES } from '../../workspace/modules'
+import { ACTIVE_MODULES, PLANNED_MODULES } from '../../workspace/modules'
 
 // Every service module: the ones the organization can use now, and the ones still planned.
 export function Services() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Services"
-        description="Relay Collective is shared infrastructure for nonprofits. Each service is a module in your workspace, built on the same organization, requests, and access."
+        title="Modules"
+        description="Relay Collective is one shared platform for nonprofits. Each module adds one kind of work, built on the same organization, team, and access."
       />
 
       <section aria-labelledby="active-title">
@@ -17,7 +17,7 @@ export function Services() {
           Available to your organization
         </h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {LIVE_MODULES.map((m) => (
+          {ACTIVE_MODULES.map((m) => (
             <ServiceModuleCard key={m.id} module={m} />
           ))}
         </div>

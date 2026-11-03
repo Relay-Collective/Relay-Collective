@@ -53,8 +53,12 @@ export function Requests() {
   return (
     <div>
       <PageHeader
-        title="Requests"
-        description="Track every request your organization has made. Transportation is the first service in your workspace."
+        title={view === 'past' ? 'Ride history' : 'Requests'}
+        description={
+          view === 'past'
+            ? 'Finished, cancelled, and no-show rides your organization requested.'
+            : 'Every ride your organization has requested through CareRide, from booking to drop-off.'
+        }
         actions={
           <Link to={paths.newRide} className={`${primaryButton} ${compactButton}`}>
             <CalendarPlus className="h-4 w-4" aria-hidden /> Request a ride

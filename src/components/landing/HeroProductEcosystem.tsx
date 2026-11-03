@@ -40,7 +40,7 @@ const PARTS: Record<PartKey, { title: string; text: string; icon: LucideIcon; to
     href: '#cap-volunteers',
     status: 'drivers',
   },
-  transport: { title: 'Transportation', text: 'The first module. Rides to appointments.', icon: CarFront, tone: 'electric', href: '#cap-transport' },
+  transport: { title: 'CareRide', text: 'The first module. Rides to appointments.', icon: CarFront, tone: 'electric', href: '#cap-transport' },
   services: {
     title: 'Resource sharing',
     text: 'The next module.',

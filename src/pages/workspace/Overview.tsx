@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, CalendarPlus, Check, ChevronRight, CircleAlert, CircleCheck, Clock, History, Inbox, MapPin, Route, TriangleAlert } from 'lucide-react'
+import { ArrowRight, Building2, CalendarPlus, Check, CircleAlert, CircleCheck, Clock, History, Inbox, MapPin, Route, TriangleAlert, UsersRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { NextPickup } from '../../components/dashboard/NextPickup'
 import { ActionRequiredList } from '../../components/workspace/ActionRequiredList'
@@ -6,9 +6,10 @@ import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { QuickActions, type QuickAction } from '../../components/workspace/QuickActions'
 import { RecentActivityList } from '../../components/workspace/RecentActivityList'
-import { AvailabilityPill } from '../../components/workspace/ServiceModuleCard'
-import { EmptyState, SectionError, Skeleton, SkeletonRows } from '../../components/workspace/states'
-import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
+import { RoleBadge } from '../../components/membership/MemberRoleSelector'
+import { ActiveModuleFeature, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
+import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
+import { panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { primaryButton } from '../../components/ui'
 import { useApp } from '../../hooks/useApp'
 import { useNow } from '../../hooks/useNow'
@@ -16,7 +17,7 @@ import { useWorkspace } from '../../hooks/useWorkspace'
 import { actionItems, COMPLETED_WINDOW_DAYS, recentActivity, requestMetrics } from '../../logic/requestSummary'
 import { byPickup, greetingFor, isFinished, needsAction } from '../../logic/rideInsights'
 import type { House, Organization, User } from '../../types'
-import { LIVE_MODULES, PLANNED_MODULES } from '../../workspace/modules'
+import { CARERIDE, FEATURED_PLANNED } from '../../workspace/modules'
 import { paths } from '../../workspace/paths'
 
 const ACTION_LIMIT = 5
@@ -32,10 +33,11 @@ function greetingName(user: User, org?: Organization, house?: House): string | u
   return name && !shared ? name.split(/\s+/)[0] : undefined
 }
 
-// The organization's home: what needs attention, how requests are going, and the services it can use.
+// The organization's home on the platform: who it is, what needs attention, the modules it works in
+// (CareRide, with how its rides are going, and what's planned), then recent activity and shortcuts.
 export function Overview() {
   const { currentUser } = useApp()
-  const { org, house, rides, driverOf } = useWorkspace()
+  const { org, house, rides, driverOf, orgRole, isAdmin } = useWorkspace()
   const now = useNow()
   if (!currentUser) return null
 
@@ -56,9 +58,9 @@ export function Overview() {
     { to: paths.requests, label: 'View requests', detail: metrics ? plural(metrics.open, 'open request', 'open requests') : 'Every request in one list', icon: Inbox },
     { to: paths.destinations, label: 'Saved destinations', detail: 'Places your clients often go', icon: MapPin },
     { to: paths.organization, label: 'Organization profile', detail: 'Details, location, and access', icon: Building2 },
+    { to: paths.team, label: isAdmin ? 'Manage team' : 'View team', detail: isAdmin ? 'Members, requests, and invitations' : 'Who works in this workspace', icon: UsersRound },
   ]
 
-  const transport = LIVE_MODULES[0]
   // The ride staff will be asked about next, chosen the same way as on the transportation home:
   // one already under way first, then by pickup time. Shown only when there is one.
   const next = (all ?? [])
@@ -67,11 +69,36 @@ export function Overview() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title={name ? `${greeting}, ${name}.` : `${greeting}.`}
-        eyebrow={date}
-        description={org ? `Here's what's happening at ${org.name}.` : "Here's what's happening in your workspace."}
-      />
+      <div className="mb-7">
+        <PageHeader
+          title={name ? `${greeting}, ${name}.` : `${greeting}.`}
+          eyebrow={date}
+          description="Here's what's happening across your organization."
+        />
+        {/* The organization at a glance: whose workspace this is, where rides start, and this person's role in it */}
+        <dl className="-mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <dt className="sr-only">Organization</dt>
+            <Building2 className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+            <dd className="min-w-0 truncate font-semibold text-rc-navy">{org?.name ?? 'Your organization'}</dd>
+          </div>
+          {house && house.name.trim().toLowerCase() !== org?.name.trim().toLowerCase() && (
+            <div className="flex min-w-0 items-center gap-1.5">
+              <dt className="sr-only">Pickup location</dt>
+              <MapPin className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              <dd className="min-w-0 truncate">{house.name}</dd>
+            </div>
+          )}
+          {orgRole && (
+            <div className="flex items-center gap-1.5">
+              <dt className="sr-only">Your role</dt>
+              <dd>
+                <RoleBadge role={orgRole} />
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
 
       {!currentUser.houseId && (
         <p role="note" className="flex items-start gap-2 rounded-xl border border-amber-200 bg-sun-50 p-4 text-sm text-amber-900">
@@ -116,38 +143,55 @@ export function Overview() {
         )}
       </section>
 
-      <section aria-labelledby="metrics-title">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="metrics-title" className={panelTitle}>
-            Transportation requests
-          </h2>
-          {failed && <p className="text-sm text-red-700">Couldn't load these numbers.</p>}
+      {/* The modules this organization works in. CareRide leads with its live numbers; planned modules are
+          labelled, quieter, and have no way in, so they never read as something to open. */}
+      <section aria-labelledby="modules-title">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <h2 id="modules-title" className="font-heading text-xl font-bold tracking-[-0.02em] text-rc-navy">
+              Your modules
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-600">Everything your organization needs to coordinate community support, all in one place.</p>
+          </div>
+          <Link to={paths.services} className={`${panelLink} -mr-2`}>
+            All modules <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
         </div>
-        <MetricGroup className="grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="Need attention"
-            value={metrics?.attention}
-            hint={metrics?.attention ? 'Open them to resolve' : 'Nothing waiting on you'}
-            icon={CircleAlert}
-            to={`${paths.requests}?view=attention`}
-            alert
-          />
-          <MetricCard label="Awaiting a driver" value={metrics?.waiting} hint="Drivers are being asked" icon={Clock} to={`${paths.requests}?view=waiting`} />
-          <MetricCard
-            label="Confirmed or under way"
-            value={metrics?.confirmed}
-            hint="A driver has accepted"
-            icon={Route}
-            to={`${paths.requests}?view=confirmed`}
-          />
-          <MetricCard
-            label="Completed"
-            value={metrics?.completedRecently}
-            hint={`In the last ${COMPLETED_WINDOW_DAYS} days`}
-            icon={CircleCheck}
-            to={`${paths.requests}?view=past`}
-          />
-        </MetricGroup>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <ActiveModuleFeature module={CARERIDE} headingId="careride-title">
+            {failed && <p className="border-t border-slate-200 px-5 py-3 text-sm text-red-700 sm:px-6">Couldn't load these numbers.</p>}
+            <MetricGroup bare className="grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Need attention"
+                value={metrics?.attention}
+                hint={metrics?.attention ? 'Open them to resolve' : 'Nothing waiting on you'}
+                icon={CircleAlert}
+                to={`${paths.requests}?view=attention`}
+                alert
+              />
+              <MetricCard label="Awaiting a driver" value={metrics?.waiting} hint="Drivers are being asked" icon={Clock} to={`${paths.requests}?view=waiting`} />
+              <MetricCard
+                label="Confirmed or under way"
+                value={metrics?.confirmed}
+                hint="A driver has accepted"
+                icon={Route}
+                to={`${paths.requests}?view=confirmed`}
+              />
+              <MetricCard
+                label="Completed"
+                value={metrics?.completedRecently}
+                hint={`In the last ${COMPLETED_WINDOW_DAYS} days`}
+                icon={CircleCheck}
+                to={`${paths.requests}?view=past`}
+              />
+            </MetricGroup>
+          </ActiveModuleFeature>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
+            {FEATURED_PLANNED.map((m) => (
+              <PlannedModuleCard key={m.id} module={m} short />
+            ))}
+          </div>
+        </div>
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
@@ -157,7 +201,7 @@ export function Overview() {
               <h2 id="activity-title" className={panelTitle}>
                 Recent activity
               </h2>
-              <p className="text-sm text-slate-500">Transportation requests, as each ride last changed</p>
+              <p className="text-sm text-slate-500">CareRide requests, as each ride last changed</p>
             </div>
             {activity.length > 0 && (
               <Link to={paths.requests} className={panelLink}>
@@ -197,56 +241,6 @@ export function Overview() {
               </h2>
             </div>
             <QuickActions actions={quickActions} />
-          </section>
-
-          {/* Working services link in; planned ones are listed, labelled, and never look like something you can open */}
-          <section aria-labelledby="services-title" className={panel}>
-            <div className={panelHead}>
-              <h2 id="services-title" className={panelTitle}>
-                Your services
-              </h2>
-              <Link to={paths.services} className={panelLink}>
-                All services <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </div>
-            {transport && (
-              <Link to={transport.to} className={`group flex items-center gap-3 px-5 py-4 transition-colors duration-150 ease-out-quart hover:bg-slate-50 ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0`}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rc-mint text-rc-teal-ink" aria-hidden>
-                  <transport.icon className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-rc-navy">{transport.name}</span>
-                    <AvailabilityPill availability="live" />
-                  </span>
-                  <span className="mt-0.5 block text-sm text-slate-600">
-                    {metrics ? (
-                      <>
-                        {plural(metrics.open, 'open request', 'open requests')}
-                        {metrics.attention > 0 && <span className="font-semibold text-red-700"> · {metrics.attention} need attention</span>}
-                      </>
-                    ) : loading ? (
-                      <Skeleton className="mt-1 h-4 w-28" />
-                    ) : (
-                      'Ride requests and trip progress'
-                    )}
-                  </span>
-                </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition duration-150 ease-out-quart group-hover:translate-x-0.5 group-hover:text-rc-navy" aria-hidden />
-              </Link>
-            )}
-            <div className="border-t border-slate-100 px-5 pb-4 pt-3">
-              <p className="text-[13px] font-semibold text-slate-500">On the roadmap</p>
-              <ul className="mt-2 space-y-2.5">
-                {PLANNED_MODULES.map((m) => (
-                  <li key={m.id} className="flex items-center gap-3 text-sm text-slate-600">
-                    <m.icon className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
-                    <AvailabilityPill availability="planned" />
-                  </li>
-                ))}
-              </ul>
-            </div>
           </section>
         </div>
       </div>

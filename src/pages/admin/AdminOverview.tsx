@@ -7,14 +7,14 @@ import { ActivityRow } from '../../components/admin/ActivityRow'
 import { VerificationBadge } from '../../components/admin/VerificationBadge'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
-import { AvailabilityPill, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
+import { ModuleBadge, ModuleIconTile, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { useAdmin } from '../../hooks/useAdmin'
 import { useNow } from '../../hooks/useNow'
 import { approvalQueue, platformMetrics, recentIssues, registrationActivity, reportedIssues, rideStage } from '../../logic/adminSummary'
 import { formatDayTime } from '../../logic/formatTime'
-import { PLANNED_MODULES } from '../../workspace/modules'
+import { CARERIDE, PLANNED_MODULES } from '../../workspace/modules'
 
 const ATTENTION_LIMIT = 8
 const ACTIVITY_LIMIT = 8
@@ -263,7 +263,7 @@ export function AdminOverview() {
             <h2 id="services-title" className={panelTitle}>
               Service overview
             </h2>
-            <p className="text-sm text-slate-500">Modules on the platform. Only transportation is in use today.</p>
+            <p className="text-sm text-slate-500">Modules on the platform. CareRide, for transportation, is the only one in use today.</p>
           </div>
           <Link to={adminPaths.services} className={panelLink}>
             All services <ArrowRight className="h-4 w-4" aria-hidden />
@@ -272,12 +272,11 @@ export function AdminOverview() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
           <article className={`${panel} p-5`}>
             <div className="flex items-start justify-between gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-rc-mint text-rc-teal-ink" aria-hidden>
-                <Truck className="h-6 w-6" />
-              </span>
-              <AvailabilityPill availability="live" />
+              <ModuleIconTile module={CARERIDE} />
+              <ModuleBadge status="active" />
             </div>
-            <h3 className="mt-4 font-heading text-lg font-bold text-rc-navy">Transportation coordination</h3>
+            <h3 className="mt-4 font-heading text-lg font-bold text-rc-navy">{CARERIDE.name}</h3>
+            <p className="text-sm font-medium text-slate-500">{CARERIDE.tagline}</p>
             <p className="mt-1 text-sm text-slate-600">The existing MVP: partner organizations request rides, verified drivers accept them.</p>
             {metrics && (
               <p className="mt-3 text-sm text-slate-700">
@@ -286,7 +285,7 @@ export function AdminOverview() {
               </p>
             )}
             <Link to={adminPaths.transportation} className={`${panelLink} -ml-2 mt-3`}>
-              Manage transportation <ArrowRight className="h-4 w-4" aria-hidden />
+              Manage CareRide <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </article>
           <div className="grid gap-3">

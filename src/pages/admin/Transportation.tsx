@@ -8,7 +8,7 @@ import { VerificationBadge } from '../../components/admin/VerificationBadge'
 import { StatusBadge } from '../../components/StatusBadge'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
-import { AvailabilityPill } from '../../components/workspace/ServiceModuleCard'
+import { ModuleBadge } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelTitle } from '../../components/workspace/styles'
 import { BACKGROUND_LABELS } from '../../constants'
@@ -104,10 +104,10 @@ export function Transportation() {
       <PageHeader
         eyebrow={
           <span className="inline-flex items-center gap-2">
-            Service management <AvailabilityPill availability="live" />
+            Transportation operations <ModuleBadge status="active" />
           </span>
         }
-        title="Transportation"
+        title="CareRide"
         description="Oversee ride requests, the driver pool, and transport providers. Organizations book and drivers drive; this view is for monitoring and investigating."
       />
 

@@ -278,7 +278,9 @@ export function HeroMesh() {
 
       // The light around the pointer and the rings from taps: soft shapes on the layer, then the grid in electric inside them
       const ringing = ripples.length > 0
-      if (light.strength > 0.005 || ringing) {
+      // A hidden or collapsed hero (e.g. behind the phone menu) resizes the layer to 0×0, and drawing a
+      // 0×0 canvas throws, so skip the light until there's room again
+      if ((light.strength > 0.005 || ringing) && layer.width > 0 && layer.height > 0) {
         lctx.clearRect(0, 0, w, h)
         lctx.globalCompositeOperation = 'source-over'
         if (light.strength > 0.005) {

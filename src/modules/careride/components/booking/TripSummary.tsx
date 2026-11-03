@@ -23,14 +23,16 @@ interface Props {
 
 function Row({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
-    <div className="flex gap-3">
-      <span className="mt-0.5 text-slate-400" aria-hidden>
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <dt className="text-sm font-semibold text-slate-500">{label}</dt>
-        <dd className="text-sm text-ink">{children}</dd>
-      </div>
+    // A <dl> may only hold dt/dd, optionally in one wrapping div, so the icon sits inside the dt.
+    // pl-7 = the 16px icon plus the 12px gap it had before.
+    <div className="relative min-w-0 pl-7">
+      <dt className="text-sm font-semibold text-slate-500">
+        <span className="absolute left-0 top-0.5 text-slate-400" aria-hidden>
+          {icon}
+        </span>
+        {label}
+      </dt>
+      <dd className="text-sm text-ink">{children}</dd>
     </div>
   )
 }

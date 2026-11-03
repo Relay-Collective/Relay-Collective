@@ -26,7 +26,7 @@ const COLUMNS: { title: string; id?: string; links: { label: string; href: strin
     title: 'Resources',
     id: 'resources',
     links: [
-      { label: 'Transportation module tour', href: LINKS.transportTour },
+      { label: 'CareRide tour', href: LINKS.transportTour },
       { label: 'GitHub', href: LINKS.github },
       { label: 'Source code', href: LINKS.repo },
       { label: 'MIT License', href: LINKS.license },

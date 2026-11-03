@@ -59,7 +59,7 @@ export function HeroProductEcosystem() {
   return (
     <figure className="relative">
       <figcaption className="sr-only">
-        An illustrative Relay Collective workspace, connected to organizations, volunteers, transportation, resource sharing (planned), and
+        An illustrative Relay Collective workspace, connected to organizations, volunteers, CareRide (transportation), resource sharing (planned), and
         community impact.
       </figcaption>
       <Loop active={active} onActive={setActive} />
@@ -483,7 +483,7 @@ function PartCard({
 const NAV: { label: string; icon: LucideIcon; part?: PartKey; current?: boolean; badge?: number }[] = [
   { label: 'Overview', icon: LayoutDashboard, current: true },
   { label: 'Requests', icon: Inbox, badge: 2 },
-  { label: 'Transportation', icon: CarFront, part: 'transport' },
+  { label: 'CareRide', icon: CarFront, part: 'transport' },
   { label: 'Volunteers', icon: HandHeart, part: 'volunteers' },
   { label: 'Team', icon: UsersRound, part: 'organizations' },
 ]

@@ -28,7 +28,7 @@ const NAV: { label: string; icon: LucideIcon; active?: boolean; badge?: number; 
   { label: 'Requests', icon: Inbox, badge: 1 },
   { label: 'Team', icon: UsersRound },
   { label: 'Volunteers', icon: HandHeart },
-  { label: 'Transportation', icon: CarFront, group: 'Modules' },
+  { label: 'CareRide', icon: CarFront, group: 'Modules' },
   { label: 'Resource sharing', icon: Layers, planned: true },
 ]
 

@@ -116,7 +116,7 @@ export const FOUNDATION: string[] = ['Organization workspaces', 'Invitations and
 
 export const STEPS: { n: string; title: string; text: string }[] = [
   { n: '01', title: 'Join the foundation', text: 'Set up your organization’s workspace and invite your team. Every organization is reviewed before it goes live.' },
-  { n: '02', title: 'Turn on what you need', text: 'Start with transportation today. Each module uses the same accounts, roles, and requests, so there is nothing new to learn.' },
+  { n: '02', title: 'Turn on what you need', text: 'Start with CareRide, for transportation, today. Each module uses the same accounts, roles, and requests, so there is nothing new to learn.' },
   { n: '03', title: 'Grow with the network', text: 'What one organization helps build, every other one can use. Resource sharing and cross-organization services are planned.' },
 ]
 

@@ -1,30 +1,39 @@
 import { ArrowRight } from 'lucide-react'
 import { CAPABILITIES, FOUNDATION, LINKS, type Capability } from '../content'
 import { Accent, Reveal, SmartLink, StatusTag } from '../primitives'
-import { container, display, h2Small, textLink } from '../styles'
+import { container, display, h2, lede, textLink } from '../styles'
 
 // The real ride lifecycle, in the same words the app uses on its status badges
 const RIDE_STATES = ['Finding a driver', 'Driver confirmed', 'Picked up', 'Completed']
 
 const byId = Object.fromEntries(CAPABILITIES.map((c) => [c.id, c])) as Record<string, Capability>
 
-// 03: one foundation, modules on top. The foundation leads on the one midnight surface, because it is the product;
-// transportation is the first module on it, the volunteer module has its first role, and the planned ones are drawn in outline.
+// 02: the idea, then the proof. One statement (every nonprofit rebuilds the same tools; build them once) with one
+// supporting note, then the foundation and its modules. The foundation leads on the one midnight surface, because it
+// is the product; CareRide is the first module on it, the volunteer module has its first role, and the planned ones
+// are drawn in outline. #platform (the statement) and #solutions (the cards) are siblings, so the nav lights one at a time.
 export function PlatformCapabilities() {
   const { transport, volunteers, organizations, grow } = byId
   return (
-    <section id="solutions" aria-labelledby="solutions-heading" className="scroll-mt-16 bg-porcelain pb-24 pt-20 sm:pb-28 lg:pb-36 lg:pt-28">
+    <section aria-labelledby="platform-heading" className="border-t border-hairline bg-porcelain pb-24 sm:pb-28 lg:pb-36">
       <div className={container}>
-        <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <h2 id="solutions-heading" className={h2Small}>
-            One connected platform. Multiple ways to make an <Accent>impact.</Accent>
-          </h2>
-          <p className="max-w-sm font-dm text-[17px] leading-relaxed text-midnight-soft">
-            Every module runs on the same accounts, roles, and requests. CareRide, for transportation, is the first, and it works today.
-          </p>
-        </Reveal>
+        <div id="platform" className="grid scroll-mt-16 gap-8 pt-24 sm:pt-28 lg:grid-cols-12 lg:gap-8 lg:pt-36">
+          <Reveal className="lg:col-span-8">
+            <h2 id="platform-heading" className={h2}>
+              Every nonprofit rebuilds the same tools.
+              <Accent className="mt-2 block text-[0.9em] leading-[1.02] text-cantaloupe-display">Let’s build them once.</Accent>
+            </h2>
+          </Reveal>
+          {/* Bottom-aligned with the headline's last line, so the two read as one statement */}
+          <Reveal delay={150} className="lg:col-span-4 lg:col-start-9 lg:self-end lg:pb-3">
+            <p className={`${lede} max-w-[34ch]`}>
+              <strong className="font-semibold text-midnight">One connected platform. Multiple ways to make an impact.</strong> Every module shares the
+              same accounts, roles, and requests. CareRide, for transportation, is the first, and it works today.
+            </p>
+          </Reveal>
+        </div>
 
-        <div className="mt-14 grid gap-4 lg:mt-20 lg:grid-cols-12">
+        <div id="solutions" className="mt-14 grid scroll-mt-24 gap-4 sm:mt-16 lg:mt-24 lg:grid-cols-12">
           {/* The foundation: the workspace that holds the rest together, so it gets the most room and the one midnight surface */}
           <Reveal as="article" className="lg:col-span-7 lg:row-span-2" aria-labelledby="cap-orgs">
             <div className="relative flex h-full flex-col overflow-hidden rounded-[20px] bg-midnight p-7 text-white sm:p-10">

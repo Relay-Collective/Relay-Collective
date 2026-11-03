@@ -8,7 +8,6 @@ import { LandingCTA } from '../../components/landing/sections/LandingCTA'
 import { LandingFooter } from '../../components/landing/sections/LandingFooter'
 import { LandingHero } from '../../components/landing/sections/LandingHero'
 import { PlatformCapabilities } from '../../components/landing/sections/PlatformCapabilities'
-import { PlatformIntroduction } from '../../components/landing/sections/PlatformIntroduction'
 import { ProductShowcase } from '../../components/landing/sections/ProductShowcase'
 import { useApp } from '../../hooks/useApp'
 import { HOME_FOR } from '../../logic/homeFor'
@@ -40,7 +39,6 @@ function PublicSite() {
       <LandingNavbar active={active} />
       <main id="main">
         <LandingHero />
-        <PlatformIntroduction />
         <PlatformCapabilities />
         <ProductShowcase />
         <HowItWorks />

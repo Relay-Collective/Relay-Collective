@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts",
     "test:db": "tsx --test tests/db/*.test.ts",
+    "test:coverage": "mkdir -p coverage && tsx --test --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-include='supabase/functions/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info tests/*.test.ts",
     "preview": "vite preview",
     "ota:prepare": "node scripts/ota-prepare.mjs",
     "deploy": "npm run ota:prepare && wrangler deploy --config wrangler.jsonc",

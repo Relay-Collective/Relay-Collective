@@ -1,8 +1,7 @@
 import { ChevronRight, Clock, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { formatTime } from '../../logic/formatTime'
-import { dayLabel } from '../../logic/rideInsights'
-import type { ActionItem } from '../../logic/requestSummary'
+import { dayLabel, formatTime } from '../../logic/formatTime'
+import type { ActionItem } from '../../modules/careride/domain'
 import { paths } from '../../workspace/paths'
 import { focusRing } from './styles'
 

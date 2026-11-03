@@ -2,7 +2,7 @@
 // The driver is Maya in the demo data; the slide just says "the driver".
 // Every moment is made with the real data service, so the screens always match the current app.
 import { ridePath } from '../../logic/homeFor'
-import { parseLocalInput, quickPicks } from '../../logic/pickupTime'
+import { parseLocalInput, quickPicks } from '../../modules/careride/domain'
 import { ALL_DAY, hoursOn, isWithinRequestHours } from '../../logic/requestHours'
 import { estimateFare } from '../../logic/estimateFare'
 import { DEFAULT_PICKUP_INSTRUCTIONS } from '../../constants'

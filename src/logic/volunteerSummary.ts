@@ -1,6 +1,6 @@
 import type { Driver, Ride, RideOffer } from '../types'
 import { hasAnyHours } from './requestHours'
-import { finishedAt } from './rideInsights'
+import { finishedAt } from '../modules/careride/domain'
 
 // What a driver's own rides and requests add up to, for the volunteer workspace.
 // Built only from records the backend returns for this driver; nothing is estimated.

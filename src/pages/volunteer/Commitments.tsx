@@ -7,9 +7,9 @@ import { EmptyState, SkeletonRows } from '../../components/workspace/states'
 import { panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { useNow } from '../../hooks/useNow'
 import { useVolunteer } from '../../hooks/useVolunteer'
-import { dayLabel, startOfDay } from '../../logic/rideInsights'
 import { commitmentsFrom, type Commitment } from '../../logic/volunteerSummary'
 import { volunteerPaths } from '../../volunteer/paths'
+import { dayLabel, startOfDay } from '../../logic/formatTime'
 
 // Group by pickup day, with trips under way and as-soon-as-possible rides first
 function byDay(items: Commitment[], now: number): [string, Commitment[]][] {

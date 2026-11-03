@@ -1,7 +1,7 @@
 import { ChevronDown, Flag, Mail, Phone, ThumbsDown, ThumbsUp } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { CopyButton } from '../../components/CopyButton'
-import { RideHistory } from '../../components/RideHistory'
+import { RideHistory } from '../../modules/careride'
 import { BACKGROUND_LABELS, ORG_TYPE_LABELS } from '../../constants'
 import { useData } from '../../hooks/useData'
 import { faresSavedFor, formatDollars } from '../../logic/estimateFare'

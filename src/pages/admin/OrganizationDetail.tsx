@@ -9,7 +9,7 @@ import { PageHeader } from '../../components/workspace/PageHeader'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelTitle } from '../../components/workspace/styles'
 import { useAdmin } from '../../hooks/useAdmin'
-import { isFinished } from '../../logic/rideInsights'
+import { isFinished } from '../../modules/careride/domain'
 
 // One organization: who they are, where they work, who can sign in for them, and how they take part
 export function OrganizationDetail() {

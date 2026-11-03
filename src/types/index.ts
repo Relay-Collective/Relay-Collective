@@ -87,6 +87,12 @@ export interface Driver {
   reviewedBy?: string // User id of that admin
 }
 
+// A ride's driver as the booking organization sees them. The workspace provides it; CareRide's lists show it.
+export interface DriverInfo {
+  name?: string
+  vehicle: string
+}
+
 // Point B: a place clients go, e.g. St. Paul's Hospital. Added by the partner org.
 export interface Destination {
   id: string

@@ -48,19 +48,14 @@ import { Demo } from './pages/demo/Demo'
 import { MyFeedback } from './pages/feedback/MyFeedback'
 import { MyFeedbackDetail } from './pages/feedback/MyFeedbackDetail'
 import { Bookings } from './pages/org/Bookings'
-import { Destinations } from './pages/org/Destinations'
+import { CareRideLayout, Dashboard, Destinations, RequestRide, Requests, RideDetail } from './modules/careride'
 import { Drivers } from './pages/org/Drivers'
 import { OrgHome } from './pages/org/OrgHome'
-import { Dashboard } from './pages/partner/Dashboard'
-import { RequestRide } from './pages/partner/RequestRide'
-import { RideDetail } from './pages/partner/RideDetail'
 import { Help } from './pages/workspace/Help'
 import { OrganizationProfile } from './pages/workspace/Organization'
 import { Overview } from './pages/workspace/Overview'
-import { Requests } from './pages/workspace/Requests'
 import { Services } from './pages/workspace/Services'
 import { Team } from './pages/workspace/Team'
-import { TransportLayout } from './pages/workspace/TransportLayout'
 import { paths } from './workspace/paths'
 import { VolunteerShell } from './components/volunteer/VolunteerShell'
 import { Availability } from './pages/volunteer/Availability'
@@ -159,7 +154,7 @@ export default function App() {
                   <Route path={paths.feedback} element={<MyFeedback />} />
                   <Route path={`${paths.feedback}/:id`} element={<MyFeedbackDetail />} />
                   {/* CareRide, the transportation module. Its requests list keeps its old address, so links and bookmarks still work. */}
-                  <Route element={<TransportLayout />}>
+                  <Route element={<CareRideLayout />}>
                     <Route path={paths.requests} element={<Requests />} />
                     <Route path={paths.transport}>
                       <Route index element={<Dashboard />} />

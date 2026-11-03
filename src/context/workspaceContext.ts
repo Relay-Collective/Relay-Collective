@@ -1,7 +1,6 @@
 import { createContext } from 'react'
-import type { DriverInfo } from '../components/dashboard/RideList'
 import type { Loadable } from '../hooks/useLoadable'
-import type { House, OrgRole, Organization, Ride } from '../types'
+import type { DriverInfo, House, OrgRole, Organization, Ride } from '../types'
 
 // What every workspace page shares: the signed-in organization, its location, and its requests.
 // Loaded once by the workspace shell, so the sidebar, header, and pages don't each ask again.

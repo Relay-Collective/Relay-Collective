@@ -79,11 +79,16 @@ Pages access application data through a typed **`DataService`** contract. [`src/
 
 ```text
 src/
-├── pages/          Role-specific screens: auth, partner, driver, org, admin
-├── components/     Shared UI, forms, ride cards, notices, and printable slips
+├── modules/
+│   └── careride/   CareRide, the transportation module: its layout, pages, ride UI, and rules
+├── workspace/      Module registry, workspace navigation, and addresses
+├── admin/          Admin console navigation and addresses
+├── volunteer/      Volunteer workspace navigation, participation, and verification
+├── pages/          Platform screens: auth, onboarding, workspace, volunteer, admin, legacy providers
+├── components/     Shared UI, forms, shells, notices, and the workspace design kit
 ├── context/        Current user, session state, and refresh coordination
 ├── hooks/          Data loading and current-user helpers
-├── logic/          Driver matching, dispatch, request hours, and ride utilities
+├── logic/          Driver matching, dispatch, request hours, and rules the data layer shares
 ├── services/
 │   ├── dataService.ts      Typed backend contract
 │   ├── index.ts            Active backend selection
@@ -95,6 +100,8 @@ src/
 ├── App.tsx         Application routes
 └── index.css       Global styles and design tokens
 ```
+
+What belongs in the platform and what belongs in a module, and which way imports may point: [architecture/modules.md](architecture/modules.md).
 
 Ride rules live in two places that must stay in step: [`src/logic/dispatch.ts`](../src/logic/dispatch.ts) with [`src/services/mockService.ts`](../src/services/mockService.ts) for the demo, and the SQL functions under [`supabase/migrations`](../supabase/migrations) for the shared backend. Identity comes from Supabase Auth. Row access and ride changes are enforced in the database, not by the screens. The service-role key stays in Edge Functions (`delete-my-account`, `admin-delete-account`) and never in a `VITE_` variable.
 

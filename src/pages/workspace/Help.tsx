@@ -2,10 +2,10 @@ import { ArrowUpRight, CalendarPlus, Inbox, LayoutDashboard, Truck } from 'lucid
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { FeedbackHelpSection } from '../../components/feedback/FeedbackHelpSection'
-import { StatusBadge } from '../../components/StatusBadge'
+import { StatusBadge } from '../../modules/careride'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { focusRing, panel, panelHead, panelTitle } from '../../components/workspace/styles'
-import { SENT_ON_TRANSIT_LABEL } from '../../logic/rideText'
+import { SENT_ON_TRANSIT_LABEL } from '../../modules/careride/domain'
 import type { RideStatus } from '../../types'
 import { paths } from '../../workspace/paths'
 

@@ -1,11 +1,11 @@
-// Every address in a partner organization's workspace, in one place.
-// Transportation is the first service module, so its pages live under its own prefix.
+import { careRidePaths } from '../modules/careride/paths'
+
+// Every address in a partner organization's workspace, in one place: the shared platform's pages,
+// plus each active module's. CareRide owns its own addresses (modules/careride/paths.ts).
 const ROOT = '/workspace'
-const TRANSPORT = `${ROOT}/transportation`
 
 export const paths = {
   overview: ROOT,
-  requests: `${ROOT}/requests`,
   services: `${ROOT}/services`,
   organization: `${ROOT}/organization`,
   team: `${ROOT}/team`,
@@ -13,18 +13,5 @@ export const paths = {
   help: `${ROOT}/help`,
   feedback: `${ROOT}/feedback`,
   feedbackItem: (id: string) => `${ROOT}/feedback/${encodeURIComponent(id)}`,
-  transport: TRANSPORT,
-  newRide: `${TRANSPORT}/new`,
-  destinations: `${TRANSPORT}/destinations`,
-  ride: (rideId: string) => `${TRANSPORT}/rides/${rideId}`,
-  // The booking form also edits a ride, books its return, or starts again from an old one
-  editRide: (rideId: string) => `${TRANSPORT}/new?edit=${rideId}`,
-  returnRide: (rideId: string) => `${TRANSPORT}/new?returnOf=${rideId}`,
-  rideAgain: (rideId: string) => `${TRANSPORT}/new?again=${rideId}`,
+  ...careRidePaths,
 } as const
-
-// The ride id on a ride's page, if that's where we are
-export function rideIdFromPath(pathname: string): string | undefined {
-  const prefix = `${TRANSPORT}/rides/`
-  return pathname.startsWith(prefix) ? pathname.slice(prefix.length).split('/')[0] || undefined : undefined
-}

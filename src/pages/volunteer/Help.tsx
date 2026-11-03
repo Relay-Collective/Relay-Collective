@@ -1,6 +1,6 @@
 import { ArrowUpRight, CalendarClock, Inbox, LayoutDashboard, Truck, UserRound } from 'lucide-react'
 import { FeedbackHelpSection } from '../../components/feedback/FeedbackHelpSection'
-import { StatusBadge } from '../../components/StatusBadge'
+import { StatusBadge } from '../../modules/careride'
 import { SafetyNote } from '../../components/volunteer/TripPanel'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { focusRing, panel, panelHead, panelTitle } from '../../components/workspace/styles'

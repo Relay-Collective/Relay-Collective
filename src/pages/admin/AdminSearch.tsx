@@ -10,7 +10,7 @@ import { focusRing, panel, panelHead, panelTitle } from '../../components/worksp
 import { useAdmin } from '../../hooks/useAdmin'
 import { matches } from '../../logic/adminSummary'
 import { formatDayTime } from '../../logic/formatTime'
-import { requestReference } from '../../logic/requestSummary'
+import { requestReference } from '../../modules/careride/domain'
 
 const LIMIT = 10
 

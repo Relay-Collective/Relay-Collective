@@ -1,6 +1,6 @@
 import { Boxes, HeartHandshake, Users, type LucideIcon } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
-import { CareRideBrandMark, CareRideMark } from '../components/brand/CareRideMark'
+import { CareRideBrandMark, CareRideMark } from '../modules/careride/brand'
 import { paths } from './paths'
 
 // The service modules Relay Collective offers. Each one runs on the shared platform (organization, team,

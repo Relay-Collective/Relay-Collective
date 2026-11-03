@@ -1,5 +1,5 @@
 import { CalendarCheck, CalendarClock, CircleHelp, Inbox, LayoutDashboard, MessagesSquare, Settings, Truck, UserRound, type LucideIcon } from 'lucide-react'
-import { CareRideMark } from '../components/brand/CareRideMark'
+import { CareRideMark } from '../modules/careride/brand'
 import type { NavEntry, NavGroup } from '../components/shell/SidebarNav'
 import { volunteerPaths as paths } from './paths'
 

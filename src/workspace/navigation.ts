@@ -1,5 +1,6 @@
 import { Blocks, Building2, CircleHelp, LayoutDashboard, MessagesSquare, UsersRound } from 'lucide-react'
 import type { NavEntry, NavGroup } from '../components/shell/SidebarNav'
+import { CARERIDE_PAGES } from '../modules/careride/paths'
 import { ACTIVE_MODULES } from './modules'
 import { paths } from './paths'
 
@@ -27,10 +28,8 @@ export const WORKSPACE_NAV: NavGroup[] = [
 export const HELP_NAV: NavEntry = { to: paths.help, label: 'Help and support', icon: CircleHelp }
 export const MY_FEEDBACK_NAV: NavEntry = { to: paths.feedback, label: 'My feedback', icon: MessagesSquare, badge: 'feedback' }
 
-// The pages inside CareRide. The workspace header names the module; each page's h1 names the page.
-const CARERIDE_PAGES = [paths.transport, paths.requests]
-
-// The section name in the workspace header, from the most specific matching address
+// The section name in the workspace header, from the most specific matching address.
+// Inside CareRide the header names the module; each page's h1 names the page.
 const TITLES: [prefix: string, title: string][] = [
   ...CARERIDE_PAGES.map((p): [string, string] => [p, 'CareRide']),
   [paths.services, 'Modules'],
@@ -43,8 +42,4 @@ const TITLES: [prefix: string, title: string][] = [
 
 export function workspaceTitle(pathname: string): string {
   return TITLES.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1] ?? 'Workspace'
-}
-
-export function inCareRide(pathname: string): boolean {
-  return CARERIDE_PAGES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }

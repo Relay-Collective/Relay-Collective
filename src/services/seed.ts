@@ -18,6 +18,7 @@ import type {
   RideFeedback,
   RideOffer,
   User,
+  VolunteerProfile,
 } from '../types'
 
 // Demo data. Everything here is fictional except public place names and addresses.
@@ -62,6 +63,7 @@ export interface Database {
   // Members an administrator removed. Their profile stays on past rides; their login moved to a new identity.
   removals: { userId: string; at: string; by: string; identityId: string }[]
   deletionJobs: AccountDeletionJob[] // permanent deletions; like the database's, they hold no name or email
+  volunteerProfiles: VolunteerProfile[] // general volunteering: interests, by profile. Never a driver profile.
 }
 
 // A request to join an organization, as the demo backend keeps it. userId is the applicant's identity id,
@@ -169,6 +171,15 @@ const FREQUENT_PLACES: Record<string, string[]> = {
   grace: ['3b', 'raven', 'ground', 'belkin', 'carn', 'kettle', 'junc', 'rcafe', 'mposs', 'south', 'vcc', 'msdpr', 'svc'],
 }
 
+// The seeded general volunteer, also added to demo data saved before volunteers existed (see mockService upgrade)
+export const VOLUNTEER_USER: User = { id: 'u-priya', name: 'Priya', email: 'priya@careride.demo', phone: '', role: 'VOLUNTEER' }
+export const VOLUNTEER_PROFILE: VolunteerProfile = {
+  id: 'vp-priya',
+  userId: VOLUNTEER_USER.id,
+  interests: ['FOOD_DISTRIBUTION', 'COMMUNITY_OUTREACH'],
+  createdAt: '2026-10-01T17:00:00.000Z',
+}
+
 const demoUsers: User[] = [
   { id: 'u-admin', name: 'Relay Collective Admin', email: ADMIN_EMAIL, phone: '604-555-0100', role: 'PLATFORM_ADMIN' },
   { id: 'u-belkin', name: 'Belkin House', email: 'belkin@careride.demo', phone: '604-555-0120', role: 'PARTNER', orgId: 'org-belkin', houseId: 'house-belkin', orgRole: 'ADMIN' },
@@ -179,9 +190,14 @@ const demoUsers: User[] = [
   { id: 'u-olive', name: 'Maya', email: 'maya@careride.demo', phone: '604-555-0104', role: 'DRIVER' },
   { id: 'u-sam', name: 'Sam', email: 'sam@careride.demo', phone: '604-555-0105', role: 'DRIVER', orgId: 'org-vanshare' },
   { id: 'u-jordan', name: 'Jordan', email: 'jordan@careride.demo', phone: '604-555-0106', role: 'DRIVER' },
+  // A general volunteer: no vehicle, no driver profile, no CareRide access
+  VOLUNTEER_USER,
 ]
 
-const seedBase: Omit<Database, 'events' | 'feedback' | 'identities' | 'applications' | 'invitations' | 'productFeedback' | 'joinRequests' | 'removals' | 'deletionJobs'> = {
+const seedBase: Omit<
+  Database,
+  'events' | 'feedback' | 'identities' | 'applications' | 'invitations' | 'productFeedback' | 'joinRequests' | 'removals' | 'deletionJobs' | 'volunteerProfiles'
+> = {
   credentials: demoUsers.map((u) => ({ email: u.email!, userId: u.id, password: demoPasswordFor(u.email!) })),
   users: demoUsers,
   organizations: [
@@ -292,4 +308,5 @@ export const seed: Database = {
   joinRequests: [],
   removals: [],
   deletionJobs: [],
+  volunteerProfiles: [VOLUNTEER_PROFILE],
 }

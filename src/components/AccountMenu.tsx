@@ -35,7 +35,7 @@ export function AccountMenu() {
 
   if (!currentUser) return null
   const tone = tones[ROLE_TONE[currentUser.role]]
-  const canDelete = currentUser.role === 'DRIVER' || currentUser.role === 'PARTNER'
+  const canDelete = currentUser.role === 'DRIVER' || currentUser.role === 'PARTNER' || currentUser.role === 'VOLUNTEER'
 
   return (
     <div ref={ref} className="relative">

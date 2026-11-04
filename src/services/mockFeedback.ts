@@ -125,7 +125,14 @@ export function submitFeedback(db: Db, user: User | undefined, input: NewProduct
   }
 
   const workspace: FeedbackWorkspace =
-    user.role === 'PLATFORM_ADMIN' ? 'admin' : user.role === 'DRIVER' ? (input.sourceWorkspace === 'driver' ? 'driver' : 'volunteer') : 'organization'
+    // Same as the database: drivers may say it's about driving; volunteers and drivers are otherwise in the volunteer workspace
+    user.role === 'PLATFORM_ADMIN'
+      ? 'admin'
+      : user.role === 'DRIVER' && input.sourceWorkspace === 'driver'
+        ? 'driver'
+        : user.role === 'DRIVER' || user.role === 'VOLUNTEER'
+          ? 'volunteer'
+          : 'organization'
   const at = now()
   const stored: StoredFeedback = {
     id: crypto.randomUUID(),

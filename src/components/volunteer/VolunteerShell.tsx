@@ -5,8 +5,16 @@ import { useApp } from '../../hooks/useApp'
 import { useFeedback } from '../../hooks/useFeedback'
 import { useVolunteer } from '../../hooks/useVolunteer'
 import { initials } from '../../logic/initials'
-import { canDrive, DRIVER_KIND_LABELS, driverKind } from '../../volunteer/participation'
-import { VOLUNTEER_FEEDBACK_NAV, VOLUNTEER_HELP_NAV, volunteerNav, volunteerTabs, volunteerTitle } from '../../volunteer/navigation'
+import { canDrive, DRIVER_KIND_LABELS, driverKind, isGeneralVolunteer, PARTICIPANT_KIND_LABELS } from '../../volunteer/participation'
+import {
+  generalVolunteerNav,
+  generalVolunteerTabs,
+  VOLUNTEER_FEEDBACK_NAV,
+  VOLUNTEER_HELP_NAV,
+  volunteerNav,
+  volunteerTabs,
+  volunteerTitle,
+} from '../../volunteer/navigation'
 import { volunteerPaths } from '../../volunteer/paths'
 import { AccountMenu } from '../AccountMenu'
 import { SidebarNav } from '../shell/SidebarNav'
@@ -15,7 +23,8 @@ import { SidebarShell, type SidebarSlotProps } from '../shell/SidebarShell'
 import { AppFooter, LoadErrorBanner, PendingApprovalNotice, RideNotices } from '../ShellNotices'
 import { focusRing } from '../workspace/styles'
 
-// A volunteer's signed-in app: their own workspace, with transportation as the first service.
+// A volunteer's signed-in app: their own workspace. Drivers get CareRide (transportation) in it; general
+// volunteers get their interests and settings only, since they have no driver profile.
 export function VolunteerShell() {
   return (
     <VolunteerProvider>
@@ -53,6 +62,7 @@ function VolunteerSidebar(props: SidebarSlotProps) {
   const { driver, offers } = useVolunteer()
   const { openFeedback, unseenCount } = useFeedback()
   const name = currentUser?.name ?? ''
+  const general = isGeneralVolunteer(currentUser)
   return (
     <SidebarNav
       {...props}
@@ -60,11 +70,12 @@ function VolunteerSidebar(props: SidebarSlotProps) {
       context={{
         initials: initials(name),
         title: name || 'Your workspace',
-        subtitle: driver ? DRIVER_KIND_LABELS[driverKind(driver)] : 'Volunteer workspace',
+        subtitle: general ? PARTICIPANT_KIND_LABELS.GENERAL_VOLUNTEER : driver ? DRIVER_KIND_LABELS[driverKind(driver)] : 'Volunteer workspace',
         className: 'bg-coral-400 text-ink',
       }}
-      groups={volunteerNav(canDrive(driver))}
-      footer={[VOLUNTEER_HELP_NAV, VOLUNTEER_FEEDBACK_NAV]}
+      groups={general ? generalVolunteerNav() : volunteerNav(canDrive(driver))}
+      // Help is about driving and rides, so general volunteers don't get it
+      footer={general ? [VOLUNTEER_FEEDBACK_NAV] : [VOLUNTEER_HELP_NAV, VOLUNTEER_FEEDBACK_NAV]}
       actions={[{ label: 'Send feedback', icon: MessageSquarePlus, onClick: () => openFeedback() }]}
       badges={{
         requests: { count: offers.data?.length ?? 0, label: 'ride requests waiting', tone: 'waiting' },
@@ -86,12 +97,13 @@ function VolunteerHeader({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; men
 
 // Phones: the main places as a tab bar, so the next ride is never more than one tap away
 function VolunteerTabBar() {
+  const { currentUser } = useApp()
   const { driver, offers } = useVolunteer()
   const count = offers.data?.length ?? 0
   return (
     <nav aria-label="Quick">
       <ul className="flex">
-        {volunteerTabs(canDrive(driver)).map(({ to, label, icon: Icon, end, badge }) => (
+        {(isGeneralVolunteer(currentUser) ? generalVolunteerTabs() : volunteerTabs(canDrive(driver))).map(({ to, label, icon: Icon, end, badge }) => (
           <li key={to} className="flex-1">
             <NavLink
               to={to}

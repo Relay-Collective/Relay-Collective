@@ -106,10 +106,11 @@ export function pageLabel(route: string | undefined): string | undefined {
 }
 
 // Which workspace the person is in. The backend decides again from their role; drivers on the
-// transportation pages are sending feedback about driving.
+// transportation pages are sending feedback about driving. General volunteers are always in the volunteer workspace.
 export function workspaceFor(role: UserRole, route: string | undefined): FeedbackWorkspace {
   if (role === 'PLATFORM_ADMIN') return 'admin'
   if (role === 'DRIVER') return route?.startsWith(volunteerPaths.transport) ? 'driver' : 'volunteer'
+  if (role === 'VOLUNTEER') return 'volunteer'
   return 'organization'
 }
 

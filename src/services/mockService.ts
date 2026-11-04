@@ -27,7 +27,7 @@ import {
   canGiveFeedback,
 } from '../logic/feedback'
 import { rideEventsBetween, type RideEventDraft } from '../logic/rideEvents'
-import { EMAIL } from '../logic/validate'
+import { EMAIL, MAX_NAME, isPhone } from '../logic/validate'
 import { MIN_SEARCH_LENGTH, optionalText, rankDirectory } from '../logic/membership'
 import type {
   AccountDeletionAction,
@@ -67,7 +67,8 @@ import {
 } from './dataService'
 import { deleteDemoFile, getDemoFile, putDemoFile } from './demoFiles'
 import * as feedbackStore from './mockFeedback'
-import { backfilledEvents, seed, type Database, type StoredJoinRequest } from './seed'
+import { backfilledEvents, seed, VOLUNTEER_PROFILE, VOLUNTEER_USER, demoPasswordFor, type Database, type StoredJoinRequest } from './seed'
+import { interestsError, normalizeInterests } from '../volunteer/interests'
 
 // Hackathon backend: keeps everything in the browser's localStorage.
 // Swap this file for a real backend later; screens won't need to change.
@@ -105,6 +106,13 @@ function upgrade(db: Database): Database {
   db.joinRequests ??= []
   db.removals ??= []
   db.deletionJobs ??= []
+  db.volunteerProfiles ??= []
+  // Demo data saved before general volunteers existed gains the seeded volunteer, so it can be signed in to
+  if (!db.users.some((u) => u.id === VOLUNTEER_USER.id) && !db.credentials.some((c) => c.email === VOLUNTEER_USER.email)) {
+    db.users.push(structuredClone(VOLUNTEER_USER))
+    db.credentials.push({ email: VOLUNTEER_USER.email!, userId: VOLUNTEER_USER.id, password: demoPasswordFor(VOLUNTEER_USER.email!) })
+    db.volunteerProfiles.push(structuredClone(VOLUNTEER_PROFILE))
+  }
   // Like the database migration: every existing member keeps managing their organization, and demo
   // partners stay findable in search as the fresh seed has them
   for (const user of db.users) if (user.role === 'PARTNER') user.orgRole ??= 'ADMIN'
@@ -398,6 +406,7 @@ function deletionPlan(db: Database, me: User, user: User) {
   const counts: [AccountDeletionCategoryKey, AccountDeletionAction, number][] = [
     ['auth_account', 'delete', n(!!login)],
     ['profile', 'anonymize', 1],
+    ['volunteer_profile', 'delete', n(db.volunteerProfiles.some((p) => p.userId === user.id))],
     ['organization_membership', 'remove', n((user.role === 'PARTNER' || user.role === 'ORG_ADMIN') && !!user.orgId && !removed)],
     ['driver_profile', 'delete', n(!!driver)],
     ['driver_documents', 'delete', n(!!driver?.licenceFile) + n(!!driver?.proofFile)],
@@ -464,6 +473,8 @@ function eraseAccount(db: Database, user: User): void {
     db.feedback = db.feedback.filter((f) => !(f.authorRole === 'DRIVER' && f.driverId === driver.id))
     db.drivers = db.drivers.filter((d) => d.id !== driver.id)
   }
+
+  db.volunteerProfiles = db.volunteerProfiles.filter((p) => p.userId !== user.id)
 
   const store = db.productFeedback
   const theirs = new Set(store.submissions.filter((f) => f.submittedBy === user.id).map((f) => f.id))
@@ -753,6 +764,53 @@ export const mockService: DataService = {
       const user: User = { ...newUser, id: identity.id, email: identity.email, role: 'DRIVER' }
       db.drivers.push({ ...driver, orgId: undefined, id: newId('d'), userId: user.id, status: 'PENDING', createdAt: now() })
       return finishOnboarding(db, identity, user)
+    }),
+
+  // Same rules as register_volunteer() (20261104120100_general_volunteers.sql). Never adds a driver profile.
+  registerVolunteer: (volunteer) =>
+    transact((db) => {
+      const existing = signedInUser(db)
+      if (existing?.role === 'VOLUNTEER') return existing
+      if (existing && existing.role !== 'DRIVER') {
+        throw new Error('This account already has a Relay Collective role, so it can’t also register as a volunteer.')
+      }
+      const problem = interestsError(volunteer.interests)
+      if (problem) throw new Error(problem)
+      const interests = normalizeInterests(volunteer.interests)
+      // A driver who also volunteers keeps their role and driver profile
+      if (existing) {
+        if (!db.volunteerProfiles.some((p) => p.userId === existing.id)) {
+          db.volunteerProfiles.push({ id: newId('vp'), userId: existing.id, interests, createdAt: now() })
+        }
+        return existing
+      }
+      const identity = identityToOnboard(db)
+      const name = volunteer.name.trim()
+      const phone = volunteer.phone?.trim() ?? ''
+      if (!name) throw new Error('Your name is required.')
+      if (name.length > MAX_NAME) throw new Error('Your name is too long.')
+      if (phone && !isPhone(phone)) throw new Error('Please enter a 10-digit phone number.')
+      db.volunteerProfiles.push({ id: newId('vp'), userId: identity.id, interests, createdAt: now() })
+      return finishOnboarding(db, identity, { id: identity.id, name, email: identity.email, phone, role: 'VOLUNTEER' })
+    }),
+
+  getVolunteerProfile: (userId) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      if (!me || (me.id !== userId && me.role !== 'PLATFORM_ADMIN')) return undefined
+      return db.volunteerProfiles.find((p) => p.userId === userId)
+    }),
+
+  updateMyVolunteerInterests: (interests) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      const profile = me && db.volunteerProfiles.find((p) => p.userId === me.id)
+      if (!profile) throw new Error('Register as a volunteer first.')
+      const problem = interestsError(interests)
+      if (problem) throw new Error(problem)
+      profile.interests = normalizeInterests(interests)
+      profile.updatedAt = now()
+      return { ...profile, interests: [...profile.interests] }
     }),
 
   getOrganizationApplication: (orgId) =>
@@ -1179,9 +1237,10 @@ export const mockService: DataService = {
       const userId = readSession()
       const user = db.users.find((u) => u.id === userId)
       if (!user) throw new Error('Please sign in.')
-      if (user.role !== 'DRIVER' && user.role !== 'PARTNER') {
+      if (user.role !== 'DRIVER' && user.role !== 'PARTNER' && user.role !== 'VOLUNTEER') {
         throw new Error("This account can't be closed from here.")
       }
+      // A general volunteer has no rides or organization to hand over: only the sign-in closes
 
       if (user.role === 'PARTNER') keepAnAdmin(db, user)
 
@@ -1189,6 +1248,7 @@ export const mockService: DataService = {
         const driver = db.drivers.find((d) => d.userId === userId)
         if (driver) releaseDriverWork(db, driver.id)
       } else if (
+        user.role === 'PARTNER' &&
         // Colleagues who can still sign in keep managing the organization's rides
         !db.users.some((u) => u.id !== userId && u.orgId === user.orgId && u.role === 'PARTNER' && db.credentials.some((c) => c.userId === u.id))
       ) {

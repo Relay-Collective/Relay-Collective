@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarClock, CircleHelp, Inbox, LayoutDashboard, MessagesSquare, Settings, Truck, UserRound, type LucideIcon } from 'lucide-react'
+import { CalendarCheck, CalendarClock, CircleHelp, HeartHandshake, Inbox, LayoutDashboard, MessagesSquare, Settings, Truck, UserRound, type LucideIcon } from 'lucide-react'
 import { CareRideMark } from '../modules/careride/brand'
 import type { NavEntry, NavGroup } from '../components/shell/SidebarNav'
 import { volunteerPaths as paths } from './paths'
@@ -32,6 +32,21 @@ export function volunteerNav(approved: boolean): NavGroup[] {
   ]
 }
 
+// A general volunteer's sidebar: no CareRide or driving pages, because the account has no driver profile.
+// Planned services aren't listed either: only destinations that work today.
+export function generalVolunteerNav(): NavGroup[] {
+  return [
+    { label: 'Workspace', items: [{ to: paths.overview, label: 'Overview', icon: LayoutDashboard, end: true }] },
+    {
+      label: 'Personal',
+      items: [
+        { to: paths.interests, label: 'Volunteering interests', icon: HeartHandshake },
+        { to: paths.settings, label: 'Settings', icon: Settings },
+      ],
+    },
+  ]
+}
+
 export const VOLUNTEER_HELP_NAV: NavEntry = { to: paths.help, label: 'Help', icon: CircleHelp }
 export const VOLUNTEER_FEEDBACK_NAV: NavEntry = { to: paths.feedback, label: 'My feedback', icon: MessagesSquare, badge: 'feedback' }
 
@@ -54,6 +69,14 @@ export function volunteerTabs(approved: boolean): TabEntry[] {
   ]
 }
 
+export function generalVolunteerTabs(): TabEntry[] {
+  return [
+    { to: paths.overview, label: 'Overview', icon: LayoutDashboard, end: true },
+    { to: paths.interests, label: 'Interests', icon: HeartHandshake },
+    { to: paths.settings, label: 'Settings', icon: Settings },
+  ]
+}
+
 // The page name shown in the header, from the most specific matching address
 const TITLES: [prefix: string, title: string][] = [
   [paths.rides, 'My rides'],
@@ -63,6 +86,7 @@ const TITLES: [prefix: string, title: string][] = [
   [paths.availability, 'Availability'],
   [paths.verification, 'Driver verification'],
   [paths.profile, 'My profile'],
+  [paths.interests, 'Volunteering interests'],
   [paths.settings, 'Settings'],
   [paths.help, 'Help'],
   [paths.feedback, 'My feedback'],

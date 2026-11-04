@@ -64,4 +64,5 @@ export const ROLE_TONE: Record<UserRole, Tone> = {
   ORG_ADMIN: 'amber',
   PARTNER: 'brand',
   DRIVER: 'coral',
+  VOLUNTEER: 'coral', // the same volunteer workspace
 }

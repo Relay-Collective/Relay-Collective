@@ -36,7 +36,11 @@ export interface House {
 
 // PARTNER: a member of a partner organization. Books rides from its location and manages its places.
 // ORG_ADMIN: a transport provider's admin.
-export type UserRole = 'PLATFORM_ADMIN' | 'ORG_ADMIN' | 'PARTNER' | 'DRIVER'
+// DRIVER: has a CareRide driver profile (vehicle, area, verification). Every driver account from before
+// general volunteering keeps this role.
+// VOLUNTEER: a general volunteer with no other role. Not a driver: no vehicle, no CareRide access.
+// See docs/architecture/volunteers.md.
+export type UserRole = 'PLATFORM_ADMIN' | 'ORG_ADMIN' | 'PARTNER' | 'DRIVER' | 'VOLUNTEER'
 
 // A partner organization member's role within it. ADMIN manages the team, its visibility and invitations;
 // STAFF uses the organization's services. Neither is a Relay Collective platform role.
@@ -246,6 +250,21 @@ export interface Impact {
   moneySaved: number
   organizations: number
   verifiedDrivers: number
+}
+
+// ---- General volunteering
+
+// Kinds of help a volunteer would like to give. Descriptive only: choosing one never grants access to
+// a service, and TRANSPORTATION doesn't make anyone a driver. Labels live in src/volunteer/interests.ts.
+export type VolunteerInterest = 'TRANSPORTATION' | 'FOOD_DISTRIBUTION' | 'COMMUNITY_OUTREACH' | 'RESOURCE_COORDINATION' | 'GENERAL'
+
+// Someone's platform-level volunteering. Name, phone and email stay on their User.
+export interface VolunteerProfile {
+  id: string
+  userId: string
+  interests: VolunteerInterest[] // at least one, each once, in the order of VOLUNTEER_INTERESTS
+  createdAt: string
+  updatedAt?: string
 }
 
 // ---- Identity and onboarding
@@ -478,6 +497,7 @@ export type AccountDeletionAction = 'delete' | 'anonymize' | 'remove' | 'detach'
 export type AccountDeletionCategoryKey =
   | 'auth_account'
   | 'profile'
+  | 'volunteer_profile'
   | 'organization_membership'
   | 'driver_profile'
   | 'driver_documents'

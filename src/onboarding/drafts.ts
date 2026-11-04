@@ -1,12 +1,12 @@
 // Unfinished onboarding survives a refresh or a closed tab, per signed-in identity, on this device only.
-// Drafts hold form answers about an organization or vehicle. Never passwords, tokens, or documents:
+// Drafts hold form answers about an organization, a vehicle, or volunteering interests. Never passwords, tokens, or documents:
 // callers pass only those answers. Signing out clears every draft, so a shared computer doesn't keep them.
 
 const PREFIX = 'rc-onboarding:'
 // The one-step registration form from before identity-first onboarding
 const LEGACY_KEYS = ['careride-register-draft-v5']
 
-export type DraftKind = 'organization' | 'provider'
+export type DraftKind = 'organization' | 'provider' | 'volunteer'
 
 function key(kind: DraftKind, identityId: string): string {
   return `${PREFIX}${kind}:${identityId}`

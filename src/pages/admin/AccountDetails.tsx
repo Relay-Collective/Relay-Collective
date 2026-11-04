@@ -9,7 +9,9 @@ import { ratingCounts } from '../../logic/feedback'
 import { formatDayTime } from '../../logic/formatTime'
 import { describeRequestHours } from '../../logic/requestHours'
 import { dataService } from '../../services'
-import type { Driver, House, Organization, Ride, RideFeedback, User, VerificationStatus } from '../../types'
+import type { Driver, House, Organization, Ride, RideFeedback, User, VerificationStatus, VolunteerProfile } from '../../types'
+import { interestLabel } from '../../volunteer/interests'
+import { PARTICIPANT_KIND_LABELS, participantKind } from '../../volunteer/participation'
 import { ExternalLink } from '../../native/ExternalLink'
 
 const STATUS_LOOK: Record<VerificationStatus, { text: string; className: string }> = {
@@ -25,6 +27,7 @@ interface Details {
   rides: Ride[]
   driverCount?: number
   feedback?: RideFeedback[] // on a driver's rides, or a partner organization's
+  volunteer?: VolunteerProfile // general volunteering: interests, which never grant access
 }
 
 const RECENT_RIDES = 5
@@ -34,11 +37,17 @@ async function loadDetails(user: User): Promise<Details> {
   const orgs = await dataService.listOrganizations()
   const org = orgs.find((o) => o.id === user.orgId)
 
+  if (user.role === 'VOLUNTEER') {
+    return { org, rides: [], volunteer: await dataService.getVolunteerProfile(user.id) }
+  }
   if (user.role === 'DRIVER') {
-    const driver = (await dataService.listDrivers()).find((d) => d.userId === user.id)
-    if (!driver) return { org, rides: [] }
+    const [driver, volunteer] = await Promise.all([
+      dataService.listDrivers().then((all) => all.find((d) => d.userId === user.id)),
+      dataService.getVolunteerProfile(user.id),
+    ])
+    if (!driver) return { org, rides: [], volunteer }
     const [rides, feedback] = await Promise.all([dataService.listMyRides(driver.id), dataService.listFeedback({ driverId: driver.id })])
-    return { org, driver, rides, feedback }
+    return { org, driver, rides, feedback, volunteer }
   }
   if (user.role === 'PARTNER' && org) {
     const house = user.houseId ? (await dataService.listHouses()).find((h) => h.id === user.houseId) : undefined
@@ -140,7 +149,8 @@ export function AccountProfile({ user }: Props) {
   const completed = rides.filter((r) => r.status === 'COMPLETED')
   const upcoming = rides.filter((r) => ['SEARCHING', 'OFFERED', 'ACCEPTED', 'NEEDS_ATTENTION', 'PICKED_UP'].includes(r.status))
   const saved = faresSavedFor(completed.length)
-  const { org, house, driver, feedback } = details ?? {}
+  const { org, house, driver, feedback, volunteer } = details ?? {}
+  const kind = participantKind(user, driver)
   const ratings = ratingCounts(feedback ?? [])
   const recent = [...rides].sort((a, b) => b.pickupTime.localeCompare(a.pickupTime)).slice(0, RECENT_RIDES)
 
@@ -152,7 +162,8 @@ export function AccountProfile({ user }: Props) {
         </p>
       ) : (
         <>
-          {user.role !== 'PLATFORM_ADMIN' && (
+          {/* A general volunteer has no rides: they aren't a driver */}
+          {user.role !== 'PLATFORM_ADMIN' && user.role !== 'VOLUNTEER' && (
             <div className="grid grid-cols-3 gap-3">
               <Stat value={completed.length} label="Rides completed" />
               <Stat value={upcoming.length} label="Open or upcoming" />
@@ -185,6 +196,16 @@ export function AccountProfile({ user }: Props) {
               <span className="font-mono text-sm">{user.id}</span>
             </Row>
           </Section>
+
+          {(kind || volunteer) && (
+            <Section title="Participation">
+              {kind && <Row label="Takes part as">{PARTICIPANT_KIND_LABELS[kind]}</Row>}
+              <Row label="Volunteering interests">
+                {volunteer?.interests.length ? volunteer.interests.map(interestLabel).join(', ') : 'None saved'}
+              </Row>
+              {user.role === 'VOLUNTEER' && <Row label="CareRide driving">Not enrolled. Interests don’t grant driving or any other access.</Row>}
+            </Section>
+          )}
 
           {driver && (
             <Section title="Driver profile">

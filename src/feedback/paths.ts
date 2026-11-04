@@ -11,6 +11,7 @@ export function myFeedbackPaths(role: UserRole): { list: string; item: (id: stri
     case 'PARTNER':
       return { list: paths.feedback, item: paths.feedbackItem }
     case 'DRIVER':
+    case 'VOLUNTEER':
       return { list: volunteerPaths.feedback, item: volunteerPaths.feedbackItem }
     case 'ORG_ADMIN':
       return { list: ORG_FEEDBACK, item: (id) => `${ORG_FEEDBACK}/${encodeURIComponent(id)}` }

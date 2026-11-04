@@ -34,10 +34,32 @@ export function driverKind(driver: Pick<Driver, 'background' | 'orgId'>): Driver
 }
 
 // Every service role this account holds. A driver profile only exists for a DRIVER account,
-// so a profile left over on another kind of account never counts.
+// so a profile left over on another kind of account never counts. Volunteering interests are not
+// service roles and never appear here.
 export function serviceRoles(user: Pick<User, 'role'> | undefined, driver: Driver | undefined): ServiceRole[] {
   if (user?.role !== 'DRIVER' || !driver) return []
   return [{ service: 'TRANSPORTATION', kind: driverKind(driver), status: driver.status }]
+}
+
+// How an account takes part, as the admin console tells them apart. A general volunteer is never a driver,
+// and a driver is classified by their driver profile, never by volunteering interests.
+export type ParticipantKind = 'GENERAL_VOLUNTEER' | DriverKind
+
+export const PARTICIPANT_KIND_LABELS: Record<ParticipantKind, string> = {
+  GENERAL_VOLUNTEER: 'General volunteer',
+  ...DRIVER_KIND_LABELS,
+}
+
+// undefined for organization staff, providers and admins, and for a DRIVER account with no driver profile
+export function participantKind(user: Pick<User, 'role'> | undefined, driver: Pick<Driver, 'background' | 'orgId'> | undefined): ParticipantKind | undefined {
+  if (user?.role === 'VOLUNTEER') return 'GENERAL_VOLUNTEER'
+  if (user?.role === 'DRIVER' && driver) return driverKind(driver)
+  return undefined
+}
+
+// Someone who volunteers without being a CareRide driver. They use the volunteer workspace, without its driving pages.
+export function isGeneralVolunteer(user: Pick<User, 'role'> | undefined): boolean {
+  return user?.role === 'VOLUNTEER'
 }
 
 // Only approved drivers are sent ride requests and can take rides. The backend checks this again on every action.

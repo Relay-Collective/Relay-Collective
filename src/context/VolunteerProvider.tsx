@@ -15,7 +15,8 @@ import { VolunteerContext } from './volunteerContext'
 export function VolunteerProvider({ children }: { children: ReactNode }) {
   const { currentUser, refresh } = useApp()
   const [celebrating, setCelebrating] = useState<{ ride: Ride; count: number }>()
-  const userId = currentUser?.id ?? ''
+  // Only a DRIVER account has a driver profile; a general volunteer's workspace never asks for one
+  const userId = currentUser?.role === 'DRIVER' ? currentUser.id : ''
   const drivers = useLoadable(() => (userId ? dataService.listDrivers() : Promise.resolve([])), userId)
   const driver = drivers.data?.find((d) => d.userId === userId)
   // Requests and rides only reach approved drivers, so there's nothing to ask for before then

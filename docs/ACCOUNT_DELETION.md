@@ -76,6 +76,7 @@ Everything in the schema that refers to a person:
 | --- | --- | --- | --- |
 | Login | `auth.users` (with identities, sessions, refresh tokens) | **Delete** (hard) | The identity itself |
 | Profile | `profiles` | **Anonymize**, then **delete** if unreferenced | Rides, history, reviews and invitations point at it. The name becomes *Deleted account*; phone, email and `is_active` are cleared; `deleted_at` is set. A check constraint (`profiles_deleted_is_anonymous`) holds this. Deleted outright when no foreign key refers to it. |
+| Volunteer profile and interests | `volunteer_profiles`, `volunteer_interests` | **Delete** | The interests a person chose describe them, and nothing else points at them. See [architecture/volunteers.md](architecture/volunteers.md). |
 | Organization membership | `profiles.org_id` / `org_role` | **Remove** (profile switched off) | The organization and its other members stay. `org_id` stays on the placeholder so the organization's history reads "a former member". |
 | Driver details | `drivers` | **Anonymize**, then **delete** if unreferenced | Finished rides and offers need the row. Vehicle, cities and hours are cleared and `deleted_at` is set. Seats and wheelchair access stay, because they describe nobody and stay locked after approval. The app's driver lists leave erased rows out. |
 | Driver documents | `driver_documents` and bucket `driver-documents` | **Delete** (files first) | Personal identity documents |
@@ -98,7 +99,7 @@ Everything in the schema that refers to a person:
 | Notifications, preferences, settings | none server-side | n/a | "Seen" markers and similar live in the person's own browser storage |
 | Deletion record | `private.account_deletion_jobs`, `private.account_deletion_events` | **Keep** | See [Audit record](#audit-record) |
 
-No foreign key was changed to `ON DELETE CASCADE`. The cleanup is explicit, and the only cascade involved is the existing one from `auth.users` to `organization_join_requests`, which the records step has already emptied by the time it would fire.
+No existing foreign key was changed to `ON DELETE CASCADE`. The cleanup is explicit. The cascades involved are the existing one from `auth.users` to `organization_join_requests`, and the volunteer tables' cascade from `profiles` (added with them). The records step has already emptied both by the time either would fire.
 
 ### Storage ownership
 

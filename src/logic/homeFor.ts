@@ -8,6 +8,7 @@ export const HOME_FOR: Record<UserRole, string> = {
   ORG_ADMIN: '/org',
   PARTNER: paths.overview,
   DRIVER: volunteerPaths.overview,
+  VOLUNTEER: volunteerPaths.overview, // the volunteer workspace, without its driving pages
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -15,6 +16,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ORG_ADMIN: 'Transport provider',
   PARTNER: 'Partner organization',
   DRIVER: 'Driver',
+  VOLUNTEER: 'Volunteer',
 }
 
 // Where a ride's detail page lives for the partner organization that booked it.

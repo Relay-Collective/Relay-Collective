@@ -11,6 +11,7 @@ export const volunteerPaths = {
   rides: `${TRANSPORT}/rides`,
   ride: (rideId: string) => `${TRANSPORT}/rides/${encodeURIComponent(rideId)}`,
   availability: `${ROOT}/availability`,
+  interests: `${ROOT}/interests`, // general volunteers' volunteering interests
   profile: `${ROOT}/profile`,
   verification: `${ROOT}/profile/verification`,
   settings: `${ROOT}/settings`,

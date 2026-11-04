@@ -1,25 +1,28 @@
 import type { UserRole } from '../types'
 
-// Shared Tailwind class names (Relay Collective 1.6). Big targets, clear focus, readable text throughout.
-// Two radii only: rounded-xl (12px) for cards, inputs and tiles, rounded-full for buttons and chips.
-// Cards get an edge, not a shadow. Shadows are kept for things that float (menus, dialogs, toasts).
+// Shared Tailwind class names (Relay Collective console 2.0). Big targets, clear focus, readable text throughout.
+// Radii: rounded-2xl (16px) for cards and panels, rounded-xl (12px) for inputs and tiles, rounded-full for buttons
+// and chips. Cards rest on a hairline and a soft offset fall (--shadow-rest); things that float get --shadow-lift.
 // Midnight ink is the primary action; electric blue (brand-600) marks what is selected or active.
-export const card = 'rounded-xl border border-slate-200 bg-white p-6'
+export const card = 'rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[var(--shadow-rest)]'
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2'
 
 export const button = `inline-flex min-h-12 select-none items-center whitespace-nowrap justify-center gap-2 rounded-full px-5 text-base font-semibold transition duration-150 ease-out-quart ${focusRing} active:scale-[0.97] active:duration-75 disabled:pointer-events-none disabled:opacity-50`
-export const primaryButton = `${button} bg-ink text-white hover:bg-brand-700 active:bg-brand-800`
-export const secondaryButton = `${button} border border-slate-300 bg-white text-ink hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100`
+// The primary pill has a light top edge and a short fall, so it reads as the one thing to press
+export const primaryButton = `${button} bg-ink text-white shadow-[var(--shadow-press)] hover:bg-brand-700 active:bg-brand-800`
+export const secondaryButton = `${button} border border-slate-200 bg-white text-ink shadow-[0_1px_2px_rgb(17_24_32/0.05)] hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100`
 export const ghostButton = `${button} text-slate-700 hover:bg-slate-100 hover:text-ink`
-export const dangerButton = `${button} bg-red-600 text-white hover:bg-red-700 active:bg-red-800`
+export const dangerButton = `${button} bg-red-600 text-white shadow-[var(--shadow-press)] hover:bg-red-700 active:bg-red-800`
 export const dangerOutlineButton = `${button} border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50`
+// For the one action on a night surface (the CareRide hero card): a white pill with ink type
+export const inverseButton = `${button} bg-white text-ink shadow-[0_1px_2px_rgb(0_0_0/0.3)] hover:bg-brand-50 active:bg-brand-100 focus-visible:ring-offset-night`
 
 export const input =
-  'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-ink placeholder:text-slate-500 transition hover:border-slate-400 focus:border-brand-600 focus:outline-none focus:ring-[3px] focus:ring-brand-100 aria-[invalid=true]:border-red-600 aria-[invalid=true]:focus:ring-red-100'
+  'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-ink shadow-[inset_0_1px_2px_rgb(17_24_32/0.04)] placeholder:text-slate-500 transition hover:border-slate-400 focus:border-brand-600 focus:outline-none focus:ring-[3px] focus:ring-brand-100 aria-[invalid=true]:border-red-600 aria-[invalid=true]:focus:ring-red-100'
 export const label = 'mb-1.5 block text-sm font-semibold text-ink'
 export const hint = 'mt-1.5 text-sm text-slate-500'
-export const pageTitle = 'mb-6 font-display text-3xl font-bold tracking-[-0.03em] text-balance text-ink'
+export const pageTitle = 'mb-6 font-display text-3xl font-bold tracking-[-0.035em] text-balance text-ink sm:text-[34px] sm:leading-[1.1]'
 
 // Each role and section picks one tone so screens feel distinct. Solid fills only: gradients belong to the logo.
 export type Tone = 'brand' | 'ink' | 'coral' | 'teal' | 'amber'

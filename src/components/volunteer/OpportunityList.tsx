@@ -46,7 +46,7 @@ export function OpportunityList({ limit, showMap = false }: { limit?: number; sh
       ) : !offers.data ? (
         <VolunteerLoadError />
       ) : all.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
           {/* On the overview this is one quiet row; the full list page keeps the larger version */}
           <EmptyState
             compact={!!limit}

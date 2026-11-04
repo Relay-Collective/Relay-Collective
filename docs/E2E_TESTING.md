@@ -28,7 +28,7 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 
 ## What's covered
 
-49 tests in [`e2e/`](../e2e). Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
+61 tests in [`e2e/`](../e2e). Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
 
 | File | Scenarios |
 | --- | --- |
@@ -39,7 +39,8 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 | [admin.spec.ts](../e2e/admin.spec.ts) | Dashboard totals and every console section · organizations list, filter and detail · approvals list, and approving a pending driver · feedback a partner sends shows up for the admin, with its details · transportation oversight list and ride detail, without private rider details |
 | [permissions.spec.ts](../e2e/permissions.spec.ts) | Signed-out visitors are sent to sign-in and back to the page they asked for · partners can't open the admin console · drivers can't open the organization workspace or the console · a driver awaiting review gets no requests · **organization staff** (created by signing up, asking to join and being approved) don't get administrator controls |
 | [responsive.spec.ts](../e2e/responsive.spec.ts) | On a 390 × 844 touch screen: landing menu, organization, volunteer and admin navigation drawers open, close and reach their pages · the booking button is reachable · a dialog can be dismissed · no page scrolls sideways |
-| [accessibility.spec.ts](../e2e/accessibility.spec.ts) | axe-core WCAG 2.1 A/AA checks on the landing page, sign-in, organization overview, CareRide overview, booking form, volunteer overview, admin overview, and the organization overview on a phone |
+| [console.spec.ts](../e2e/console.spec.ts) | The console 2.0 look, by what it promises: the greeting's accent word keeps the heading's words · the sidebar marks one current page and it moves · the sidebar collapses to icons, keeps every link named and remembers the choice · the CareRide card opens the module and its drawing stays out of the accessibility tree · CareRide's segmented tabs mark the current page, History included · the admin sidebar reaches its last section · with reduced motion the route is drawn in full and nothing moves · on a phone, the night tab bar and the drawer mark the current page |
+| [accessibility.spec.ts](../e2e/accessibility.spec.ts) | axe-core WCAG 2.1 A/AA checks on the landing page, sign-in, organization overview, CareRide overview, booking form, volunteer overview, admin overview, and on a phone the organization overview, the volunteer overview with its night tab bar, and the open navigation drawer |
 
 Browser tests check what people see. They don't replace the database's access rules: `npm run test:db` tests those against the real SQL.
 

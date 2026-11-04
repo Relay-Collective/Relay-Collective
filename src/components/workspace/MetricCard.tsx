@@ -20,7 +20,7 @@ interface Props {
 // bare: no frame of its own, for a strip along the foot of a card. The top row's edge becomes the divider.
 export function MetricGroup({ className = '', bare, children }: { className?: string; bare?: boolean; children: ReactNode }) {
   return (
-    <div className={bare ? 'overflow-hidden' : 'overflow-hidden rounded-xl border border-slate-200 bg-white'}>
+    <div className={bare ? 'overflow-hidden' : 'overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]'}>
       <div className={`-ml-px grid ${bare ? '' : '-mt-px'} ${className}`}>{children}</div>
     </div>
   )
@@ -38,8 +38,8 @@ export function MetricCard({ label, value, hint, icon: Icon, to, alert }: Props)
     <Link
       to={to}
       aria-label={loading ? `${label}: loading` : `${label}: ${value}. ${hint}`}
-      className={`group relative row-span-3 grid min-w-0 grid-rows-subgrid content-start border-l border-t border-slate-200 px-4 py-4 transition-colors duration-150 ease-out-quart sm:px-5 sm:py-5 ${focusRing} focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0 ${
-        raised ? look.cell : 'hover:bg-slate-50'
+      className={`group relative row-span-3 grid min-w-0 grid-rows-subgrid content-start border-l border-t border-slate-200/80 px-4 py-4 transition-colors duration-150 ease-out-quart sm:px-6 sm:py-6 ${focusRing} focus-visible:z-10 focus-visible:ring-inset focus-visible:ring-offset-0 ${
+        raised ? look.cell : 'hover:bg-brand-50/50'
       }`}
     >
       <span className="flex items-start gap-2 pr-5" aria-hidden>
@@ -47,11 +47,11 @@ export function MetricCard({ label, value, hint, icon: Icon, to, alert }: Props)
         <span className="min-w-0 text-[13px] font-semibold leading-tight text-slate-600">{label}</span>
       </span>
       <ArrowUpRight
-        className="absolute right-3 top-3.5 h-4 w-4 text-slate-300 opacity-0 transition duration-150 ease-out-quart group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-rc-navy group-hover:opacity-100 group-focus-visible:opacity-100 max-sm:hidden"
+        className="absolute right-4 top-4 h-4 w-4 text-slate-300 opacity-0 transition duration-150 ease-out-quart group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-rc-navy group-hover:opacity-100 group-focus-visible:opacity-100 max-sm:hidden"
         aria-hidden
       />
-      <span className="mt-3 block self-end font-heading text-[28px] font-semibold leading-none tracking-[-0.03em] tabular-nums text-rc-navy sm:text-[34px]" aria-hidden>
-        {loading ? <Skeleton className="h-8 w-12" /> : value}
+      <span className="mt-4 block self-end font-heading text-[34px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-ink sm:text-[44px]" aria-hidden>
+        {loading ? <Skeleton className="h-9 w-12" /> : value}
       </span>
       <span className={`mt-2 block self-start text-[13px] leading-snug ${raised ? look.hint : 'text-slate-500'}`} aria-hidden>
         {hint}

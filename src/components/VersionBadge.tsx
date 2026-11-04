@@ -59,7 +59,7 @@ export function VersionBadge() {
       <dialog
         ref={dialog}
         aria-labelledby="whats-new-title"
-        className="m-auto max-h-[min(44rem,calc(100dvh-2rem))] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rc-dialog rounded-xl border border-slate-200 bg-white p-0 text-ink shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
+        className="m-auto max-h-[min(44rem,calc(100dvh-2rem))] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rc-dialog rounded-[20px] border border-slate-200 bg-white p-0 text-ink shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
         onClick={(e) => {
           if (e.target === dialog.current) close()
         }}

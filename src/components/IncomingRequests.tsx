@@ -47,7 +47,7 @@ export function IncomingRequests() {
   }
 
   const confirmation = answered && (
-    <div role="status" className="rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+    <div role="status" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
       <div className="flex items-start gap-3">
         <span
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${

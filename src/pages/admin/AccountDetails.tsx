@@ -65,7 +65,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h3 className="mb-2 text-sm font-bold text-slate-500">{title}</h3>
-      <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">{children}</dl>
+      <dl className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">{children}</dl>
     </section>
   )
 }
@@ -86,7 +86,7 @@ function Row({ label, children, copy }: { label: string; children: ReactNode; co
 
 function Stat({ value, label }: { value: ReactNode; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)] p-4 text-center">
       <p className="font-display text-2xl font-bold text-ink">{value}</p>
       <p className="text-sm text-slate-500">{label}</p>
     </div>
@@ -103,7 +103,7 @@ const FEEDBACK_LOOK = {
 function FeedbackList({ feedback, rides }: { feedback: RideFeedback[]; rides: Ride[] }) {
   const sorted = [...feedback].sort((a, b) => b.at.localeCompare(a.at))
   return (
-    <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+    <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
       {sorted.map((f) => {
         const look = FEEDBACK_LOOK[f.authorRole === 'DRIVER' ? 'FLAG' : (f.rating ?? 'UP')]
         const Icon = look.icon
@@ -237,7 +237,7 @@ export function AccountProfile({ user }: Props) {
                 )}
               </h3>
               {feedback.length === 0 ? (
-                <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-500">No feedback yet.</p>
+                <p className="rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)] px-4 py-3 text-slate-500">No feedback yet.</p>
               ) : (
                 <FeedbackList feedback={feedback} rides={rides} />
               )}
@@ -247,7 +247,7 @@ export function AccountProfile({ user }: Props) {
           {recent.length > 0 && (
             <section>
               <h3 className="mb-2 text-sm font-bold text-slate-500">Recent rides and their history</h3>
-              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+              <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
                 {recent.map((r) => (
                   <li key={r.id}>
                     <details className="group px-4 py-3">

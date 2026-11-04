@@ -108,7 +108,7 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
           <span />
         </div>
 
-        <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+        <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
           {DAY_ORDER.map((day) => {
             const w = value[day]
             const name = DAY_NAMES[day]

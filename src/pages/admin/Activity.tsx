@@ -31,7 +31,7 @@ export function Activity() {
     <div className="space-y-4">
       <PageHeader title="Activity" description="When organizations and drivers registered, and the latest review decision on each." />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)] p-4 text-sm text-slate-700">
         <p className="flex items-start gap-2 font-semibold text-rc-navy">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-rc-blue" aria-hidden /> This isn’t a full audit log yet
         </p>

@@ -7,7 +7,8 @@ import { OpportunityList } from '../../components/volunteer/OpportunityList'
 import { VolunteerLoadError } from '../../components/volunteer/states'
 import { VerificationSummary } from '../../components/volunteer/VerificationSummary'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
-import { PageHeader } from '../../components/workspace/PageHeader'
+import { Greeting, PageHeader } from '../../components/workspace/PageHeader'
+import { RouteArt } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, Skeleton, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { useApp } from '../../hooks/useApp'
@@ -50,7 +51,7 @@ export function Overview() {
 
   const header = (
     <PageHeader
-      title={first ? `${greeting}, ${first}.` : `${greeting}.`}
+      title={<Greeting greeting={greeting} name={first || undefined} />}
       eyebrow={date}
       description="Your time makes a difference. Here's what's happening in your workspace."
     />
@@ -82,7 +83,7 @@ export function Overview() {
   const ridesLoading = !rides.data && !rides.error
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {header}
 
       {/* First: anything that needs this volunteer. A clear day is one quiet line. */}
@@ -126,14 +127,25 @@ export function Overview() {
         )}
       </section>
 
-      <section aria-labelledby="metrics-title">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="metrics-title" className={`${panelTitle} flex items-center gap-2`}>
-            <CareRideMark tone="brand" className="h-5 w-5" /> CareRide
-          </h2>
-          {(rides.error || offers.error) && <p className="text-sm text-red-700">Some numbers couldn't load.</p>}
+      {/* CareRide, the module this volunteer drives for: the same night band as the organization overview's
+          module card, with this driver's numbers on white beneath it */}
+      <section aria-labelledby="metrics-title" className={`${panel} overflow-hidden`}>
+        <div className="rc-night relative isolate flex flex-wrap items-center justify-between gap-x-4 gap-y-2 overflow-hidden bg-night px-5 py-5 sm:px-7 sm:py-6">
+          <RouteArt className="-bottom-6 right-0 h-[130px] w-[234px] max-sm:hidden" />
+          <div className="flex min-w-0 items-center gap-3.5">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-[0_10px_24px_-12px_rgb(2_151_222/0.6)]" aria-hidden>
+              <CareRideMark tone="brand" className="h-8 w-8" />
+            </span>
+            <div className="min-w-0">
+              <h2 id="metrics-title" className="font-heading text-[22px] font-bold leading-tight tracking-[-0.03em] text-white">
+                CareRide
+              </h2>
+              <p className="text-sm text-slate-400">Your rides and requests</p>
+            </div>
+          </div>
+          {(rides.error || offers.error) && <p className="text-sm font-semibold text-red-200">Some numbers couldn't load.</p>}
         </div>
-        <MetricGroup className="grid-cols-2 lg:grid-cols-4">
+        <MetricGroup bare className="grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Requests to answer"
             value={offers.data?.length}

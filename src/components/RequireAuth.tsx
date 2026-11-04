@@ -26,7 +26,7 @@ export function RequireAuth() {
   if (sessionError) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div role="alert" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center">
+        <div role="alert" className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)] p-6 text-center">
           <AlertCircle className="mx-auto h-10 w-10 text-red-600" aria-hidden />
           <h1 className="mt-3 text-xl font-bold">We couldn't open your account</h1>
           <p className="mt-2 text-slate-600">{sessionError}</p>

@@ -46,7 +46,7 @@ function AvailabilityForm({ driver }: { driver: Driver }) {
 
       <RequestStatusCard driver={driver} />
 
-      <p className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+      <p className="flex items-start gap-2 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)] p-4 text-sm text-slate-700">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-rc-blue" aria-hidden />
         <span>
           <strong className="font-semibold text-rc-navy">Changes apply to new requests only.</strong> Rides you've already accepted stay on your list. If

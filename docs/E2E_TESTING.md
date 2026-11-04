@@ -28,7 +28,7 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 
 ## What's covered
 
-61 tests in [`e2e/`](../e2e). Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
+66 tests in [`e2e/`](../e2e). The README screenshots live apart in `e2e/screenshots/` (`npm run docs:screenshots`) and never run with the suite. Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
 
 | File | Scenarios |
 | --- | --- |
@@ -40,6 +40,7 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 | [permissions.spec.ts](../e2e/permissions.spec.ts) | Signed-out visitors are sent to sign-in and back to the page they asked for · partners can't open the admin console · drivers can't open the organization workspace or the console · a driver awaiting review gets no requests · **organization staff** (created by signing up, asking to join and being approved) don't get administrator controls |
 | [responsive.spec.ts](../e2e/responsive.spec.ts) | On a 390 × 844 touch screen: landing menu, organization, volunteer and admin navigation drawers open, close and reach their pages · the booking button is reachable · a dialog can be dismissed · no page scrolls sideways |
 | [console.spec.ts](../e2e/console.spec.ts) | The console look (the route rail), by what it promises: the greeting's accent word keeps the heading's words · the sidebar marks one current page and it moves · the relay point rests on the current page's station and follows you · the sidebar collapses to icons, keeps every link named and remembers the choice · the CareRide card opens the module and its drawing stays out of the accessibility tree · CareRide's segmented tabs mark the current page, History included · the admin sidebar reaches its last section · with reduced motion the route is drawn in full and nothing moves · on a phone, the tab bar and the drawer mark the current page |
+| [landing.spec.ts](../e2e/landing.spec.ts) | The home page: the header jumps to the workspaces and CareRide sections · the workspace tabs show the organization, driver and admin pictures by click and by keyboard (arrows wrap, Home and End, one tab in the Tab order), each with its notes, its sign-up link and an "illustrative" caption · the ride is told in four steps and leads to the CareRide tour · on a phone the tabs fit, keep their full names and switch with a tap |
 | [accessibility.spec.ts](../e2e/accessibility.spec.ts) | axe-core WCAG 2.1 A/AA checks on the landing page, sign-in, organization overview, CareRide overview, booking form, volunteer overview, admin overview, and on a phone the organization overview, the volunteer overview with its tab bar, and the open navigation drawer |
 
 Browser tests check what people see. They don't replace the database's access rules: `npm run test:db` tests those against the real SQL.

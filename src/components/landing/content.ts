@@ -30,6 +30,8 @@ export interface NavItem {
 export const NAV: NavItem[] = [
   { id: 'platform', label: 'Platform' },
   { id: 'solutions', label: 'Modules' },
+  { id: 'showcase', label: 'Workspaces' },
+  { id: 'ride', label: 'CareRide' },
   { id: 'impact', label: 'Impact' },
   { id: 'resources', label: 'Resources' },
 ]

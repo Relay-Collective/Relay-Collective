@@ -68,13 +68,6 @@
   /* Flat app background. One step below white cards, so a card reads by its edge, not a shadow */
   --color-canvas: #f8f9f7; /* porcelain */
 
-  /* Console 2.0: the night frame. The sidebar and the frame around the workspace sheet, a step deeper than
-     midnight ink so ink type and primary buttons still read as their own thing on the sheet.
-     Text on night: white for strong, slate-300 for body (11:1), slate-400 for meta (7:1). */
-  --color-night: #0b1117;
-  --color-night-raised: #141c24; /* hover and the context card on night */
-  --color-night-line: #222c36; /* hairlines on night */
-
   /* Console 2.0 depth: a hairline of contact and a soft, offset fall. Cards rest; interactive cards lift. */
   --shadow-rest: 0 1px 2px rgb(17 24 32 / 0.04), 0 6px 20px -14px rgb(17 24 32 / 0.14);
   --shadow-lift: 0 1px 2px rgb(17 24 32 / 0.05), 0 18px 36px -18px rgb(17 24 32 / 0.26);
@@ -275,10 +268,33 @@
 .workspace :is(h2, h3) {
   letter-spacing: -0.02em;
 }
-/* The night frame keeps its own scrollbar dark, so a long sidebar doesn't flash a light gutter */
-.rc-night {
-  scrollbar-color: var(--color-night-line) transparent;
-  color-scheme: dark;
+/* Console 2.1: the landing's ground at work. A still hairline midnight grid (the hero mesh's pitch and weight)
+   behind the top of every page, fading out before the content gets dense. Lines only: no glow, no colour field. */
+.rc-grid {
+  background-image:
+    linear-gradient(to right, rgb(17 24 32 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(17 24 32 / 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: -1px -1px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
+}
+@media (max-width: 639px) {
+  .rc-grid {
+    background-size: 44px 44px;
+  }
+}
+
+/* The sidebar route: one electric line through the navigation, a station per link, and the relay point (the
+   logo's cantaloupe centre on a white ring) that travels to the current page. */
+.rc-relay {
+  transition:
+    translate 360ms var(--ease-out-expo),
+    opacity 200ms var(--ease-out-quart);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-relay {
+    transition: none;
+  }
 }
 
 /* Console 2.0: each page settles into the sheet as you arrive. Short and small, so it never holds up the task;

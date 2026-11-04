@@ -100,7 +100,7 @@ test.describe('accessibility', () => {
     })
 
     // The night surfaces (console 2.0): the tab bar along the foot of the volunteer workspace, and the drawer
-    test('the volunteer overview, with its night tab bar, has no new WCAG A/AA violations', async ({ page }) => {
+    test('the volunteer overview, with its tab bar, has no new WCAG A/AA violations', async ({ page }) => {
       await signIn(page, accounts.frank)
       await expect(page.getByRole('navigation', { name: 'Quick' })).toBeVisible()
       await expectOnlyKnownIssues(page, 'volunteer overview on a phone')

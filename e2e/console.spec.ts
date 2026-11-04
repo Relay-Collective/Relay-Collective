@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test'
 import { accounts, expect, signIn, test } from './fixtures'
 
-// The console 2.0 look (DESIGN.md §5–6): the night frame and its sidebar, the greeting's accent word, the CareRide
+// The console look (DESIGN.md §5–6): the route rail and its sidebar, the greeting's accent word, the CareRide
 // card on the overview, CareRide's segmented tabs and the phone tab bar. These check what each piece promises a
 // person (words, current-page marks, links, motion that respects the system setting), not pixels.
 
@@ -35,6 +35,25 @@ test.describe('console', () => {
     await expect(await expectOneCurrent(page, 'sidebar', 'Main')).toHaveText('CareRide')
   })
 
+  test("the sidebar's relay point rests on the current page's station, and follows you", async ({ page }) => {
+    await signIn(page, accounts.belkin)
+    const nav = page.getByRole('navigation', { name: 'Main' })
+    const relay = page.getByRole('complementary', { name: 'Sidebar' }).locator('.bg-cantaloupe')
+    const restsOn = async (name: string) => {
+      const station = nav.getByRole('link', { name, exact: true }).locator('[data-station]')
+      await expect(station).toHaveAttribute('data-current', 'true')
+      await expect(nav.locator('[data-station][data-current]')).toHaveCount(1)
+      // The relay point's centre sits on the station's centre
+      await expect(async () => {
+        const [a, b] = await Promise.all([relay.boundingBox(), station.boundingBox()])
+        expect(Math.abs(a!.y + a!.height / 2 - (b!.y + b!.height / 2))).toBeLessThan(1.5)
+      }).toPass()
+    }
+    await restsOn('Overview')
+    await nav.getByRole('link', { name: 'Team', exact: true }).click()
+    await restsOn('Team')
+  })
+
   test('the sidebar collapses to icons, keeps every link named, and remembers the choice', async ({ page }) => {
     await signIn(page, accounts.belkin)
     const sidebar = page.getByRole('complementary', { name: 'Sidebar' })
@@ -57,7 +76,7 @@ test.describe('console', () => {
     await expect(card.getByRole('link', { name: /^Completed: 3\./ })).toBeVisible()
     // The drawn trip is decoration: nothing in it reaches the accessibility tree
     await expect(card.getByRole('img')).toHaveCount(0)
-    await expect(card.locator('svg.rc-route-draw, svg:has(.rc-route-draw)')).toHaveAttribute('aria-hidden', 'true')
+    await expect(card.locator('[aria-hidden="true"]:has(.rc-route-draw)')).toHaveCount(1)
 
     await card.getByRole('link', { name: 'Open CareRide' }).click()
     await expect(page).toHaveURL(/\/workspace\/transportation$/)

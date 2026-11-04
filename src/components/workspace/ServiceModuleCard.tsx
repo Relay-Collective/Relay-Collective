@@ -2,28 +2,21 @@ import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { ActiveModule, ModuleStatus, PlannedModule, ServiceModule } from '../../workspace/modules'
-import { inverseButton, primaryButton } from '../ui'
+import { primaryButton } from '../ui'
 import { compactButton } from './styles'
 
 // The pieces every module is shown with: its icon tile, its status, and a card. Active modules lead with
 // a way in; planned ones have no link or button, so they never read as something you can open.
 
 // The module's symbol on its tile. Active modules sit on electric tint; planned ones stay grey.
-// onNight: a white tile, so the mark keeps its midnight pickup on the night ground.
-export function ModuleIconTile({ module, size = 'md', onNight }: { module: ServiceModule; size?: 'sm' | 'md' | 'lg'; onNight?: boolean }) {
+export function ModuleIconTile({ module, size = 'md' }: { module: ServiceModule; size?: 'sm' | 'md' | 'lg' }) {
   const active = module.status === 'active'
   const Icon = (active && module.brandIcon) || module.icon
   const box = { sm: 'h-9 w-9 rounded-lg', md: 'h-11 w-11 rounded-xl', lg: 'h-14 w-14 rounded-2xl' }[size]
   const glyph = { sm: 'h-5 w-5', md: 'h-6 w-6', lg: active ? 'h-9 w-9' : 'h-6 w-6' }[size]
   return (
     <span
-      className={`flex shrink-0 items-center justify-center ${box} ${
-        onNight
-          ? 'bg-white shadow-[0_10px_24px_-12px_rgb(2_151_222/0.6)]'
-          : active
-            ? 'bg-brand-50 shadow-[inset_0_0_0_1px_var(--color-brand-100)]'
-            : 'bg-slate-100 text-slate-500'
-      }`}
+      className={`flex shrink-0 items-center justify-center ${box} ${active ? 'bg-brand-50 shadow-[inset_0_0_0_1px_var(--color-brand-100)]' : 'bg-slate-100 text-slate-500'}`}
       aria-hidden
     >
       <Icon className={`${glyph} ${active ? 'text-brand-600' : ''}`} />
@@ -33,16 +26,14 @@ export function ModuleIconTile({ module, size = 'md', onNight }: { module: Servi
 
 // Status in words, with a mark that differs by shape as well as colour: a solid dot, or a dashed ring.
 // Same language as the public site.
-export function ModuleBadge({ status, onNight }: { status: ModuleStatus; onNight?: boolean }) {
+export function ModuleBadge({ status }: { status: ModuleStatus }) {
   const active = status === 'active'
-  const look = onNight
-    ? 'bg-emerald-400/15 text-emerald-200 shadow-[inset_0_0_0_1px_rgb(52_211_153/0.25)]'
-    : active
-      ? 'bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgb(16_185_129/0.18)]'
-      : 'border border-dashed border-slate-300 text-slate-600'
+  const look = active
+    ? 'bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgb(16_185_129/0.18)]'
+    : 'border border-dashed border-slate-300 text-slate-600'
   return (
     <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${look}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${active ? (onNight ? 'bg-emerald-400' : 'bg-emerald-600') : 'border border-slate-400'}`} aria-hidden />
+      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-600' : 'border border-slate-400'}`} aria-hidden />
       {active ? 'Active' : 'Planned'}
     </span>
   )
@@ -61,9 +52,9 @@ function ModuleTitle({ module, id, large }: { module: ServiceModule; id?: string
 }
 
 // The way into an active module. The arrow steps forward on hover; a press settles the whole pill.
-export function OpenModuleLink({ module, className = '', onNight }: { module: ActiveModule; className?: string; onNight?: boolean }) {
+export function OpenModuleLink({ module, className = '' }: { module: ActiveModule; className?: string }) {
   return (
-    <Link to={module.route} className={`group/open ${onNight ? inverseButton : primaryButton} ${compactButton} ${className}`}>
+    <Link to={module.route} className={`group/open ${primaryButton} ${compactButton} ${className}`}>
       {module.actionLabel}
       <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out-quart group-hover/open:translate-x-0.5" aria-hidden />
     </Link>
@@ -71,29 +62,30 @@ export function OpenModuleLink({ module, className = '', onNight }: { module: Ac
 }
 
 // The overview's lead module: who it is, what it does, how it's going (children: a bare MetricGroup), and the way in.
-// Console 2.0: the one night surface on the sheet. Its own trip is drawn large across the right, and draws itself
-// once as the overview opens; the numbers below stay on white, where they are easiest to read.
+// Console 2.1: the landing's one large electric field sits beside the words, with the module's own trip drawn on it
+// (white road, midnight pickup, cantaloupe drop-off). The words stay on white, where they are easiest to read.
 export function ActiveModuleFeature({ module, headingId, children }: { module: ActiveModule; headingId: string; children?: ReactNode }) {
   return (
     <article aria-labelledby={headingId} className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
-      <div className="rc-night relative isolate flex flex-1 flex-col gap-6 overflow-hidden bg-night p-6 text-slate-300 sm:p-7">
-        <RouteArt className="bottom-0 right-0 h-[170px] w-[306px] max-sm:hidden" />
-        <div className="flex items-start gap-4">
-          <ModuleIconTile module={module} size="lg" onNight />
-          <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <div className="min-w-0">
-              <h3 id={headingId} className="font-heading text-[26px] font-bold leading-tight tracking-[-0.03em] text-white">
-                {module.name}
-              </h3>
-              <p className="text-sm font-medium text-slate-400">{module.category}</p>
+      <div className="grid flex-1 gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
+        <RouteField className="h-28 sm:order-last sm:h-auto sm:min-h-52" />
+        <div className="flex flex-col gap-6 p-4 sm:p-5">
+          <div className="flex items-start gap-4">
+            <ModuleIconTile module={module} size="lg" />
+            <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-3 gap-y-2">
+              <div className="min-w-0">
+                <h3 id={headingId} className="font-heading text-[26px] font-bold leading-tight tracking-[-0.03em] text-ink">
+                  {module.name}
+                </h3>
+                <p className="text-sm font-medium text-slate-500">{module.category}</p>
+              </div>
+              <ModuleBadge status="active" />
             </div>
-            <ModuleBadge status="active" onNight />
           </div>
-        </div>
-        {/* The words keep to the left, clear of the drawn trip */}
-        <div className="mt-auto sm:max-w-[min(44ch,calc(100%-17rem))]">
-          <p className="text-[15px] leading-relaxed text-slate-300">{module.description}</p>
-          <OpenModuleLink module={module} onNight className="mt-5" />
+          <div className="mt-auto">
+            <p className="max-w-[48ch] text-[15px] leading-relaxed text-slate-600">{module.description}</p>
+            <OpenModuleLink module={module} className="mt-5" />
+          </div>
         </div>
       </div>
       {children}
@@ -101,32 +93,31 @@ export function ActiveModuleFeature({ module, headingId, children }: { module: A
   )
 }
 
-// One trip, drawn like the CareRide mark at card scale: an open pickup ring, a road that steps up, a cantaloupe
-// drop-off. A faint street grid sits behind it. Decoration only, so it is hidden from assistive technology; the
-// caller places it clear of the words.
-export function RouteArt({ className = '' }: { className?: string }) {
+// The electric field with one trip drawn across it, like the CareRide mark at card scale: an open midnight pickup
+// ring, a white road that steps up, a cantaloupe drop-off on a white ring. A faint dot grid sits behind it, and the
+// road draws itself once. Decoration only, so it is hidden from assistive technology.
+export function RouteField({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 360 200" className={`pointer-events-none absolute -z-10 ${className}`} aria-hidden focusable="false">
-      <defs>
-        <pattern id="rc-streets" width="24" height="24" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="1.2" fill="rgb(255 255 255 / 0.09)" />
-        </pattern>
-      </defs>
-      <rect width="360" height="200" fill="url(#rc-streets)" />
-      <path d="M96 150h40a32 32 0 0 0 32-32V92a32 32 0 0 1 32-32h86" fill="none" stroke="rgb(255 255 255 / 0.07)" strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
-      <path
-        className="rc-route-draw"
-        pathLength={1}
-        d="M96 150h40a32 32 0 0 0 32-32V92a32 32 0 0 1 32-32h86"
-        fill="none"
-        stroke="#0297DE"
-        strokeWidth="12"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle className="rc-stop-in" cx="62" cy="150" r="15" fill="none" stroke="#fff" strokeWidth="8" />
-      <circle className="rc-stop-in" style={{ ['--stop-delay' as string]: '850ms' }} cx="314" cy="60" r="19" fill="#FC734D" />
-    </svg>
+    <div
+      className={`relative overflow-hidden rounded-[14px] bg-electric bg-[radial-gradient(rgb(255_255_255/0.28)_1.2px,transparent_1.4px)] bg-[size:20px_20px] bg-[position:10px_10px] ${className}`}
+      aria-hidden
+    >
+      <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" focusable="false">
+        <path d="M96 150h40a32 32 0 0 0 32-32V92a32 32 0 0 1 32-32h86" fill="none" stroke="rgb(17 24 32 / 0.12)" strokeWidth="26" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          className="rc-route-draw"
+          pathLength={1}
+          d="M96 150h40a32 32 0 0 0 32-32V92a32 32 0 0 1 32-32h86"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle className="rc-stop-in" cx="62" cy="150" r="15" fill="#fff" stroke="#111820" strokeWidth="8" />
+        <circle className="rc-stop-in" style={{ ['--stop-delay' as string]: '850ms' }} cx="314" cy="60" r="21" fill="#FC734D" stroke="#fff" strokeWidth="6" />
+      </svg>
+    </div>
   )
 }
 

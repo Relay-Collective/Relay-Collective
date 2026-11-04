@@ -1,8 +1,6 @@
 // Shared class names for the signed-in consoles (organization, volunteer, admin). Builds on ../ui.ts.
 
 export const focusRing = 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2'
-// The same ring on the night frame: a lighter electric, with the gap in night rather than white
-export const focusRingNight = 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-night'
 
 // A section of a page: a hairline and a soft resting fall
 export const panel = 'rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]'

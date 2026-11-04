@@ -13,7 +13,7 @@ import { SidebarNav } from '../shell/SidebarNav'
 import { ShellHeader } from '../shell/ShellHeader'
 import { SidebarShell, type SidebarSlotProps } from '../shell/SidebarShell'
 import { AppFooter, LoadErrorBanner, PendingApprovalNotice, RideNotices } from '../ShellNotices'
-import { focusRingNight } from '../workspace/styles'
+import { focusRing } from '../workspace/styles'
 
 // A volunteer's signed-in app: their own workspace, with transportation as the first service.
 export function VolunteerShell() {
@@ -97,22 +97,22 @@ function VolunteerTabBar() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `group/tab relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors duration-150 ease-out-quart ${focusRingNight} focus-visible:ring-inset focus-visible:ring-offset-0 ${
-                  isActive ? 'text-white' : 'text-slate-400 active:text-white'
+                `group/tab relative flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors duration-150 ease-out-quart ${focusRing} focus-visible:ring-inset focus-visible:ring-offset-0 ${
+                  isActive ? 'text-ink' : 'text-slate-500 active:text-ink'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* The current tab is marked by shape as well as colour: a white pill behind its icon, on the night bar */}
+                  {/* The current tab is marked by shape as well as colour: a midnight pill behind its icon, as in the sidebar */}
                   <span
                     className={`relative flex h-8 w-14 items-center justify-center rounded-full transition-[background-color,scale] duration-200 ease-out-expo group-active/tab:scale-95 ${
-                      isActive ? 'bg-white text-brand-600 shadow-[0_6px_16px_-8px_rgb(2_151_222/0.7)]' : ''
+                      isActive ? 'bg-ink text-brand-300 shadow-[var(--shadow-press)]' : ''
                     }`}
                   >
                     <Icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} aria-hidden />
                     {badge && count > 0 && (
-                      <span className="absolute -right-0.5 -top-1 min-w-5 rounded-full bg-sun-400 px-1.5 text-center text-[11px] font-bold leading-5 tabular-nums text-ink ring-2 ring-night" aria-hidden>
+                      <span className="absolute -right-0.5 -top-1 min-w-5 rounded-full bg-sun-400 px-1.5 text-center text-[11px] font-bold leading-5 tabular-nums text-ink ring-2 ring-white" aria-hidden>
                         {count}
                       </span>
                     )}

@@ -1,6 +1,6 @@
 import type { UserRole } from '../types'
 
-// Shared Tailwind class names (Relay Collective console 2.0). Big targets, clear focus, readable text throughout.
+// Shared Tailwind class names (Relay Collective console 2.1). Big targets, clear focus, readable text throughout.
 // Radii: rounded-2xl (16px) for cards and panels, rounded-xl (12px) for inputs and tiles, rounded-full for buttons
 // and chips. Cards rest on a hairline and a soft offset fall (--shadow-rest); things that float get --shadow-lift.
 // Midnight ink is the primary action; electric blue (brand-600) marks what is selected or active.
@@ -15,8 +15,6 @@ export const secondaryButton = `${button} border border-slate-200 bg-white text-
 export const ghostButton = `${button} text-slate-700 hover:bg-slate-100 hover:text-ink`
 export const dangerButton = `${button} bg-red-600 text-white shadow-[var(--shadow-press)] hover:bg-red-700 active:bg-red-800`
 export const dangerOutlineButton = `${button} border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50`
-// For the one action on a night surface (the CareRide hero card): a white pill with ink type
-export const inverseButton = `${button} bg-white text-ink shadow-[0_1px_2px_rgb(0_0_0/0.3)] hover:bg-brand-50 active:bg-brand-100 focus-visible:ring-offset-night`
 
 export const input =
   'min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-ink shadow-[inset_0_1px_2px_rgb(17_24_32/0.04)] placeholder:text-slate-500 transition hover:border-slate-400 focus:border-brand-600 focus:outline-none focus:ring-[3px] focus:ring-brand-100 aria-[invalid=true]:border-red-600 aria-[invalid=true]:focus:ring-red-100'

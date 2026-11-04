@@ -511,7 +511,7 @@ function Workspace({ active, compact = false }: { active: PartKey | null; compac
     <div className={`min-w-0 ${compact ? 'px-4 pb-4 pt-4' : 'px-[1.5em] pb-[1.4em] pt-[1.4em]'}`}>
       {!compact && <p className="mb-[0.35em] truncate font-dm text-[0.68em] font-medium text-hush">{DEMO_ORG}</p>}
       <p className={`font-grotesk font-semibold leading-tight tracking-[-0.03em] text-midnight ${compact ? 'text-[19px]' : 'text-[1.35em]'}`}>
-        Good afternoon, {DEMO_STAFF.first}.
+        Good <em className="font-editorial text-[1.1em] font-normal italic tracking-[-0.02em] text-cantaloupe-ink">afternoon</em>, {DEMO_STAFF.first}.
       </p>
       <span className={`mt-[0.2em] block truncate font-dm text-hush ${compact ? 'text-[13px]' : 'text-[0.75em]'}`}>
         Here's what's happening across your organization.
@@ -577,7 +577,7 @@ function Workspace({ active, compact = false }: { active: PartKey | null; compac
   return (
     <div className="rcl-lift-lg overflow-hidden rounded-[1.1em] border border-hairline bg-white">
       <div className="grid grid-cols-[3.6em_1fr]">
-        <aside className="flex flex-col items-center gap-[0.35em] border-r border-hairline bg-porcelain pb-[1.4em] pt-[1.2em]">
+        <aside className="flex flex-col items-center gap-[0.35em] border-r border-hairline bg-white pb-[1.4em] pt-[1.2em]">
           <LogoMark className="mb-[0.9em] h-[1.5em] w-[1.5em]" />
           {NAV.map(({ label, icon: I, current, badge, part }) => (
             <span

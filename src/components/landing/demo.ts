@@ -7,22 +7,6 @@ export const DEMO_STAFF = { first: 'Alex', last: 'Lee', initials: 'AL', role: 'O
 // Ride status words, exactly as StatusBadge shows them
 export type DemoStatus = 'Finding a driver' | 'Driver confirmed' | 'Picked up' | 'Completed'
 
-export const DEMO_UPCOMING: { who: string; time: string; to: string; status: DemoStatus }[] = [
-  { who: 'JD', time: '2:30 PM', to: 'Medical appointment', status: 'Driver confirmed' },
-  { who: 'SK', time: '3:15 PM', to: 'Housing interview', status: 'Picked up' },
-  { who: 'RM', time: '4:00 PM', to: 'Social service visit', status: 'Finding a driver' },
-]
-
-// The showcase's people panel: one invitation each, the access their role needs
-export type DemoRole = 'Admin' | 'Staff' | 'Volunteer driver'
-
-export const DEMO_PEOPLE: { initials: string; name: string; role: DemoRole | null }[] = [
-  { initials: 'AL', name: 'Alex Lee', role: 'Admin' },
-  { initials: 'PN', name: 'Priya N.', role: 'Staff' },
-  { initials: 'MR', name: 'Maya R.', role: 'Volunteer driver' },
-  { initials: 'DO', name: 'Dev O.', role: null },
-]
-
 // The hero workspace's activity feed: one line from each part of the platform that works today
 export type DemoArea = 'organizations' | 'volunteers' | 'transport' | 'impact'
 
@@ -30,4 +14,19 @@ export const DEMO_ACTIVITY: { area: DemoArea; text: string; when: string }[] = [
   { area: 'volunteers', text: 'Maya R. joined as a volunteer driver', when: '2h ago' },
   { area: 'transport', text: 'Ride to Downtown Health Clinic confirmed', when: '4h ago' },
   { area: 'organizations', text: 'Eastside Food Bank accepted your invite', when: 'Yesterday' },
+]
+
+// The role showcase: a volunteer driver's and a platform admin's view of the same made-up network
+export const DEMO_DRIVER = { first: 'Maya', initials: 'MR', detail: 'Volunteer driver' }
+
+export const DEMO_OFFER = { from: `${DEMO_ORG}, Vancouver`, to: "St. Paul's Hospital", when: 'Today, 2:30 PM', answerBy: '1:30 PM' }
+
+export const DEMO_REVIEWS: { kind: string; name: string }[] = [
+  { kind: 'Organization registration', name: 'Eastside Food Bank' },
+  { kind: 'Driver verification', name: 'Sam T.' },
+]
+
+export const DEMO_PLATFORM_ACTIVITY: { text: string; when: string }[] = [
+  { text: 'Harbour Youth Services was approved', when: '9:12 AM' },
+  { text: 'Dev O. verified as a volunteer driver', when: 'Yesterday' },
 ]

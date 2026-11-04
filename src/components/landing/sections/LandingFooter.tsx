@@ -17,7 +17,8 @@ const COLUMNS: { title: string; id?: string; links: { label: string; href: strin
     links: [
       { label: 'Platform', href: '#platform' },
       { label: 'Modules', href: '#solutions' },
-      { label: 'The workspace', href: '#showcase' },
+      { label: 'Workspaces', href: '#showcase' },
+      { label: 'A ride, start to finish', href: '#ride' },
       { label: 'How it works', href: '#how-it-works' },
       { label: 'Impact', href: '#impact' },
     ],

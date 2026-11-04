@@ -22,5 +22,5 @@
     "noFallthroughCasesInSwitch": true,
     "strict": true
   },
-  "include": ["e2e", "playwright.config.ts"]
+  "include": ["e2e", "playwright.config.ts", "playwright.screenshots.config.ts"]
 }

@@ -127,6 +127,7 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 | `npm run test:db` | Run every migration in an embedded Postgres and test the feedback, membership and account-deletion rules against it. |
 | `npm run test:e2e` | Run the Playwright browser tests against a mock build. Run `npx playwright install chromium` once first. See [E2E_TESTING.md](E2E_TESTING.md). |
 | `npm run test:e2e:ui` | Open Playwright's UI mode to run and step through browser tests. `test:e2e:smoke`, `test:e2e:headed` and `test:e2e:report` also exist. |
+| `npm run docs:screenshots` | Retake the README screenshots in `docs/images/` from a mock build, with a few demo rides booked so every overview has something on it. |
 | `npm run build` | Run TypeScript project checks and create the production build in `dist/`. |
 | `npm run preview` | Serve an existing production build locally. |
 | `npm run deploy` | Zip the current `dist/` as an Android live-update bundle, then deploy with Wrangler. Run `npm run build` first. |

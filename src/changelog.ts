@@ -22,6 +22,7 @@ export const RELEASES: Release[] = [
       'CareRide’s tabs are now one bar of pills, with the page you are on raised.',
       'Cards, panels and dialogs have softer corners and a light shadow, and the numbers on your overview are larger.',
       'If your device is set to reduce motion, nothing moves: the route is shown already drawn and pages appear in place.',
+      'Our home page now shows each workspace as it looks today, for organizations, volunteer drivers and platform admins, and walks through one ride from booking to drop-off.',
       'Nothing about how rides are booked, matched, accepted or cancelled has changed.',
     ],
   },

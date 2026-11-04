@@ -8,7 +8,8 @@ import { LandingCTA } from '../../components/landing/sections/LandingCTA'
 import { LandingFooter } from '../../components/landing/sections/LandingFooter'
 import { LandingHero } from '../../components/landing/sections/LandingHero'
 import { PlatformCapabilities } from '../../components/landing/sections/PlatformCapabilities'
-import { ProductShowcase } from '../../components/landing/sections/ProductShowcase'
+import { RideRelay } from '../../components/landing/sections/RideRelay'
+import { WorkspaceShowcase } from '../../components/landing/sections/WorkspaceShowcase'
 import { useApp } from '../../hooks/useApp'
 import { HOME_FOR } from '../../logic/homeFor'
 
@@ -40,7 +41,8 @@ function PublicSite() {
       <main id="main">
         <LandingHero />
         <PlatformCapabilities />
-        <ProductShowcase />
+        <WorkspaceShowcase />
+        <RideRelay />
         <HowItWorks />
         <ImpactSection />
         <LandingCTA />

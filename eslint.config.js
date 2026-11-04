@@ -21,6 +21,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  // Unit and database tests run in Node.
+  {
+    files: ['tests/**/*.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   // Playwright tests run in Node. Their fixtures call `use()`, which isn't a React hook,
   // and a fixture with no dependencies is written `async ({}, use) => …`.
   {

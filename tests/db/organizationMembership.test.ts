@@ -60,7 +60,7 @@ async function addMember(role: string, orgId: string | null, houseId: string | n
 }
 
 const search = (who: Actor, q: string) =>
-  as(db, who, (tx) => tx.query<{ id: string; name: string; city: string }>(`select * from public.search_organizations($1)`, [q]).then((r) => r.rows))
+  as(db, who, (tx) => tx.query<{ id: string; name: string; city: string; description: string | null }>(`select * from public.search_organizations($1)`, [q]).then((r) => r.rows))
 const submit = (who: Actor, orgId: string, position: string | null = 'Case worker', message: string | null = 'I run the Tuesday program.') =>
   as(db, who, (tx) => one<{ id: string }>(tx, `select public.submit_join_request($1, $2, $3) as id`, [orgId, position, message]).then((r) => r.id))
 const approve = (who: Actor, id: string, role = 'STAFF') =>

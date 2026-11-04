@@ -1,10 +1,10 @@
 # Relay Collective: Design
 
-Visual and tone guidelines for Relay Collective. **v1.0, shipped with Relay Collective 1.6.** One light-first system for the whole product: the public site, sign in and onboarding, the organization and volunteer workspaces, and the admin console.
+Visual and tone guidelines for Relay Collective. **v2.0 (console 2.0), shipped with Relay Collective 1.8**, on the v1.0 palette, type and logo from 1.6. One light-first system for the whole product: the public site, sign in and onboarding, the organization and volunteer workspaces, and the admin console.
 
 **In three words:** clear, warm, precise. **One impression to leave:** "technology that brings us together, and gets out of the way."
 
-The public site is a Persuade surface: editorial, expressive, product-led. The consoles are Operate surfaces: dense where that helps, calm, scannable. They share one palette, one type system, one logo and one component language, so they read as the same product.
+The public site is a Persuade surface: editorial, expressive, product-led. The consoles are Operate surfaces: dense where that helps, calm, scannable, and since 2.0 framed with conviction: a night frame around a porcelain sheet, display-size greetings, and one night card per overview. They share one palette, one type system, one logo and one component language, so they read as the same product.
 
 ## 1. Direction
 
@@ -70,6 +70,7 @@ Light first. Porcelain and white take most of the area; midnight ink carries typ
 | Success | `emerald-50` / `emerald-700` / `emerald-800` | | Approved, completed, resolved, saved, active. Only these |
 | Warning | `sun-100` / `sun-400`, `amber-*` | | Waiting, pending review. Yellow is a fill with ink text, never text |
 | Error / urgent | `red-*`, `care-red` | | Errors, destructive actions, "No driver available". Never replaced by cantaloupe |
+| Night | `night` / `night-raised` / `night-line` | `#0b1117` / `#141c24` / `#222c36` | Console 2.0 frame: the sidebar, the phone drawer, the volunteer tab bar, and one module card per overview. Text on night: white, `slate-300` body (11:1), `slate-400` meta (7:1). A step deeper than midnight ink, so ink type and buttons still read on the sheet |
 
 The older `rc-*` names still work: they point at the 1.6 values. `rc-teal`, `rc-teal-ink` and `rc-mint` are electric, for section icons and progress; success always uses emerald explicitly.
 
@@ -86,7 +87,7 @@ The older `rc-*` names still work: they point at the 1.6 values. `rc-teal`, `rc-
 
 - Never rely on colour alone for status: icon and words too.
 - Small text in a brand hue uses the 600+/`-ink` shade. Display-size cantaloupe words use `cantaloupe-display` `#e85a30` (3.35:1).
-- No gradients in UI chrome, no glows, no glass. Large flat discs of electric and cantaloupe are the brand's only decorative shapes, and only on brand surfaces (public site, auth brand panel, What's New header).
+- No gradients in UI chrome, no glows, no glass. Large flat discs of electric and cantaloupe are the brand's only decorative shapes, and only on brand surfaces (public site, auth brand panel, What's New header) and, in the consoles, the CareRide route drawn on its night card.
 
 ### Ride status colours
 
@@ -114,14 +115,16 @@ Self-hosted with `@fontsource` (loaded once in `src/main.tsx`).
 
 - **Space Grotesk** (`font-display`, `font-heading`, `font-grotesk`), 500–700: page and section titles, numbers in stat tiles, the wordmark. Tracking −0.02 to −0.04em, tighter as it gets larger.
 - **DM Sans** (`font-sans`, `font-dm`), 400–700: everything you read or operate: body, labels, buttons, forms, tables, navigation.
-- **Instrument Serif italic** (`font-editorial`): one or two accent words in public-site headlines, the auth brand panel and the What's New subtitle. Never in forms, tables, statuses or admin information.
+- **Instrument Serif italic** (`font-editorial`): one or two accent words in public-site headlines, the auth brand panel and the What's New subtitle, and (2.0) the time of day in the console greetings (`Greeting` in `PageHeader.tsx`: "Good *morning*.", cantaloupe-display, 1.12em). Never in forms, tables, statuses or admin information.
 
 | Style | Size / line | Weight |
 | --- | --- | --- |
 | Public hero | 44–92px / 0.95 | Space Grotesk 600 |
-| Page title (consoles) | 30px / 1.15 | Space Grotesk 700 (`pageTitle`) |
+| Page title (consoles) | 30px phone, 40px from sm / 1.08, −0.035em | Space Grotesk 700 (`PageHeader`, `pageTitle`) |
 | Auth title | 30–38px / 1.08 | Space Grotesk 600 (`authTitle`) |
-| Panel title | 17px | Space Grotesk 600 (`panelTitle`) |
+| Section title (on the sheet) | 22px | Space Grotesk 700 (`sectionTitle`) |
+| Panel title | 18px | Space Grotesk 700 (`panelTitle`) |
+| Metric number | 34px phone, 44px from sm, −0.045em | Space Grotesk 600, tabular |
 | Body | 16px / 1.5 | DM Sans 400 |
 | Label / button | 14–16px | DM Sans 600 |
 | Caption | 13px | DM Sans 500 |
@@ -131,12 +134,12 @@ Self-hosted with `@fontsource` (loaded once in `src/main.tsx`).
 
 ## 5. Shape, spacing, layout
 
-- **Radius:** 12px (`rounded-xl`) for cards, inputs, tiles and dialogs. 9999px (`rounded-full`) for every button, chip and avatar. 8px (`rounded-lg`) only for small inline controls such as icon buttons and text links with a hover fill. Nothing larger than 12px on a card.
+- **Radius (2.0):** 16px (`rounded-2xl`) for cards and panels, 20px for dialogs, 28px for the sheet's one turned corner. 12px (`rounded-xl`) for inputs, tiles and sidebar items. 9999px (`rounded-full`) for every button, chip, tab pill and avatar. 8px (`rounded-lg`) only for small inline icon buttons.
 - **Spacing scale:** 4 / 8 / 12 / 16 / 24 / 32 / 48. Tailwind defaults.
 - **Touch targets:** 48×48px minimum. Staff may be wearing gloves or in a hurry.
 - **Layout:** mobile-first, single column up to 640px, max content width 960px. Booking flows are step-by-step, one question per step.
-- **Elevation:** one approach per element. In-page cards get a `slate-200` border and no shadow. Shadows are only for things that float: menus, dialogs, toasts, the floating "Request a ride" button. No coloured glow shadows.
-- **Background:** flat porcelain `canvas`. No radial glows, blurred blobs, or frosted glass. Sticky bars and sidebars are solid white with a `slate-200` edge.
+- **Elevation (2.0):** three tokens in `index.css`. `--shadow-rest` (a hairline of contact and a soft offset fall) on every card and panel, with a `slate-200/80` edge; `--shadow-lift` on menus and on interactive tiles under hover; `--shadow-press` on primary and danger pills (a light top edge and a short fall). The current sidebar item and the volunteer tab pill carry a faint electric fall, the one coloured shadow, and only on night. No zero-offset glows.
+- **Frame and sheet (2.0):** from the tablet breakpoint the console is a night frame (the sidebar) with the workspace as a porcelain sheet set into it, its top-left corner turned at 28px where they meet. The sticky header is porcelain with night behind its corner, so the turn holds while the page scrolls. Phones have no frame: the sheet is the screen, and the drawer and the volunteer tab bar are night. Still no radial glows, blobs or frosted glass.
 - **Public hero mesh:** the one exception to a plain ground. Behind the landing hero only, a still hairline midnight grid that a soft electric light picks out around the pointer (light, never movement, so text never shifts), and that carries cantaloupe relay points from node to node (`components/landing/HeroMesh.tsx`). Lines and dots only: still no glows, blobs or gradient fields.
 - **Public site:** may use larger radii (16–28px) on product pictures and a soft offset shadow (`rcl-lift`) on floating product cards. The consoles keep the 12px rule.
 
@@ -155,7 +158,7 @@ It replaces the old rainbow `bg-spectrum` bar. Plain cards (audience cards, stat
 
 Shared classes live in `src/components/ui.ts`, `src/components/workspace/styles.ts` (consoles) and `src/components/auth/styles.ts` (sign in and onboarding). Change these before touching a screen.
 
-- **Primary button** (`primaryButton`): midnight ink fill, white text, pill. Hover `brand-700`. One per screen.
+- **Primary button** (`primaryButton`): midnight ink fill, white text, pill, `--shadow-press`. Hover `brand-700`. One per screen. On night, the inverse (`inverseButton`): white pill, ink text.
 - **Secondary button:** white, `slate-300` border, ink text; the border darkens on hover.
 - **Signature CTA pair** (public site only, `ctaSignature` / `ctaQuiet` and their chambers in `components/landing/styles.ts`, used by `HeroCTAButtons`): for a page's one main decision. Two 60px pills, label left and a 48px round arrow chamber set 6px inside the right edge. Primary is `electric-ink` with white text and a white chamber, a light top edge, a faint inner base and a short offset shadow; it lifts 1px on hover. Secondary is white with a `midnight/15` hairline and a porcelain chamber that turns midnight on hover. On hover the arrow hands off: one slides out as the next slides in. Full width and stacked 12px apart on phones. Focus is a 3px `electric-ink` outline, offset 3px.
 - **Selected state:** electric. Choice cards, chips, toggles, the current onboarding step and active navigation use `brand-600` / `brand-50`.
@@ -171,9 +174,10 @@ Shared classes live in `src/components/ui.ts`, `src/components/workspace/styles.
 - **Metric strip** (`MetricGroup` + `MetricCard`): one bordered panel split by hairlines, never a row of separate cards. Each cell is a three-row subgrid (label with a 16px icon, number, hint), so numbers line up when a label wraps. A raised cell is tinted red (something's wrong) or sun (work waiting), with the hint in words.
 - **Attention first:** each overview opens with what needs the person. Items lead with care red when someone is waiting (a ride with no driver), sun for queues; urgent items sort first so a list limit can never hide them.
 - **Activity:** a day-grouped timeline, icons on one hairline, time of day on the right.
-- **Filters and tabs:** filters are pills with the electric selected state (`brand-50`, `brand-700` text, `brand-200` inner edge). Section tabs are underlined in `brand-600`. On narrow screens a scrolling strip fades at its right edge.
+- **Filters and tabs:** filters are pills with the electric selected state (`brand-50`, `brand-700` text, `brand-200` inner edge). Tabs inside a panel are underlined in `brand-600`. A module's page tabs (CareRide) are a segmented bar (2.0): a `slate-200/60` track with the current page a raised white pill and an electric icon. On narrow screens a scrolling strip fades at its right edge.
+- **Sidebar (2.0, `SidebarNav`):** night. The logo is the app icon (`AppIconMark`: white and midnight hooks on an electric tile), the wordmark white. The context card is `night-raised` with a `night-line` edge; partner organizations show an electric tile, volunteers cantaloupe, admins white. Links are `slate-300`, `night-raised` on hover; the current page is a white pill with ink type and an electric icon, so it reads by shape and contrast. Focus on night is `focusRingNight` (`brand-400`, night offset).
 - **Page header meta:** context such as the date or a reference sits under the h1, never above it.
-- **Service modules** (`src/workspace/modules.ts`, `components/workspace/ServiceModuleCard.tsx`): Relay Collective is the platform; modules sit on it. One registry describes every module (`active` or `planned`). Active modules get an electric-tint icon tile, an emerald "Active" badge and one midnight "Open …" pill whose arrow steps forward on hover. Planned modules are dashed, quieter, labelled "Planned" in words, and have no link, button or hover. Only active modules appear in navigation. The org overview leads its "Your modules" section with CareRide (its ride numbers as a bare `MetricGroup` along the card's foot), with two planned modules beside it.
+- **Service modules** (`src/workspace/modules.ts`, `components/workspace/ServiceModuleCard.tsx`): Relay Collective is the platform; modules sit on it. One registry describes every module (`active` or `planned`). Active modules get an electric-tint icon tile, an emerald "Active" badge and one midnight "Open …" pill whose arrow steps forward on hover. On the overviews (2.0) the active module leads as the one night card: a white icon tile, white name, the emerald badge on night, the inverse "Open …" pill, and its own trip drawn large at the bottom right (`RouteArt`: pickup ring, electric road, cantaloupe drop-off on a faint dot grid, `aria-hidden`), with its numbers on white beneath. The volunteer overview uses the same band over the driver's CareRide numbers. Planned modules are dashed, quieter, labelled "Planned" in words, and have no link, button or hover. Only active modules appear in navigation. The org overview leads its "Your modules" section with CareRide (its ride numbers as a bare `MetricGroup` along the card's foot), with two planned modules beside it.
 - **CareRide** (the transportation module): mark `CareRideMark` (`modules/careride/brand.tsx`), one trip drawn like a ride card's route: an open midnight pickup ring, an electric road that steps up, a cantaloupe drop-off. It draws in `currentColor` in navigation. CareRide branding lives only inside the module (its header, tabs, nav entry and cards); the Relay Collective logo stays on every shell. Inside the module, `CareRideLayout` shows the module header (mark, name, "Transportation coordination", Active) and underlined tabs: Overview, Requests, New ride, Destinations, History.
 
 ## 7. Imagery and iconography
@@ -227,6 +231,8 @@ The public site keeps its own `rcl-` classes for motion and layout, and uses the
 
 Motion in the consoles is quick and quiet: hover transitions, the dialog and drawer entrances, and the status ring. The public hero plays one ride once. Everything respects reduced motion.
 
+Console 2.0 adds two moments, both off under reduced motion: each page settles into the sheet as you arrive (`.rc-page`, 320ms, from 40% opacity and 6px, fill `backwards` so nothing lingers), and the CareRide route draws itself once on the overview (`.rc-route-draw`, 0.85s, then the drop-off pops in). `.workspace` themes the browser's own surfaces: electric text selection, an electric-ink caret, and thin palette scrollbars (dark on night).
+
 Console motion tokens (`index.css`): `ease-out-quart` for hovers and presses (150ms; presses scale to 0.97), `ease-out-expo` for things that move into place. The sidebar collapses over 220ms. Every `<dialog>` carries `rc-dialog` (rises 8px and fades in over 240ms, fades out on close, backdrop midnight at 40%); the phone drawer carries `rc-drawer` (slides from the left). Both use `@starting-style` and `allow-discrete`, so the native top layer still owns focus and Escape.
 
 **Delight rules (v0.3).** Delight has to carry information, or it doesn't ship.
@@ -267,6 +273,7 @@ Still open: Inter as the body face (kept by choice) and motion (left alone by ch
 
 ## Changelog
 
+- **v2.0 (2026-11-04, Relay Collective 1.8):** Console 2.0. Same palette, type and logo; a bolder frame. The sidebar, phone drawer and volunteer tab bar move to night (`#0b1117`), and the workspace becomes a porcelain sheet set into the frame with one 28px turned corner. The current page is a white pill. Greetings are 40px with the time of day in Instrument Serif ("Good *morning*."). Cards and panels move to 16px with a resting shadow (`--shadow-rest`); dialogs 20px; primary pills get `--shadow-press`. The overview's active module becomes a night card with the CareRide route drawn across it, drawing once; the volunteer overview gets the same band. CareRide's tabs become a segmented pill bar. Metric numbers grow to 44px. Pages settle in on arrival. Selection, caret and scrollbars are themed. Rules changed: the 12px card cap, "in-page cards get no shadow", and "sidebars are solid white" (see §5).
 - **v1.2.1 (2026-11-03):** The landing intro and the modules section become one section: one statement ("Every nonprofit rebuilds the same tools. Let’s build them once.") with one note beside it, set bottom-aligned to the headline, then the foundation and module cards. The two back-to-back headline-and-note blocks are gone. The landing names CareRide everywhere it shows transportation.
 - **v1.2 (2026-11-03):** Modular platform. Transportation becomes CareRide, the first active module, with its own mark and module header. Volunteer coordination, Resource sharing and Cross-organization collaboration are planned. The workspace sidebar groups Workspace (Overview, Organization, Team) and Your modules (CareRide, All modules). The org overview gains "Your modules" and an organization facts line. The requests list and history are CareRide tabs, at their existing addresses. The volunteer and admin consoles name CareRide where they show transportation. The landing modules heading reads "One connected platform. Multiple ways to make an impact."
 - **v1.1 (2026-11-02):** The signed-in consoles are refined, with no change to the palette, type or logo. One console header (`ShellHeader`, 56px, breadcrumb) replaces three. The sidebar collapse is animated, and sign out and collapse share the footer row. Workspace navigation groups Transportation and All services under Services. Overviews open with what needs attention, then a hairline metric strip (`MetricGroup`), a day-grouped activity timeline, and a compact services list. The org home shows the next pickup when there is one. Rides with no driver lead the admin attention list in care red. All dialogs share one entrance and exit, and the drawer slides in. Filters use the electric selected state. Page meta moves under the title. The volunteer tab bar marks the current tab with a pill as well as colour. Placeholder dashes and "Not recorded" move from slate-400 to slate-500 for contrast. The account menu button reaches 44px.

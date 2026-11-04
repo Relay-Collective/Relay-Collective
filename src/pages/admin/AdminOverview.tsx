@@ -9,7 +9,7 @@ import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { ModuleBadge, ModuleIconTile, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
-import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
+import { focusRing, panel, panelHead, panelLink, panelTitle, sectionTitle } from '../../components/workspace/styles'
 import { useAdmin } from '../../hooks/useAdmin'
 import { useNow } from '../../hooks/useNow'
 import { approvalQueue, platformMetrics, recentIssues, registrationActivity, reportedIssues, rideStage } from '../../logic/adminSummary'
@@ -258,12 +258,12 @@ export function AdminOverview() {
       </div>
 
       <section aria-labelledby="services-title">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 id="services-title" className={panelTitle}>
+            <h2 id="services-title" className={sectionTitle}>
               Service overview
             </h2>
-            <p className="text-sm text-slate-500">Modules on the platform. CareRide, for transportation, is the only one in use today.</p>
+            <p className="mt-1 text-[15px] text-slate-600">Modules on the platform. CareRide, for transportation, is the only one in use today.</p>
           </div>
           <Link to={adminPaths.services} className={panelLink}>
             All services <ArrowRight className="h-4 w-4" aria-hidden />

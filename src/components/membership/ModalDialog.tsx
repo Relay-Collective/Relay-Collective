@@ -33,7 +33,7 @@ export function ModalDialog({ open, title, description, busy, onClose, children,
         e.preventDefault()
         if (!busy) onClose()
       }}
-      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-hidden rc-dialog rounded-xl p-0 text-rc-navy shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)] open:flex open:flex-col"
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-hidden rc-dialog rounded-[20px] p-0 text-rc-navy shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)] open:flex open:flex-col"
     >
       <div className="flex items-start gap-3 border-b border-slate-100 px-6 py-4">
         <div className="min-w-0 flex-1">

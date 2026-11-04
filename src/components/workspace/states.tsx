@@ -12,12 +12,17 @@ import { compactButton } from './styles'
 export function EmptyState({ icon, title, text, action, compact, tone = 'clear' }: { icon: ReactNode; title: string; text?: string; action?: ReactNode; compact?: boolean; tone?: 'clear' | 'neutral' }) {
   if (compact) {
     return (
-      <div className="flex items-center gap-3 px-5 py-4">
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full [&>svg]:h-[18px] [&>svg]:w-[18px] ${tone === 'clear' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`} aria-hidden>
+      <div className="flex items-center gap-3.5 px-5 py-4 sm:px-6">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full [&>svg]:h-[18px] [&>svg]:w-[18px] ${
+            tone === 'clear' ? 'bg-emerald-50 text-emerald-700 shadow-[inset_0_0_0_1px_rgb(16_185_129/0.2),0_0_0_5px_rgb(16_185_129/0.06)]' : 'bg-slate-100 text-slate-500'
+          }`}
+          aria-hidden
+        >
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold text-rc-navy">{title}</span>
+          <span className="block font-heading text-base font-bold tracking-[-0.01em] text-ink">{title}</span>
           {text && <span className="block text-sm text-slate-600">{text}</span>}
         </span>
         {action && <span className="shrink-0">{action}</span>}
@@ -25,11 +30,11 @@ export function EmptyState({ icon, title, text, action, compact, tone = 'clear' 
     )
   }
   return (
-    <div className="flex flex-col items-center px-4 py-10 text-center">
-      <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-rc-mint text-rc-teal-ink" aria-hidden>
+    <div className="flex flex-col items-center px-4 py-12 text-center">
+      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shadow-[inset_0_0_0_1px_var(--color-brand-100),0_0_0_6px_rgb(2_151_222/0.05)]" aria-hidden>
         {icon}
       </span>
-      <p className="font-semibold text-rc-navy">{title}</p>
+      <p className="font-heading text-lg font-bold tracking-[-0.02em] text-ink">{title}</p>
       {text && <p className="mt-1 max-w-sm text-sm text-slate-600">{text}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>

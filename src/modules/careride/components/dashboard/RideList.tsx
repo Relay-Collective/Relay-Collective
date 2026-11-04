@@ -287,11 +287,11 @@ function StatusDot({ ride }: { ride: Ride }) {
 
 function Empty({ icon, title, text, action }: { icon: ReactNode; title: string; text: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center px-4 py-10 text-center">
-      <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500" aria-hidden>
+    <div className="flex flex-col items-center px-4 py-12 text-center">
+      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 shadow-[inset_0_0_0_1px_rgb(17_24_32/0.06),0_0_0_6px_rgb(17_24_32/0.025)]" aria-hidden>
         {icon}
       </span>
-      <p className="font-bold text-ink">{title}</p>
+      <p className="font-heading text-lg font-bold tracking-[-0.02em] text-ink">{title}</p>
       <p className="mt-1 max-w-sm text-sm text-slate-500">{text}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>

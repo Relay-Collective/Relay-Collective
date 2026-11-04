@@ -558,7 +558,7 @@ export function RideDetail() {
 
       <dialog
         ref={transitDialog}
-        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl p-6 text-ink rc-dialog shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
+        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[20px] p-6 text-ink rc-dialog shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
       >
         <h2 className="text-xl font-bold">Send them on transit?</h2>
         <p className="mt-2 text-slate-700">

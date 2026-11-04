@@ -15,7 +15,7 @@ interface Props {
   alert?: boolean // draws the eye: something here needs doing
 }
 
-const tile = 'relative flex h-full flex-col rounded-xl border bg-white p-5 transition'
+const tile = 'relative flex h-full flex-col rounded-2xl border bg-white p-5 shadow-[var(--shadow-rest)] transition duration-200 ease-out-quart sm:p-6'
 
 // One headline number. The label leads with a small coloured icon; the value stays in ink.
 export function StatTile({ label, value, icon, tone, note, to, onClick, actionLabel, alert }: Props) {
@@ -32,13 +32,13 @@ export function StatTile({ label, value, icon, tone, note, to, onClick, actionLa
           <ArrowRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-ink" aria-hidden />
         )}
       </div>
-      <p className="mt-3 font-display text-4xl font-bold tabular-nums tracking-tight text-ink">{value}</p>
-      {note && <p className={`mt-1 text-sm ${alert ? 'font-semibold text-red-700' : 'text-slate-500'}`}>{note}</p>}
+      <p className="mt-4 font-display text-[40px] font-semibold leading-none tabular-nums tracking-[-0.045em] text-ink">{value}</p>
+      {note && <p className={`mt-2 text-sm ${alert ? 'font-semibold text-red-700' : 'text-slate-500'}`}>{note}</p>}
     </>
   )
 
-  const ring = alert ? 'border-red-300 bg-red-50/40' : 'border-slate-200'
-  const interactive = `group ${tile} ${ring} w-full text-left hover:-translate-y-0.5 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0`
+  const ring = alert ? 'border-red-300 bg-red-50/40' : 'border-slate-200/80'
+  const interactive = `group ${tile} ${ring} w-full text-left hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[var(--shadow-lift)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:translate-y-0`
   if (to) {
     return (
       <Link to={to} className={interactive} aria-label={actionLabel}>

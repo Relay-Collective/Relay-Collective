@@ -68,6 +68,18 @@
   /* Flat app background. One step below white cards, so a card reads by its edge, not a shadow */
   --color-canvas: #f8f9f7; /* porcelain */
 
+  /* Console 2.0: the night frame. The sidebar and the frame around the workspace sheet, a step deeper than
+     midnight ink so ink type and primary buttons still read as their own thing on the sheet.
+     Text on night: white for strong, slate-300 for body (11:1), slate-400 for meta (7:1). */
+  --color-night: #0b1117;
+  --color-night-raised: #141c24; /* hover and the context card on night */
+  --color-night-line: #222c36; /* hairlines on night */
+
+  /* Console 2.0 depth: a hairline of contact and a soft, offset fall. Cards rest; interactive cards lift. */
+  --shadow-rest: 0 1px 2px rgb(17 24 32 / 0.04), 0 6px 20px -14px rgb(17 24 32 / 0.14);
+  --shadow-lift: 0 1px 2px rgb(17 24 32 / 0.05), 0 18px 36px -18px rgb(17 24 32 / 0.26);
+  --shadow-press: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(17 24 32 / 0.24), 0 6px 14px -8px rgb(17 24 32 / 0.4);
+
   /* Care red and sun yellow: seasoning beside the blue, never side by side (see DESIGN.md) */
   --color-care-red: oklch(0.56 0.2 30);
   --color-sun-50: oklch(0.987 0.022 95);
@@ -244,12 +256,66 @@
 /* Consoles: thin scrollbars in the palette, and figures that line up in columns */
 .workspace {
   scrollbar-color: var(--color-slate-300) transparent;
+  caret-color: var(--color-electric-ink);
 }
 .workspace * {
   scrollbar-width: thin;
 }
 .workspace table {
   font-variant-numeric: tabular-nums;
+}
+.workspace ::selection {
+  background: var(--color-electric);
+  color: #fff;
+}
+.workspace p {
+  text-wrap: pretty;
+}
+/* Headings in the consoles sit tighter than their size's default, as Space Grotesk wants */
+.workspace :is(h2, h3) {
+  letter-spacing: -0.02em;
+}
+/* The night frame keeps its own scrollbar dark, so a long sidebar doesn't flash a light gutter */
+.rc-night {
+  scrollbar-color: var(--color-night-line) transparent;
+  color-scheme: dark;
+}
+
+/* Console 2.0: each page settles into the sheet as you arrive. Short and small, so it never holds up the task;
+   the page is fully visible from the first frame (opacity starts at 0.001 only to let the browser composite). */
+@media (prefers-reduced-motion: no-preference) {
+  .rc-page > * {
+    animation: rc-settle 320ms var(--ease-out-expo) backwards; /* backwards: nothing lingers once it lands, so fixed bars inside keep the viewport */
+  }
+}
+@keyframes rc-settle {
+  from {
+    opacity: 0.4;
+    translate: 0 6px;
+  }
+}
+
+/* A route that draws itself once, on a path with pathLength 1 (the CareRide hero card). The stops wait for it. */
+.rc-route-draw {
+  stroke-dasharray: 1;
+  animation: rcl-draw 0.85s cubic-bezier(0.65, 0, 0.35, 1) 100ms both;
+}
+.rc-stop-in {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rc-pop 0.5s var(--ease-out-expo) var(--stop-delay, 0ms) both;
+}
+@keyframes rc-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-route-draw,
+  .rc-stop-in {
+    animation: none;
+  }
 }
 
 /* Landing page: sections fade up once as they scroll into view (see Reveal.tsx).

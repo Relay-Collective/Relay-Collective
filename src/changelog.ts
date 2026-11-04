@@ -11,6 +11,21 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.8',
+    date: '2026-11-04',
+    title: 'Relay Collective 1.8',
+    summary: 'A workspace with room to think.',
+    changes: [
+      'The workspaces have a new look. The sidebar is now dark, and your pages sit on a light sheet beside it, so where you are and what you are working on are easy to tell apart.',
+      'The page you are on is a white pill in the sidebar. On a phone, the volunteer tab bar marks the current tab the same way.',
+      'Your overview greets you in larger type, and CareRide has its own dark card with its route drawn across it. Its numbers sit just below.',
+      'CareRide’s tabs are now one bar of pills, with the page you are on raised.',
+      'Cards, panels and dialogs have softer corners and a light shadow, and the numbers on your overview are larger.',
+      'If your device is set to reduce motion, nothing moves: the route is shown already drawn and pages appear in place.',
+      'Nothing about how rides are booked, matched, accepted or cancelled has changed.',
+    ],
+  },
+  {
     version: '1.7',
     date: '2026-11-03',
     title: 'Relay Collective 1.7',

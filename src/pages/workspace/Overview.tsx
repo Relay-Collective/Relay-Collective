@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom'
 import { NextPickup } from '../../modules/careride'
 import { ActionRequiredList } from '../../components/workspace/ActionRequiredList'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
-import { PageHeader } from '../../components/workspace/PageHeader'
+import { Greeting, PageHeader } from '../../components/workspace/PageHeader'
 import { QuickActions, type QuickAction } from '../../components/workspace/QuickActions'
 import { RecentActivityList } from '../../components/workspace/RecentActivityList'
 import { RoleBadge } from '../../components/membership/MemberRoleSelector'
 import { ActiveModuleFeature, PlannedModuleCard } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
-import { panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
+import { panel, panelHead, panelLink, panelTitle, sectionTitle } from '../../components/workspace/styles'
 import { primaryButton } from '../../components/ui'
 import { useApp } from '../../hooks/useApp'
 import { useNow } from '../../hooks/useNow'
@@ -68,24 +68,24 @@ export function Overview() {
     .sort((a, b) => Number(b.status === 'PICKED_UP') - Number(a.status === 'PICKED_UP') || byPickup(a, b))[0]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="mb-7">
         <PageHeader
-          title={name ? `${greeting}, ${name}.` : `${greeting}.`}
+          title={<Greeting greeting={greeting} name={name} />}
           eyebrow={date}
           description="Here's what's happening across your organization."
         />
         {/* The organization at a glance: whose workspace this is, where rides start, and this person's role in it */}
-        <dl className="-mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
-          <div className="flex min-w-0 items-center gap-1.5">
+        <dl className="-mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          <div className="flex min-h-8 min-w-0 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white py-1 pl-2.5 pr-3 shadow-[0_1px_2px_rgb(17_24_32/0.04)]">
             <dt className="sr-only">Organization</dt>
-            <Building2 className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-            <dd className="min-w-0 truncate font-semibold text-rc-navy">{org?.name ?? 'Your organization'}</dd>
+            <Building2 className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+            <dd className="min-w-0 truncate font-semibold text-ink">{org?.name ?? 'Your organization'}</dd>
           </div>
           {house && house.name.trim().toLowerCase() !== org?.name.trim().toLowerCase() && (
-            <div className="flex min-w-0 items-center gap-1.5">
+            <div className="flex min-h-8 min-w-0 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white py-1 pl-2.5 pr-3 shadow-[0_1px_2px_rgb(17_24_32/0.04)]">
               <dt className="sr-only">Pickup location</dt>
-              <MapPin className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+              <MapPin className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
               <dd className="min-w-0 truncate">{house.name}</dd>
             </div>
           )}
@@ -146,18 +146,18 @@ export function Overview() {
       {/* The modules this organization works in. CareRide leads with its live numbers; planned modules are
           labelled, quieter, and have no way in, so they never read as something to open. */}
       <section aria-labelledby="modules-title">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
           <div className="min-w-0">
-            <h2 id="modules-title" className="font-heading text-xl font-bold tracking-[-0.02em] text-rc-navy">
+            <h2 id="modules-title" className={sectionTitle}>
               Your modules
             </h2>
-            <p className="mt-0.5 text-sm text-slate-600">Everything your organization needs to coordinate community support, all in one place.</p>
+            <p className="mt-1 text-[15px] text-slate-600">Everything your organization needs to coordinate community support, all in one place.</p>
           </div>
           <Link to={paths.services} className={`${panelLink} -mr-2`}>
             All modules <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <ActiveModuleFeature module={CARERIDE} headingId="careride-title">
             {failed && <p className="border-t border-slate-200 px-5 py-3 text-sm text-red-700 sm:px-6">Couldn't load these numbers.</p>}
             <MetricGroup bare className="grid-cols-2 xl:grid-cols-4">
@@ -186,7 +186,7 @@ export function Overview() {
               />
             </MetricGroup>
           </ActiveModuleFeature>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
             {FEATURED_PLANNED.map((m) => (
               <PlannedModuleCard key={m.id} module={m} short />
             ))}

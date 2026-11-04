@@ -24,6 +24,7 @@ const KNOWN_ISSUES: Record<string, Record<string, number>> = {
   'volunteer overview': { 'label-content-name-mismatch': 5 },
   'admin overview': { 'label-content-name-mismatch': 7 },
   'organization overview on a phone': { 'label-content-name-mismatch': 5 },
+  'volunteer overview on a phone': { 'label-content-name-mismatch': 5 },
 }
 
 async function expectOnlyKnownIssues(page: Page, name: string) {
@@ -96,6 +97,20 @@ test.describe('accessibility', () => {
       // The account menu button keeps its name when the label is hidden on small screens
       await expect(page.getByRole('banner').getByRole('button', { name: 'Belkin House' })).toBeVisible()
       await expectOnlyKnownIssues(page, 'organization overview on a phone')
+    })
+
+    // The night surfaces (console 2.0): the tab bar along the foot of the volunteer workspace, and the drawer
+    test('the volunteer overview, with its night tab bar, has no new WCAG A/AA violations', async ({ page }) => {
+      await signIn(page, accounts.frank)
+      await expect(page.getByRole('navigation', { name: 'Quick' })).toBeVisible()
+      await expectOnlyKnownIssues(page, 'volunteer overview on a phone')
+    })
+
+    test('the open navigation drawer has no new WCAG A/AA violations', async ({ page }) => {
+      await signIn(page, accounts.belkin)
+      await page.getByRole('button', { name: 'Open navigation' }).click()
+      await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible()
+      await expectOnlyKnownIssues(page, 'navigation drawer on a phone')
     })
   })
 })

@@ -46,38 +46,41 @@ export function CareRideLayout() {
 
   return (
     <>
-      <div className="no-print mb-7 border-b border-slate-200">
-        <div className="flex items-center gap-3 pb-4">
-          <ModuleIconTile module={CARERIDE} />
+      <div className="no-print mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3.5">
+          <ModuleIconTile module={CARERIDE} size="lg" />
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <span className="font-heading text-xl font-bold leading-tight tracking-[-0.025em] text-rc-navy">{CARERIDE.name}</span>
+              <span className="font-heading text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink">{CARERIDE.name}</span>
               <ModuleBadge status="active" />
             </p>
             <p className="text-sm text-slate-500">{CARERIDE.tagline}</p>
           </div>
         </div>
+        {/* A segmented bar: the current page is a white pill raised off the track, so it reads by shape, not colour alone */}
         <nav
           ref={nav}
           aria-label={CARERIDE.name}
-          className="-mb-px -mx-1 flex gap-1 overflow-x-auto px-1 max-md:pr-8 max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)]"
+          className="-mx-4 overflow-x-auto px-4 max-md:[mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] sm:mx-0 sm:px-0"
         >
-          {TABS.map(({ to, label, icon: Icon, current }) => {
-            const on = current(pathname, view)
-            return (
-              <Link
-                key={label}
-                to={to}
-                aria-current={on ? 'page' : undefined}
-                className={`inline-flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-semibold transition-colors duration-150 ease-out-quart ${focusRing} focus-visible:ring-offset-0 ${
-                  on ? 'border-brand-600 text-rc-navy' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-rc-navy'
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${on ? 'text-brand-600' : ''}`} aria-hidden />
-                {label}
-              </Link>
-            )
-          })}
+          <div className="inline-flex gap-1 rounded-full bg-slate-200/60 p-1 shadow-[inset_0_1px_2px_rgb(17_24_32/0.06)] max-md:mr-8">
+            {TABS.map(({ to, label, icon: Icon, current }) => {
+              const on = current(pathname, view)
+              return (
+                <Link
+                  key={label}
+                  to={to}
+                  aria-current={on ? 'page' : undefined}
+                  className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ease-out-quart ${focusRing} focus-visible:ring-offset-0 ${
+                    on ? 'bg-white text-ink shadow-[0_1px_2px_rgb(17_24_32/0.08),0_4px_12px_-6px_rgb(17_24_32/0.2)]' : 'text-slate-600 hover:bg-white/60 hover:text-ink'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${on ? 'text-brand-600' : ''}`} aria-hidden />
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
         </nav>
       </div>
       <Outlet />

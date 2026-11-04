@@ -44,6 +44,7 @@ import { JoinRequestStatus } from './pages/onboarding/JoinRequestStatus'
 import { OrganizationOnboarding } from './pages/onboarding/organization/OrganizationOnboarding'
 import { PendingApproval } from './pages/onboarding/PendingApproval'
 import { ProviderOnboarding } from './pages/onboarding/ProviderOnboarding'
+import { VolunteerOnboarding } from './pages/onboarding/VolunteerOnboarding'
 import { Demo } from './pages/demo/Demo'
 import { MyFeedback } from './pages/feedback/MyFeedback'
 import { MyFeedbackDetail } from './pages/feedback/MyFeedbackDetail'
@@ -61,6 +62,7 @@ import { VolunteerShell } from './components/volunteer/VolunteerShell'
 import { Availability } from './pages/volunteer/Availability'
 import { Commitments } from './pages/volunteer/Commitments'
 import { Help as VolunteerHelp } from './pages/volunteer/Help'
+import { Interests as VolunteerInterests } from './pages/volunteer/Interests'
 import { MyRides } from './pages/volunteer/MyRides'
 import { Opportunities } from './pages/volunteer/Opportunities'
 import { Overview as VolunteerOverview } from './pages/volunteer/Overview'
@@ -69,6 +71,7 @@ import { RideDetail as VolunteerRideDetail } from './pages/volunteer/RideDetail'
 import { Settings as VolunteerSettings } from './pages/volunteer/Settings'
 import { Transportation as VolunteerTransportation } from './pages/volunteer/Transportation'
 import { Verification } from './pages/volunteer/Verification'
+import { VolunteerHome } from './pages/volunteer/VolunteerHome'
 import { volunteerPaths } from './volunteer/paths'
 
 // "/home" always lands on the right main page for whoever is signed in, from what the backend says:
@@ -81,6 +84,12 @@ function RoleHome() {
   // Couldn't check the organization: fall back to the role's home, where the workspace explains its status
   if (orgId && !orgs.data && !orgs.error) return <FullPageLoader />
   return <Navigate to={orgs.error ? HOME_FOR[currentUser.role] : homePath(currentUser, orgs.data?.find((o) => o.id === orgId))} replace />
+}
+
+// "/volunteer" is each volunteer's home: drivers see their driving overview, general volunteers their interests.
+function VolunteerLanding() {
+  const { currentUser } = useApp()
+  return currentUser?.role === 'VOLUNTEER' ? <VolunteerHome /> : <VolunteerOverview />
 }
 
 // The website keeps the marketing page at "/". The app skips it: signed-in people
@@ -135,6 +144,7 @@ export default function App() {
           <Route path={onboardingPaths.start} element={<GetStarted />} />
           <Route path={onboardingPaths.organization} element={<OrganizationOnboarding />} />
           <Route path={onboardingPaths.provider} element={<ProviderOnboarding />} />
+          <Route path={onboardingPaths.volunteer} element={<VolunteerOnboarding />} />
           <Route path={onboardingPaths.join} element={<JoinOrganization />} />
           {/* Also reached once approved: the backend's answer decides when the workspace opens */}
           <Route path={onboardingPaths.joinStatus} element={<JoinRequestStatus />} />
@@ -207,28 +217,36 @@ export default function App() {
               </Route>
             </Route>
 
-            {/* Drivers: the volunteer workspace, with transportation as its first service */}
-            <Route element={<RequireRole roles={['DRIVER']} />}>
+            {/* The volunteer workspace, for everyone who volunteers. Drivers have CareRide (transportation) in it.
+                General volunteers have no driver profile, so its driving pages send them back to their home. */}
+            <Route element={<RequireRole roles={['DRIVER', 'VOLUNTEER']} />}>
               <Route element={<VolunteerShell />}>
-                <Route path={volunteerPaths.overview} element={<VolunteerOverview />} />
-                <Route path={volunteerPaths.opportunities} element={<Opportunities />} />
-                <Route path={volunteerPaths.commitments} element={<Commitments />} />
-                <Route path={volunteerPaths.transport} element={<VolunteerTransportation />} />
-                <Route path={volunteerPaths.rides} element={<MyRides />} />
-                <Route path={`${volunteerPaths.rides}/:id`} element={<VolunteerRideDetail />} />
-                <Route path={volunteerPaths.availability} element={<Availability />} />
-                <Route path={volunteerPaths.profile} element={<Profile />} />
-                <Route path={volunteerPaths.verification} element={<Verification />} />
+                <Route path={volunteerPaths.overview} element={<VolunteerLanding />} />
                 <Route path={volunteerPaths.settings} element={<VolunteerSettings />} />
-                <Route path={volunteerPaths.help} element={<VolunteerHelp />} />
                 <Route path={volunteerPaths.feedback} element={<MyFeedback />} />
                 <Route path={`${volunteerPaths.feedback}/:id`} element={<MyFeedbackDetail />} />
+                <Route element={<RequireRole roles={['VOLUNTEER']} />}>
+                  <Route path={volunteerPaths.interests} element={<VolunteerInterests />} />
+                </Route>
+                <Route element={<RequireRole roles={['DRIVER']} />}>
+                  <Route path={volunteerPaths.opportunities} element={<Opportunities />} />
+                  <Route path={volunteerPaths.commitments} element={<Commitments />} />
+                  <Route path={volunteerPaths.transport} element={<VolunteerTransportation />} />
+                  <Route path={volunteerPaths.rides} element={<MyRides />} />
+                  <Route path={`${volunteerPaths.rides}/:id`} element={<VolunteerRideDetail />} />
+                  <Route path={volunteerPaths.availability} element={<Availability />} />
+                  <Route path={volunteerPaths.profile} element={<Profile />} />
+                  <Route path={volunteerPaths.verification} element={<Verification />} />
+                  <Route path={volunteerPaths.help} element={<VolunteerHelp />} />
+                </Route>
               </Route>
               {/* Driver pages used to live under /driver. Old links and bookmarks still land on the same page. */}
-              <Route path="/driver" element={<MovedTo to={volunteerPaths.transport} />} />
-              <Route path="/driver/my-rides" element={<MovedTo to={volunteerPaths.rides} />} />
-              <Route path="/driver/settings" element={<MovedTo to={volunteerPaths.availability} />} />
-              <Route path="/driver/*" element={<MovedTo to={volunteerPaths.overview} />} />
+              <Route element={<RequireRole roles={['DRIVER']} />}>
+                <Route path="/driver" element={<MovedTo to={volunteerPaths.transport} />} />
+                <Route path="/driver/my-rides" element={<MovedTo to={volunteerPaths.rides} />} />
+                <Route path="/driver/settings" element={<MovedTo to={volunteerPaths.availability} />} />
+                <Route path="/driver/*" element={<MovedTo to={volunteerPaths.overview} />} />
+              </Route>
               <Route path={`${volunteerPaths.overview}/*`} element={<MovedTo to={volunteerPaths.overview} />} />
             </Route>
           </Route>

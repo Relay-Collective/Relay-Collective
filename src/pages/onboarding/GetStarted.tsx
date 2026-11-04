@@ -1,4 +1,4 @@
-import { Building2, Car, Check, ShieldCheck, Users } from 'lucide-react'
+import { Building2, Car, Check, HeartHandshake, ShieldCheck, Users } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout'
@@ -10,7 +10,7 @@ import { onboardingPaths } from '../../onboarding/routing'
 import { dataService } from '../../services'
 import { FullPageLoader } from '../auth/FullPageLoader'
 
-type Path = 'organization' | 'join' | 'provider'
+type Path = 'organization' | 'join' | 'volunteer' | 'provider'
 
 const PATHS: { value: Path; title: string; description: string; detail: string; icon: ReactNode }[] = [
   {
@@ -28,8 +28,15 @@ const PATHS: { value: Path; title: string; description: string; detail: string; 
     icon: <Users className="h-6 w-6" />,
   },
   {
+    value: 'volunteer',
+    title: 'Join as a volunteer',
+    description: 'Share your interests and discover ways to contribute to your community.',
+    detail: 'No vehicle needed. Choose the kinds of help you’d like to give.',
+    icon: <HeartHandshake className="h-6 w-6" />,
+  },
+  {
     value: 'provider',
-    title: 'Become a service provider',
+    title: 'Drive with CareRide',
     description: 'Offer your time and vehicle as a volunteer driver for partner organizations.',
     detail: 'Drivers are verified by our team before receiving any ride requests.',
     icon: <Car className="h-6 w-6" />,
@@ -57,6 +64,7 @@ export function GetStarted() {
     }
     if (path === 'organization') return navigate(onboardingPaths.organization)
     if (path === 'provider') return navigate(onboardingPaths.provider)
+    if (path === 'volunteer') return navigate(onboardingPaths.volunteer)
     navigate(onboardingPaths.join)
   }
 

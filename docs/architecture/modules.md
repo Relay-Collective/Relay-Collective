@@ -92,6 +92,8 @@ The routes stay where they were in `App.tsx`, inside `RequireRole(['PARTNER'])` 
 
 Drivers take part in CareRide through the volunteer workspace (`/volunteer/...`). That workspace owns the driver's side: opportunities, commitments, availability, verification, trip actions, the driver's ride pages and `VolunteerProvider`. These stay in the volunteer workspace. Driver identity, verification and participation (`volunteer/participation.ts`, `volunteer/verification.ts`) are account-level, not transportation-only.
 
+General volunteers (role `VOLUNTEER`) use the same workspace without its driving pages, and their volunteering interests never grant access to CareRide. See [volunteers.md](volunteers.md).
+
 The volunteer workspace uses CareRide's ride wording and status presentation through `domain.ts` and `index.ts`. CareRide never imports the volunteer workspace.
 
 Driver-side trip components such as `components/DriverTripActions`, `components/OfferCard`, `components/maps` and `components/volunteer/TripPanel` are still under `components/`. They belong to the transportation domain, but splitting them from the volunteer workspace was left for later (see below).

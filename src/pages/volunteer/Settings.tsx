@@ -50,7 +50,8 @@ export function Settings() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
         <nav aria-label="Settings sections" className="lg:sticky lg:top-24">
           <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:flex-col lg:overflow-visible">
-            {SECTIONS.map(({ id, label, icon: Icon }) => (
+            {/* Transportation settings exist only for an account with a driver profile */}
+            {SECTIONS.filter((section) => section.id !== 'transportation' || driver).map(({ id, label, icon: Icon }) => (
               <li key={id} className="shrink-0">
                 <a href={`#${id}`} className={`flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-600 hover:bg-white hover:text-rc-navy ${focusRing}`}>
                   <Icon className="h-4 w-4" aria-hidden /> {label}
@@ -78,12 +79,18 @@ export function Settings() {
           <Panel id="notifications" title="Notifications">
             <div className="space-y-3 px-5 py-4 text-sm text-slate-700">
               <p>Here's how Relay Collective tells you about things today:</p>
-              <ul className="list-disc space-y-1.5 pl-5">
-                <li>New ride requests appear in Opportunities, with a count beside it in the menu.</li>
-                <li>If a ride you accepted is cancelled, a notice appears at the top of the workspace.</li>
-                {isNative && <li>Your phone vibrates when a new request arrives while the app is open.</li>}
-                <li>Verification decisions show on your Overview and profile.</li>
-              </ul>
+              {driver ? (
+                <ul className="list-disc space-y-1.5 pl-5">
+                  <li>New ride requests appear in Opportunities, with a count beside it in the menu.</li>
+                  <li>If a ride you accepted is cancelled, a notice appears at the top of the workspace.</li>
+                  {isNative && <li>Your phone vibrates when a new request arrives while the app is open.</li>}
+                  <li>Verification decisions show on your Overview and profile.</li>
+                </ul>
+              ) : (
+                <ul className="list-disc space-y-1.5 pl-5">
+                  <li>Replies to feedback you send show in My feedback, with a count beside it in the menu.</li>
+                </ul>
+              )}
               <Notice tone="info">Email, text, and push notifications aren't available yet, so there are no notification choices to set.</Notice>
             </div>
           </Panel>
@@ -127,8 +134,9 @@ export function Settings() {
               <div>
                 <p className="font-semibold text-rc-navy">Delete account</p>
                 <p className="text-sm text-slate-600">
-                  Closes your sign-in. Finished rides stay on record, and upcoming rides you accepted go back to other drivers. Finish any trip under way
-                  first.
+                  {currentUser.role === 'VOLUNTEER'
+                    ? 'Closes your sign-in. Your volunteer profile and interests stay with the closed account until the Relay Collective team deletes it.'
+                    : 'Closes your sign-in. Finished rides stay on record, and upcoming rides you accepted go back to other drivers. Finish any trip under way first.'}
                 </p>
               </div>
               <button type="button" className={`${dangerOutlineButton} min-h-11 shrink-0 px-4 text-sm`} onClick={() => setDeleting(true)}>

@@ -4,7 +4,8 @@ import type { Organization, User } from '../types'
 export const onboardingPaths = {
   start: '/onboarding',
   organization: '/onboarding/organization',
-  provider: '/onboarding/provider',
+  provider: '/onboarding/provider', // CareRide driver sign-up
+  volunteer: '/onboarding/volunteer', // general volunteer: interests, no vehicle
   join: '/onboarding/join', // find an organization and ask to join it
   joinStatus: '/onboarding/join/status', // where that request stands
   application: '/application', // an organization's review status
@@ -18,9 +19,10 @@ export function homePath(user: User, org: Organization | undefined): string {
   return HOME_FOR[user.role]
 }
 
-// Landing pages send ?role=partner|driver. A preference for which path to show first, nothing more.
+// Landing pages send ?role=partner|driver|volunteer. A preference for which path to show first, nothing more.
 export function pathForIntent(intent: string | null): string {
   if (intent === 'partner') return onboardingPaths.organization
   if (intent === 'driver') return onboardingPaths.provider
+  if (intent === 'volunteer') return onboardingPaths.volunteer
   return onboardingPaths.start
 }

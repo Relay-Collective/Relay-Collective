@@ -37,6 +37,8 @@ import type {
   RideOffer,
   User,
   VerificationStatus,
+  VolunteerInterest,
+  VolunteerProfile,
 } from '../types'
 
 export type NewOrganization = Omit<Organization, 'id' | 'status'>
@@ -63,6 +65,12 @@ export interface NewOrganizationApplication
   contactPhone: string
   address: string
   city: string
+}
+// What someone joining as a general volunteer tells us. The backend makes the profile from the session.
+export interface NewVolunteer {
+  name: string
+  phone?: string // optional: volunteers aren't required to share one
+  interests: VolunteerInterest[] // at least one; descriptive only, never access
 }
 // A new invitation. The token is shown once, to build the link; the backend keeps only its hash.
 export interface CreatedInvitation {
@@ -204,6 +212,14 @@ export interface DataService {
   // Safe to repeat: a retry returns the profile the first call made instead of creating another.
   submitOrganizationApplication(application: NewOrganizationApplication): Promise<User>
   registerDriverProfile(user: NewDriverUser, driver: NewDriver): Promise<User>
+  // Joins as a general volunteer: a VOLUNTEER profile and its interests. Never creates a driver profile.
+  registerVolunteer(volunteer: NewVolunteer): Promise<User>
+
+  // General volunteering. Interests are descriptive: they never change what an account may do.
+  // The account's volunteer profile, if it has one. Your own, or anyone's for a platform admin (checked by the backend).
+  getVolunteerProfile(userId: string): Promise<VolunteerProfile | undefined>
+  // Replaces the signed-in volunteer's interests (at least one). Changes nothing else, driving included.
+  updateMyVolunteerInterests(interests: VolunteerInterest[]): Promise<VolunteerProfile>
   // The application behind an organization: its members and platform admins only
   getOrganizationApplication(orgId: string): Promise<OrganizationApplication | undefined>
 
@@ -277,7 +293,7 @@ export interface DataService {
   // Carries on with a deletion that failed or was cut off, from the step it stopped at
   retryAccountDeletion(jobId: string, password: string): Promise<AccountDeletionJob>
   getAccountDeletion(jobId: string): Promise<AccountDeletionJob | undefined>
-  // The signed-in driver or partner organization closes their own sign-in. Ride history stays.
+  // The signed-in driver, volunteer or partner organization closes their own sign-in. Ride history stays.
   // A driver with a client in the car has to finish that ride first.
   deleteMyAccount(): Promise<void>
 

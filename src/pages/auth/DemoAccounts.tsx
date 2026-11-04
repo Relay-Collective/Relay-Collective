@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, Car, ChevronDown, Loader2, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Building2, Car, ChevronDown, HeartHandshake, Loader2, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { CopyButton } from '../../components/CopyButton'
 import { ROLE_TONE, tones } from '../../components/ui'
@@ -11,6 +11,7 @@ import type { User, UserRole } from '../../types'
 const ROLE_GROUPS: { role: UserRole; title: string; text: string; icon: ReactNode }[] = [
   { role: 'PARTNER', title: 'Partner organizations', text: 'Book rides for clients and track them.', icon: <Building2 className="h-4 w-4" /> },
   { role: 'DRIVER', title: 'Drivers', text: 'Accept ride requests and drive trips.', icon: <Car className="h-4 w-4" /> },
+  { role: 'VOLUNTEER', title: 'Volunteers', text: 'Share how you’d like to help. Not a driver.', icon: <HeartHandshake className="h-4 w-4" /> },
   { role: 'PLATFORM_ADMIN', title: 'Relay Collective admin', text: 'Approve organizations and drivers.', icon: <ShieldCheck className="h-4 w-4" /> },
 ]
 

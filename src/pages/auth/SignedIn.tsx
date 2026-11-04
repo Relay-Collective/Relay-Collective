@@ -29,6 +29,7 @@ const BRAND = {
 const OPEN_HOME: Record<UserRole, string> = {
   PARTNER: 'Open your workspace',
   DRIVER: 'Open your workspace',
+  VOLUNTEER: 'Open your workspace',
   ORG_ADMIN: 'Open your dashboard',
   PLATFORM_ADMIN: 'Open the admin console',
 }

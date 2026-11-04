@@ -49,7 +49,9 @@ import type {
   User,
   UserRole,
   VerificationStatus,
+  VolunteerProfile,
 } from '../types'
+import { interestsError, normalizeInterests } from '../volunteer/interests'
 import {
   ALL_RIDES_LIMIT,
   type DataService,
@@ -76,6 +78,8 @@ const PROFILE_COLUMNS = 'id, name, phone, role, org_id, house_id, org_role'
 const ORG_COLUMNS =
   'id, name, type, contact_name, contact_phone, booking_notifications, status, discoverability, directory_description, created_at, reviewed_at, reviewed_by'
 const HOUSE_COLUMNS = 'id, org_id, name, address, city, phone'
+// A volunteer profile with its interests, embedded through volunteer_interests' foreign key
+const VOLUNTEER_COLUMNS = 'id, profile_id, created_at, updated_at, volunteer_interests(interest)'
 const DRIVER_COLUMNS =
   'id, profile_id, org_id, background, vehicle, wheelchair_accessible, seats, service_cities, request_hours, status, created_at, reviewed_at, reviewed_by'
 const DESTINATION_COLUMNS = 'id, org_id, name, address, city, notes'
@@ -94,6 +98,14 @@ const APPLICATION_COLUMNS =
   'org_id, kind, website, description, contact_email, contact_role, service_categories, platform_interests, submitted_by, submitted_at'
 // token_hash is not readable from the browser
 const INVITATION_COLUMNS = 'id, org_id, email, role, invited_by, created_at, expires_at, accepted_at, revoked_at'
+
+interface VolunteerRow {
+  id: string
+  profile_id: string
+  created_at: string
+  updated_at: string
+  volunteer_interests: { interest: string }[]
+}
 
 interface ProfileRow {
   id: string
@@ -321,6 +333,27 @@ function toUser(row: ProfileRow, email?: string): User {
     houseId: row.house_id ?? undefined,
     orgRole: row.org_role ?? undefined,
   }
+}
+
+function toVolunteerProfile(row: VolunteerRow): VolunteerProfile {
+  return {
+    id: row.id,
+    userId: row.profile_id,
+    interests: normalizeInterests(row.volunteer_interests.map((i) => i.interest)),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  }
+}
+
+// Access rules return only the caller's own (or any, for platform admins)
+async function readVolunteerProfile(profileId: string): Promise<VolunteerProfile | undefined> {
+  const { data, error } = await getSupabase()
+    .from('volunteer_profiles')
+    .select(VOLUNTEER_COLUMNS)
+    .eq('profile_id', profileId)
+    .maybeSingle<VolunteerRow>()
+  if (error) fail(error, "We couldn't load the volunteer profile.")
+  return data ? toVolunteerProfile(data) : undefined
 }
 
 function toOrganization(row: OrgRow): Organization {
@@ -993,6 +1026,32 @@ export const supabaseService: DataService = {
       fail(error, "We couldn't create your driver account.")
     }
     return requireUser(await currentAuthUser())
+  },
+
+  async registerVolunteer(volunteer) {
+    const problem = interestsError(volunteer.interests)
+    if (problem) throw new Error(problem)
+    const { error } = await getSupabase().rpc('register_volunteer', {
+      p_details: { name: volunteer.name.trim(), phone: volunteer.phone?.trim() ?? '', interests: normalizeInterests(volunteer.interests) },
+    })
+    if (error) {
+      if (error.code === '23514') throw new Error('Please check your details and try again.')
+      fail(error, "We couldn't create your volunteer profile.")
+    }
+    return requireUser(await currentAuthUser())
+  },
+
+  getVolunteerProfile: (userId) => readVolunteerProfile(userId),
+
+  async updateMyVolunteerInterests(interests) {
+    const problem = interestsError(interests)
+    if (problem) throw new Error(problem)
+    const { error } = await getSupabase().rpc('set_my_volunteer_interests', { p_interests: normalizeInterests(interests) })
+    if (error) fail(error, "We couldn't save your interests.")
+    const user = await requireUser(await currentAuthUser())
+    const saved = await readVolunteerProfile(user.id)
+    if (!saved) throw new Error("We couldn't load your interests. Please refresh the page.")
+    return saved
   },
 
   async getOrganizationApplication(orgId) {

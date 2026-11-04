@@ -6,13 +6,15 @@ export const ORG_KIND: Record<OrgType, { label: string; service: string }> = {
   TRANSPORT_PROVIDER: { label: 'Transport provider', service: 'Transportation · provides rides' },
 }
 
-// What each role means on the platform. Platform admins run Relay Collective; everyone else
-// belongs to one organization or drives, and none of them can see other organizations' data.
+// What each role means on the platform. Platform admins run Relay Collective; everyone else belongs to one
+// organization, drives, or volunteers, and none of them can see other organizations' data. A volunteer is
+// never shown as a driver: driving takes a CareRide driver profile.
 export const USER_KIND: Record<UserRole, string> = {
   PLATFORM_ADMIN: 'Platform admin',
   PARTNER: 'Organization account (shared)',
   ORG_ADMIN: 'Transport provider admin',
   DRIVER: 'Driver',
+  VOLUNTEER: 'Volunteer',
 }
 
-export const USER_KIND_ORDER: UserRole[] = ['PARTNER', 'DRIVER', 'ORG_ADMIN', 'PLATFORM_ADMIN']
+export const USER_KIND_ORDER: UserRole[] = ['PARTNER', 'DRIVER', 'VOLUNTEER', 'ORG_ADMIN', 'PLATFORM_ADMIN']

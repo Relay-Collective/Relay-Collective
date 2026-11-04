@@ -22,6 +22,9 @@ const KNOWN_ISSUES: Record<string, Record<string, number>> = {
   'CareRide overview': { 'label-content-name-mismatch': 3 },
   'booking form': { 'label-content-name-mismatch': 1 },
   'volunteer overview': { 'label-content-name-mismatch': 5 },
+  // Only the "What's new" version badge, as on sign-in
+  'general volunteer home': { 'label-content-name-mismatch': 1 },
+  'volunteering interests': { 'label-content-name-mismatch': 1 },
   'admin overview': { 'label-content-name-mismatch': 7 },
   'organization overview on a phone': { 'label-content-name-mismatch': 5 },
   'volunteer overview on a phone': { 'label-content-name-mismatch': 5 },
@@ -69,6 +72,18 @@ const pages: { name: string; account?: Account; path: string; ready: (page: Page
     account: accounts.frank,
     path: '/volunteer',
     ready: (p) => expect(p.getByRole('region', { name: 'CareRide' })).toBeVisible(),
+  },
+  {
+    name: 'general volunteer home',
+    account: accounts.priya,
+    path: '/volunteer',
+    ready: (p) => expect(p.getByRole('region', { name: 'Your volunteering interests' }).getByRole('listitem').first()).toBeVisible(),
+  },
+  {
+    name: 'volunteering interests',
+    account: accounts.priya,
+    path: '/volunteer/interests',
+    ready: (p) => expect(p.getByRole('checkbox', { name: /^Food distribution/ })).toBeChecked(),
   },
   {
     name: 'admin overview',

@@ -21,6 +21,7 @@ export function emailMatches(typed: string, email: string | undefined): boolean 
 export const CATEGORY_LABELS: Record<AccountDeletionCategoryKey, string> = {
   auth_account: 'Supabase sign-in account',
   profile: 'Profile: name, phone and email',
+  volunteer_profile: 'Volunteer profile and volunteering interests',
   organization_membership: 'Organization membership',
   driver_profile: 'Driver profile: vehicle, cities and hours',
   driver_documents: 'Driver verification documents',
@@ -54,6 +55,7 @@ export const ACTION_LABELS: Record<AccountDeletionAction, string> = {
 // The why behind keeping or anonymizing, shown under the row
 export const CATEGORY_NOTES: Partial<Record<AccountDeletionCategoryKey, string>> = {
   profile: `Shown as “${DELETED_NAME}” where shared records still point to it, and removed entirely when nothing does.`,
+  volunteer_profile: 'Deleted with the interests they chose.',
   organization_membership: 'The organization and everyone else in it stay.',
   driver_profile: 'Kept only as an anonymous placeholder while finished rides point to it.',
   open_rides: 'Upcoming rides they accepted, and requests waiting on them, go to the next driver.',

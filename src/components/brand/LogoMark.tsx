@@ -22,18 +22,3 @@ export function LogoMark({ className = 'h-8 w-8', tone = 'brand' }: { className?
 
 // The name, set in Space Grotesk. Pair with LogoMark; the symbol is roughly 1.5x the text's size.
 export const wordmark = 'whitespace-nowrap font-display font-semibold tracking-[-0.035em] text-ink'
-
-// The app icon as a live mark: white and midnight hooks on an electric tile, as in
-// public/brand/relay-collective-app-icon.svg. The brand's own way to sit on a dark ground such as the night sidebar.
-export function AppIconMark({ className = 'h-9 w-9' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 48" className={`shrink-0 ${className}`} aria-hidden focusable="false">
-      <rect width="48" height="48" rx="11" fill="#0297DE" />
-      <g transform="translate(7.2 7.2) scale(.7)">
-        <path d="M9 31V19a10 10 0 0 1 10-10h9" fill="none" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round" />
-        <path d="M39 17v12a10 10 0 0 1-10 10h-9" fill="none" stroke="#111820" strokeWidth="8" strokeLinecap="round" />
-        <circle cx="24" cy="24" r="4.5" fill="#FFFFFF" />
-      </g>
-    </svg>
-  )
-}

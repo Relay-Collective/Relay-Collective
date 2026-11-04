@@ -24,7 +24,7 @@ export function AdminSidebar(props: SidebarSlotProps) {
         initials: '',
         title: 'Platform administration',
         subtitle: 'Relay Collective',
-        className: 'bg-white text-ink', // midnight identity, inverted for the night frame
+        className: 'bg-ink text-white', // the admin tone: midnight
       }}
       contextIcon={<ShieldCheck className="h-5 w-5" />}
       groups={ADMIN_NAV}

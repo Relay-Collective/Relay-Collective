@@ -24,7 +24,7 @@ export function WorkspaceSidebar(props: SidebarSlotProps) {
         initials: org ? initials(org.name) : '',
         title: org?.name ?? 'Your organization',
         subtitle: 'Nonprofit workspace',
-        className: 'bg-brand-600 text-white', // the partner tone; midnight would vanish on the night frame
+        className: 'bg-brand-600 text-white', // the partner tone: electric
       }}
       groups={WORKSPACE_NAV}
       footer={[HELP_NAV, MY_FEEDBACK_NAV]}

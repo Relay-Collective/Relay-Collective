@@ -8,7 +8,7 @@ import { VolunteerLoadError } from '../../components/volunteer/states'
 import { VerificationSummary } from '../../components/volunteer/VerificationSummary'
 import { MetricCard, MetricGroup } from '../../components/workspace/MetricCard'
 import { Greeting, PageHeader } from '../../components/workspace/PageHeader'
-import { RouteArt } from '../../components/workspace/ServiceModuleCard'
+import { RouteField } from '../../components/workspace/ServiceModuleCard'
 import { EmptyState, Skeleton, SkeletonRows } from '../../components/workspace/states'
 import { focusRing, panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { useApp } from '../../hooks/useApp'
@@ -127,23 +127,25 @@ export function Overview() {
         )}
       </section>
 
-      {/* CareRide, the module this volunteer drives for: the same night band as the organization overview's
-          module card, with this driver's numbers on white beneath it */}
+      {/* CareRide, the module this volunteer drives for: the same electric field as the organization overview's
+          module card, beside its name, with this driver's numbers beneath */}
       <section aria-labelledby="metrics-title" className={`${panel} overflow-hidden`}>
-        <div className="rc-night relative isolate flex flex-wrap items-center justify-between gap-x-4 gap-y-2 overflow-hidden bg-night px-5 py-5 sm:px-7 sm:py-6">
-          <RouteArt className="-bottom-6 right-0 h-[130px] w-[234px] max-sm:hidden" />
-          <div className="flex min-w-0 items-center gap-3.5">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-[0_10px_24px_-12px_rgb(2_151_222/0.6)]" aria-hidden>
-              <CareRideMark tone="brand" className="h-8 w-8" />
-            </span>
-            <div className="min-w-0">
-              <h2 id="metrics-title" className="font-heading text-[22px] font-bold leading-tight tracking-[-0.03em] text-white">
-                CareRide
-              </h2>
-              <p className="text-sm text-slate-400">Your rides and requests</p>
+        <div className="flex items-stretch gap-2 p-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-3 sm:px-4">
+            <div className="flex min-w-0 items-center gap-3.5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 shadow-[inset_0_0_0_1px_var(--color-brand-100)]" aria-hidden>
+                <CareRideMark tone="brand" className="h-8 w-8" />
+              </span>
+              <div className="min-w-0">
+                <h2 id="metrics-title" className="font-heading text-[22px] font-bold leading-tight tracking-[-0.03em] text-ink">
+                  CareRide
+                </h2>
+                <p className="text-sm text-slate-500">Your rides and requests</p>
+              </div>
             </div>
+            {(rides.error || offers.error) && <p className="text-sm font-semibold text-red-700">Some numbers couldn't load.</p>}
           </div>
-          {(rides.error || offers.error) && <p className="text-sm font-semibold text-red-200">Some numbers couldn't load.</p>}
+          <RouteField className="hidden w-56 shrink-0 sm:block" />
         </div>
         <MetricGroup bare className="grid-cols-2 lg:grid-cols-4">
           <MetricCard

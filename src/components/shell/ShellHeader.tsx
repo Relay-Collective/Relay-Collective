@@ -1,5 +1,5 @@
 import { ChevronRight, Menu } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { focusRing } from '../workspace/styles'
 import { DRAWER_ID } from './SidebarShell'
 
@@ -13,11 +13,18 @@ interface Props {
 
 // The bar above every console page. One line: whose space, then the section, so it never competes with the
 // page's own h1. Phones show the section alone; the drawer carries the rest.
+// As on the landing page, the bar is clear over the grid at the top of the page and turns white, with a hairline,
+// once the page scrolls under it.
 export function ShellHeader({ onOpenMenu, menuOpen, context, title, children }: Props) {
+  const scrolled = useScrolled()
   return (
-    // Night behind, so the sheet's turned corner holds while the page scrolls under the bar
-    <header className="no-print sticky top-0 z-20 bg-canvas pt-[var(--safe-top)] md:bg-night">
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200/70 bg-canvas px-4 sm:px-6 md:rounded-tl-[28px] lg:px-10">
+    <header
+      data-scrolled={scrolled || undefined}
+      className={`no-print sticky top-0 z-20 border-b pt-[var(--safe-top)] transition-[background-color,border-color] duration-200 ease-out-quart ${
+        scrolled ? 'border-slate-200/80 bg-white' : 'border-transparent bg-transparent'
+      }`}
+    >
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-10">
         <button
           type="button"
           onClick={onOpenMenu}
@@ -39,4 +46,16 @@ export function ShellHeader({ onOpenMenu, menuOpen, context, title, children }: 
       </div>
     </header>
   )
+}
+
+// Whether the page has scrolled at all. Checked once on mount too, so a restored scroll position starts solid.
+function useScrolled(): boolean {
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const check = () => setScrolled(window.scrollY > 4)
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    return () => window.removeEventListener('scroll', check)
+  }, [])
+  return scrolled
 }

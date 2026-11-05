@@ -28,7 +28,7 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 
 ## What's covered
 
-74 tests in [`e2e/`](../e2e). The README screenshots live apart in `e2e/screenshots/` (`npm run docs:screenshots`) and never run with the suite. Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
+88 tests in [`e2e/`](../e2e). The README screenshots live apart in `e2e/screenshots/` (`npm run docs:screenshots`) and never run with the suite. Tags: `@smoke` for fast launch checks, `@critical` for the journeys that matter most.
 
 | File | Scenarios |
 | --- | --- |
@@ -37,12 +37,13 @@ Nothing else to start: Playwright builds the app and serves it itself. The whole
 | [careride.spec.ts](../e2e/careride.spec.ts) | Transportation overview totals · booking a scheduled ride, and which drivers are asked · a past ride's details · changing a waiting ride · history lists completed rides only · the form refuses a booking with no destination · **the full lifecycle**: a partner books, a driver accepts, goes through each trip step and drops off, and both see it finish and move to history |
 | [volunteer.spec.ts](../e2e/volunteer.spec.ts) | Driver dashboard · a fitting request shows up in Opportunities and accepting it makes a commitment · declining removes it · availability changes are saved and kept after a reload · an unsaved change can be cancelled · verification shows an approved driver's status and requirements |
 | [generalVolunteer.spec.ts](../e2e/generalVolunteer.spec.ts) | **Registering as a general volunteer** with several interests and no vehicle details · a volunteer's home, without driving pages · adding and removing interests, kept after a reload · choosing Transportation doesn't open any driving page · an existing driver still reaches their driving workspace · admins see a volunteer as a volunteer, not a driver |
+| [volunteerWorkspace.spec.ts](../e2e/volunteerWorkspace.spec.ts) | The adaptive workspace: a general volunteer's dashboard, navigation, profile and help without driving · the empty state when no interests are saved · interest changes shown everywhere and kept after a refresh · an approved driver keeps every CareRide part of the dashboard and navigation · removing Transportation leaves driving untouched · a driver in review · CareRide addresses typed by a general volunteer send them home · a driver from before interests adds some · phone and tablet layouts with no sideways scrolling |
 | [admin.spec.ts](../e2e/admin.spec.ts) | Dashboard totals and every console section · organizations list, filter and detail · approvals list, and approving a pending driver · feedback a partner sends shows up for the admin, with its details · transportation oversight list and ride detail, without private rider details |
 | [permissions.spec.ts](../e2e/permissions.spec.ts) | Signed-out visitors are sent to sign-in and back to the page they asked for · partners can't open the admin console · drivers can't open the organization workspace or the console · a driver awaiting review gets no requests · **organization staff** (created by signing up, asking to join and being approved) don't get administrator controls |
 | [responsive.spec.ts](../e2e/responsive.spec.ts) | On a 390 × 844 touch screen: landing menu, organization, volunteer and admin navigation drawers open, close and reach their pages · the booking button is reachable · a dialog can be dismissed · no page scrolls sideways |
 | [console.spec.ts](../e2e/console.spec.ts) | The console look (the route rail), by what it promises: the greeting's accent word keeps the heading's words · the sidebar marks one current page and it moves · the relay point rests on the current page's station and follows you · the sidebar collapses to icons, keeps every link named and remembers the choice · the CareRide card opens the module and its drawing stays out of the accessibility tree · CareRide's segmented tabs mark the current page, History included · the admin sidebar reaches its last section · with reduced motion the route is drawn in full and nothing moves · on a phone, the tab bar and the drawer mark the current page |
 | [landing.spec.ts](../e2e/landing.spec.ts) | The home page: the header jumps to the workspaces and CareRide sections · the workspace tabs show the organization, driver and admin pictures by click and by keyboard (arrows wrap, Home and End, one tab in the Tab order), each with its notes, its sign-up link and an "illustrative" caption · the ride is told in four steps and leads to the CareRide tour · on a phone the tabs fit, keep their full names and switch with a tap |
-| [accessibility.spec.ts](../e2e/accessibility.spec.ts) | axe-core WCAG 2.1 A/AA checks on the landing page, sign-in, organization overview, CareRide overview, booking form, volunteer overview, general volunteer home, volunteering interests, admin overview, and on a phone the organization overview, the volunteer overview with its tab bar, and the open navigation drawer |
+| [accessibility.spec.ts](../e2e/accessibility.spec.ts) | axe-core WCAG 2.1 A/AA checks on the landing page, sign-in, organization overview, CareRide overview, booking form, volunteer overview, general volunteer home, volunteering interests, general volunteer profile, admin overview, and on a phone the organization overview, the volunteer overview with its tab bar, and the open navigation drawer |
 
 Browser tests check what people see. They don't replace the database's access rules: `npm run test:db` tests those against the real SQL.
 
@@ -96,10 +97,11 @@ From the seed. Passwords are read from `src/services/seed.ts`, not copied into t
 | Key in `accounts` | Who | Signs in to |
 | --- | --- | --- |
 | `belkin`, `richmond` | Partner organizations (each is its organization's administrator) | `/workspace` |
-| `frank` | Driver: approved, any time, Vancouver and Richmond | `/volunteer` |
-| `maya` | Driver: approved, 7 AM–10 PM | `/volunteer` |
+| `frank` | Driver: approved, any time, Vancouver and Richmond. No volunteer profile (a driver from before interests) | `/volunteer` |
+| `maya` | Driver: approved, 7 AM–10 PM, also saved interests (Transportation, Food distribution) | `/volunteer` |
 | `jordan` | Driver: still pending review, Richmond only | `/volunteer` |
 | `priya` | General volunteer: Food distribution and Community outreach, no driver profile | `/volunteer` |
+| `alex` | General volunteer: Transportation and Community outreach, still not a driver | `/volunteer` |
 | `admin` | Relay Collective platform admin | `/admin` |
 
 The seed has no organization staff member. The staff test creates one the real way: a new person signs up, asks to join Belkin House, and Belkin's administrator approves them as Staff. All new names are marked **(Fictional)** and use `example.org` addresses.

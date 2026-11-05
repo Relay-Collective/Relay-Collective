@@ -171,7 +171,10 @@ const FREQUENT_PLACES: Record<string, string[]> = {
   grace: ['3b', 'raven', 'ground', 'belkin', 'carn', 'kettle', 'junc', 'rcafe', 'mposs', 'south', 'vcc', 'msdpr', 'svc'],
 }
 
-// The seeded general volunteer, also added to demo data saved before volunteers existed (see mockService upgrade)
+// The seeded general volunteers: no vehicle, no driver profile, no CareRide access. Also added to demo data saved
+// before volunteers existed (see mockService upgrade).
+// Priya doesn't drive and would like to help with food and outreach. Alex is interested in transportation as well,
+// which still doesn't make them a driver.
 export const VOLUNTEER_USER: User = { id: 'u-priya', name: 'Priya', email: 'priya@careride.demo', phone: '', role: 'VOLUNTEER' }
 export const VOLUNTEER_PROFILE: VolunteerProfile = {
   id: 'vp-priya',
@@ -179,6 +182,14 @@ export const VOLUNTEER_PROFILE: VolunteerProfile = {
   interests: ['FOOD_DISTRIBUTION', 'COMMUNITY_OUTREACH'],
   createdAt: '2026-10-01T17:00:00.000Z',
 }
+const ALEX: User = { id: 'u-alex', name: 'Alex Morgan', email: 'alex@careride.demo', phone: '', role: 'VOLUNTEER' }
+// A driver can save interests too: Maya drives and would also help with food. Frank and the others have none
+// (as for every driver from before general volunteering).
+export const SEEDED_VOLUNTEERS: { user?: User; profile: VolunteerProfile }[] = [
+  { user: VOLUNTEER_USER, profile: VOLUNTEER_PROFILE },
+  { user: ALEX, profile: { id: 'vp-alex', userId: ALEX.id, interests: ['TRANSPORTATION', 'COMMUNITY_OUTREACH'], createdAt: '2026-10-02T17:00:00.000Z' } },
+  { profile: { id: 'vp-olive', userId: 'u-olive', interests: ['TRANSPORTATION', 'FOOD_DISTRIBUTION'], createdAt: '2026-10-03T17:00:00.000Z' } },
+]
 
 const demoUsers: User[] = [
   { id: 'u-admin', name: 'Relay Collective Admin', email: ADMIN_EMAIL, phone: '604-555-0100', role: 'PLATFORM_ADMIN' },
@@ -190,8 +201,9 @@ const demoUsers: User[] = [
   { id: 'u-olive', name: 'Maya', email: 'maya@careride.demo', phone: '604-555-0104', role: 'DRIVER' },
   { id: 'u-sam', name: 'Sam', email: 'sam@careride.demo', phone: '604-555-0105', role: 'DRIVER', orgId: 'org-vanshare' },
   { id: 'u-jordan', name: 'Jordan', email: 'jordan@careride.demo', phone: '604-555-0106', role: 'DRIVER' },
-  // A general volunteer: no vehicle, no driver profile, no CareRide access
+  // General volunteers: no vehicle, no driver profile, no CareRide access
   VOLUNTEER_USER,
+  ALEX,
 ]
 
 const seedBase: Omit<
@@ -308,5 +320,5 @@ export const seed: Database = {
   joinRequests: [],
   removals: [],
   deletionJobs: [],
-  volunteerProfiles: [VOLUNTEER_PROFILE],
+  volunteerProfiles: SEEDED_VOLUNTEERS.map((v) => v.profile),
 }

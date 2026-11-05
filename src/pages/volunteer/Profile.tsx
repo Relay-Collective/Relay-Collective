@@ -1,53 +1,66 @@
 import { ArrowRight, CalendarClock, Car, Lock, ShieldOff } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DetailList } from '../../components/admin/controls'
-import { VerificationBadge } from '../../components/admin/VerificationBadge'
 import { DriverVehicleFields } from '../../components/DriverFields'
 import type { DriverDraft } from '../../components/driverDraft'
 import { SaveBar } from '../../components/volunteer/SaveBar'
 import { SettingsSection } from '../../components/volunteer/SettingsSection'
+import { InterestsSection } from '../../components/volunteer/InterestsSection'
 import { RestrictedState } from '../../components/volunteer/states'
+import { ServiceParticipation } from '../../components/volunteer/ServiceParticipation'
 import { VerificationSummary } from '../../components/volunteer/VerificationSummary'
 import { PageHeader } from '../../components/workspace/PageHeader'
 import { SkeletonRows } from '../../components/workspace/states'
 import { panel, panelHead, panelLink, panelTitle } from '../../components/workspace/styles'
 import { useApp } from '../../hooks/useApp'
-import { useCurrentOrg } from '../../hooks/useCurrent'
 import { useDriverEdits } from '../../hooks/useDriverEdits'
 import { useVolunteer } from '../../hooks/useVolunteer'
 import { initials } from '../../logic/initials'
 import { describeRequestHours } from '../../logic/requestHours'
 import { MAX_NAME, tooLong } from '../../logic/validate'
 import type { Driver, User } from '../../types'
-import { DRIVER_KIND_LABELS, serviceRoles } from '../../volunteer/participation'
 import { volunteerPaths } from '../../volunteer/paths'
 
-// Who the volunteer is, how they take part, and their driver details. Only vehicle details are editable here:
-// contact details and approval are changed by the Relay Collective team, and the backend refuses anything else.
+// Who the volunteer is, the ways they'd like to help, the services they actually take part in, and (for CareRide
+// drivers only) their transportation details. Interests and service participation are kept apart on purpose.
+// Contact details and approval are changed by the Relay Collective team; only vehicle details are editable here,
+// and the backend refuses anything else.
 export function Profile() {
   const { currentUser } = useApp()
-  const { driver, driverLoaded } = useVolunteer()
+  const { workspace, driver, driverLoaded } = useVolunteer()
   if (!currentUser) return null
   if (!driverLoaded) return <SkeletonRows rows={4} label="Loading your profile" />
+  const isDriver = workspace.experience === 'CARERIDE_DRIVER'
 
   return (
     <div className="space-y-6 pb-28">
-      <PageHeader title="My profile" description="Your details, how you take part in Relay Collective, and your transportation information." />
+      <PageHeader
+        title="My profile"
+        description={
+          isDriver
+            ? 'Your details, how you take part in Relay Collective, and your transportation information.'
+            : 'Your details, the ways you’d like to help, and the services you take part in.'
+        }
+      />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
         <div className="space-y-6">
-          <PersonalInfo user={currentUser} />
-          <Participation user={currentUser} driver={driver} />
+          <PersonalInfo user={currentUser} driver={isDriver} />
+          <InterestsSection compact />
         </div>
         <div className="space-y-6">
+          <ServiceParticipation />
           {driver ? (
             <>
               <TransportationDetails driver={driver} />
               <VerificationSummary driver={driver} />
             </>
           ) : (
-            <RestrictedState icon={<ShieldOff className="h-6 w-6" />} title="No transportation profile">
-              <p>This account isn't set up to drive, so there are no transportation details to show.</p>
-            </RestrictedState>
+            // Only a driver account can be missing its transportation details. A general volunteer never had any.
+            isDriver && (
+              <RestrictedState icon={<ShieldOff className="h-6 w-6" />} title="No transportation profile">
+                <p>This account isn't set up to drive, so there are no transportation details to show.</p>
+              </RestrictedState>
+            )
           )}
         </div>
       </div>
@@ -55,7 +68,7 @@ export function Profile() {
   )
 }
 
-function PersonalInfo({ user }: { user: User }) {
+function PersonalInfo({ user, driver }: { user: User; driver: boolean }) {
   return (
     <section aria-labelledby="personal-title" className={panel}>
       <div className={panelHead}>
@@ -85,40 +98,11 @@ function PersonalInfo({ user }: { user: User }) {
         />
       </div>
       <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
-        Your first name and phone number are shared only with the organization whose ride you accept. To change your name or phone number, contact the Relay
-        Collective team.
+        {driver
+          ? 'Your first name and phone number are shared only with the organization whose ride you accept. '
+          : 'Your contact details are seen only by the Relay Collective team. '}
+        To change your name or phone number, contact the Relay Collective team.
       </p>
-    </section>
-  )
-}
-
-function Participation({ user, driver }: { user: User; driver: Driver | undefined }) {
-  const roles = serviceRoles(user, driver)
-  const org = useCurrentOrg()
-  return (
-    <section aria-labelledby="participation-title" className={panel}>
-      <div className={panelHead}>
-        <h2 id="participation-title" className={panelTitle}>
-          Participation
-        </h2>
-      </div>
-      {roles.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-slate-600">You don't hold any service roles yet.</p>
-      ) : (
-        <ul className="divide-y divide-slate-100">
-          {roles.map((r) => (
-            <li key={r.service} className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
-              <span>
-                <span className="block font-semibold text-rc-navy">Transportation</span>
-                <span className="block text-sm text-slate-600">{DRIVER_KIND_LABELS[r.kind]}</span>
-              </span>
-              <VerificationBadge status={r.status} />
-            </li>
-          ))}
-        </ul>
-      )}
-      {org && <DetailList rows={[['Organization', org.name]]} />}
-      <p className="border-t border-slate-100 px-5 py-3 text-xs text-slate-500">Service roles are granted by the Relay Collective team after review.</p>
     </section>
   )
 }

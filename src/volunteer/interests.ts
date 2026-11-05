@@ -22,7 +22,8 @@ export const VOLUNTEER_INTERESTS: InterestDefinition[] = [
     id: 'TRANSPORTATION',
     label: 'Transportation',
     description: 'Helping people get to appointments and services through CareRide.',
-    availability: 'CareRide is running. Driving for it is a separate enrollment, with verification by the Relay Collective team.',
+    availability:
+      'CareRide is running. Driving for it is a separate enrollment, verified by the Relay Collective team, and isn’t open to volunteer accounts yet.',
     operational: true,
   },
   {

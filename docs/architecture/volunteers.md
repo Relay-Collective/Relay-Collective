@@ -130,30 +130,85 @@ Tests: `tests/db/volunteers.test.ts` (RLS, ownership, escalation attempts, ride 
 | --- | --- |
 | `/onboarding` | New choice, **Join as a volunteer**, next to **Drive with CareRide** (the existing driver sign-up, renamed from "Become a service provider") |
 | `/onboarding/volunteer` | About you (name from sign-up, optional phone), interests, review, then confirmation. No vehicle questions. |
-| `/volunteer` | `VOLUNTEER`: `VolunteerHome` (interests, what's running today, volunteer profile). `DRIVER`: the existing driving overview. |
-| `/volunteer/interests` | `VOLUNTEER` only: add or remove interests and save |
-| `/volunteer/settings`, `/volunteer/feedback` | Shared by drivers and volunteers |
-| Other `/volunteer/...` pages | `DRIVER` only, as before |
+| `/volunteer/...` | One workspace for drivers and general volunteers, adapted to each person. See [The adaptive workspace](#the-adaptive-workspace). |
 | Admin → Users | Role filter **Volunteer**. Account details show "Takes part as" (general volunteer, volunteer driver, professional provider, organization driver) and any saved interests. |
 
-`VolunteerProvider` only loads a driver profile for a `DRIVER` account, and `serviceRoles()` ignores
-interests, so a volunteer never sees a driver banner or verification prompt.
+## The adaptive workspace
+
+The volunteer workspace shows each person what fits how they actually take part. The design is the same for
+everyone: the sidebar with its identity card, the breadcrumb header, the greeting with its serif accent, and
+the panels. Only the content changes.
+
+**The presentation model.** `src/volunteer/workspace.ts` turns what the backend already says about the
+signed-in person into a `VolunteerWorkspace`:
+
+| Field | From | Means |
+| --- | --- | --- |
+| `experience` | `profiles.role` | `CARERIDE_DRIVER` for `DRIVER` accounts, `GENERAL_VOLUNTEER` for `VOLUNTEER` |
+| `hasVolunteerProfile`, `interests` | `volunteer_profiles` / `volunteer_interests` | What they'd like to do. Never used for access. |
+| `careRide` | the `drivers` row's `status` | `NOT_ENROLLED`, `PENDING`, `APPROVED` or `REJECTED` |
+| `driverKind` | the `drivers` row | Volunteer driver, professional provider or organization driver |
+| `approvedToDrive` | `canDrive()` | The existing eligibility rule, unchanged |
+
+`VolunteerProvider` loads the volunteer profile once for the whole workspace, next to the driver profile it
+already loaded. Every page reads `workspace` and `volunteer` from `useVolunteer()`. The model is
+presentation only. Routes are still guarded in `App.tsx`, and the database refuses every ride action to an
+account without an approved driver profile. A driver profile only counts on a `DRIVER` account, so even a
+stray `drivers` row can't change a general volunteer's workspace.
+
+**The three experiences.**
+
+| | General volunteer | CareRide driver (approved / in review) | Volunteer with several interests |
+| --- | --- | --- | --- |
+| Identity card | "Volunteer" | "Volunteer · CareRide" (volunteer driver), "Professional transportation provider" or "Organization-affiliated driver" | Whichever of the two they are |
+| Overview | Greeting, interests, **Your services** ("Your volunteering journey starts here.", with CareRide shown as running but *not enrolled*), volunteer profile, next steps | Unchanged: action required, the CareRide card and its four metrics, commitments, opportunities, request hours, impact. Plus their interests in the side column. In review: verification, "While you wait", and their interests. | Every interest listed. Each says what it means for *them*: Transportation reads "You drive with CareRide." only with an approved driver profile. |
+| Navigation | Workspace: Overview, My interests · Personal: My profile, Settings · Help, My feedback | As before, with **My interests** added under Personal. Opportunities and My commitments appear once approved. | — |
+| Phone tabs | Overview, Interests, Profile | Unchanged: Overview, Requests, Rides, Availability, Profile | — |
+| Profile | Personal information, interests, service participation ("not enrolled") | The same, plus transportation details and verification | — |
+| Help | Their workspace's layout and how to get help | Unchanged (safety, ride statuses) | — |
+
+**Routes.** These are shared by `DRIVER` and `VOLUNTEER`: `/volunteer` (Overview), `/volunteer/interests`,
+`/volunteer/profile`, `/volunteer/settings`, `/volunteer/help` and `/volunteer/feedback`. CareRide's pages
+are `DRIVER` only and listed in `CARERIDE_PATHS` (`src/volunteer/navigation.ts`): opportunities,
+commitments, transportation and rides, availability, and verification. A general volunteer who opens one
+is sent to `/volunteer`. A driver in review can open them, and each explains why there's nothing to act on yet.
+
+**Drivers from before interests existed** have no volunteer profile. Nothing is created when a page opens:
+their Overview and profile show "No interests saved yet". Their first save on **My interests** calls
+`register_volunteer()`, which adds a volunteer profile and leaves the role, driver profile, verification and
+rides untouched. Removing Transportation from a driver's interests changes nothing about driving.
+
+**Components.**
+
+| Component | Where | Used by |
+| --- | --- | --- |
+| `InterestsSection`, `InterestItem` | `components/volunteer/InterestsSection.tsx` | Overview (both experiences), Profile |
+| `ServiceParticipation` | `components/volunteer/ServiceParticipation.tsx` | General Overview ("Your services"), Profile |
+| `InterestPicker`, `InterestIcon` | `components/volunteer/InterestPicker.tsx` (Phase 1) | Onboarding, My interests |
+| `volunteerNav()`, `volunteerTabs()`, `isCareRidePath()` | `volunteer/navigation.ts` | The workspace shell |
+| `volunteerWorkspace()`, `identityLabel()`, `overviewDescription()`, `interestStatus()` | `volunteer/workspace.ts` | The shell and pages |
+
+Phase 1's separate general volunteer home (`VolunteerHome`) and its `useMyVolunteerProfile` hook were folded
+into `Overview` and the provider.
 
 ## Existing drivers
 
 Nothing about an existing `DRIVER` account changes. The role, driver row, verification status, offers, rides,
 history, routes, navigation, and closing or deleting the account all work as before. Driver onboarding
 (`/onboarding/provider`, `register_driver_profile()`) is unchanged. Drivers are never given a volunteer
-profile automatically. The e2e suite's existing driver tests all still pass, along with
-`e2e/generalVolunteer.spec.ts`'s driver check.
+profile automatically. Since the adaptive workspace, their dashboard also lists any interests they choose to
+add, and their navigation has **My interests**. Every other part of their workspace is as it was.
 
 ## Mock backend
 
 `src/services/mockService.ts` mirrors the database rules: `registerVolunteer`, `getVolunteerProfile` (your own,
 or anyone's for an admin), and `updateMyVolunteerInterests`, plus self-close and deletion. The seed adds
-**Priya** (`priya@careride.demo`), a general volunteer with Food distribution and Community outreach and no
-driver profile. Demo data saved in a browser before this change gets Priya added on load, and nothing else
-in it changes.
+**Priya** (`priya@careride.demo`, Food distribution and Community outreach) and **Alex Morgan**
+(`alex@careride.demo`, Transportation and Community outreach). Both are general volunteers with no driver
+profile. **Maya**, an approved driver, has saved interests (Transportation, Food distribution). **Frank** and
+the other drivers have none, as for every driver from before interests existed. Demo data saved in a browser
+before volunteers existed gets these added once, on its first load. After that, an account deleted on purpose
+stays deleted.
 
 ## Rolling out to staging
 
@@ -182,24 +237,32 @@ Nothing has been applied to any hosted project. Production isn't touched by this
 - **One profile per login.** A volunteer can't also join an organization or enrol as a driver on the same
   login: `register_driver_profile()` and `submit_join_request()` refuse an account that already has a role.
   Optional CareRide enrollment for volunteers is Phase 2.
-- **Drivers' interests aren't shown.** The backend lets a driver hold a volunteer profile, but the app only
-  shows interests to `VOLUNTEER` accounts.
 - **Name and phone can't be edited** by a volunteer in the app, the same as for drivers. The Relay Collective
   team changes them.
 - **Copied functions.** Four functions were redefined by copying their latest version. A later change to
   any of them must start from `20261104120100_general_volunteers.sql`.
 - **Two places list the interest codes**: the SQL check and validator, and `VOLUNTEER_INTERESTS`. Each points
   to the other.
-- **`Help` is driver-only.** General volunteers don't get a help page yet, only Feedback & Suggestions.
+- **Availability is CareRide's.** It's when a driver may be sent ride requests, so general volunteers don't
+  have it. Wider volunteering availability belongs to a future Volunteer Coordination module.
+- **A general volunteer with no interests** can't be made through the app or the database (at least one is
+  required). The workspace still handles it, for data from an older or partial save.
 
 ## Future extension
 
-- **Phase 2: optional CareRide enrollment for volunteers.** Let a `VOLUNTEER` add a driver profile.
-  Either `register_driver_profile()` attaches a `drivers` row and moves the role to `DRIVER` (the
-  `volunteer_profiles` row stays), or role checks move from `profiles.role` to "has an approved driver row".
-  Verification stays with admins either way. Show drivers their interests too.
-- **Phase 2: volunteer workspace redesign.** Merge the general and driving views into one workspace, with a
-  module section per service the person is enrolled in.
-- **Phase 3: Volunteer Coordination module.** Organization-posted opportunities, matching and scheduling.
+- **Done in Phase 2:** the adaptive workspace above, with drivers' interests shown and editable.
+- **Next: optional CareRide enrollment for general volunteers.** It needs:
+  1. **Database.** `register_driver_profile()` refuses a login that already has a profile. Let an active
+     `VOLUNTEER` call it: insert a `PENDING` `drivers` row through `private.insert_driver()`, and change the
+     role to `DRIVER` in the same transaction, keeping `volunteer_profiles`. Every CareRide policy and ride
+     function then works unchanged, because they key off the driver row and its approval. Add PGlite tests:
+     a pending driver still can't see rides, and an admin's approval opens them.
+  2. **App.** An "Enroll in CareRide" path from the Transportation interest and the Service participation
+     panel, reusing the driver onboarding's vehicle, area and availability steps (`DriverFields`), without
+     asking again for what the profile already has. After `reloadSession()`, the workspace becomes the
+     `CARERIDE_DRIVER` experience on its own, and the existing verification screens take over.
+  3. **Wording.** Change Transportation's availability text in `src/volunteer/interests.ts` ("isn't open to
+     volunteer accounts yet").
+- **Later: Volunteer Coordination module.** Organization-posted opportunities, matching and scheduling.
   Interests become a filter for suggestions. Enrollment and permissions for each service stay in that
   service's own tables, following the `drivers` pattern, never in `volunteer_interests`.

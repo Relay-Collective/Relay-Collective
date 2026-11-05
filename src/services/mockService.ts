@@ -67,7 +67,7 @@ import {
 } from './dataService'
 import { deleteDemoFile, getDemoFile, putDemoFile } from './demoFiles'
 import * as feedbackStore from './mockFeedback'
-import { backfilledEvents, seed, VOLUNTEER_PROFILE, VOLUNTEER_USER, demoPasswordFor, type Database, type StoredJoinRequest } from './seed'
+import { backfilledEvents, seed, SEEDED_VOLUNTEERS, demoPasswordFor, type Database, type StoredJoinRequest } from './seed'
 import { interestsError, normalizeInterests } from '../volunteer/interests'
 
 // Hackathon backend: keeps everything in the browser's localStorage.
@@ -106,12 +106,20 @@ function upgrade(db: Database): Database {
   db.joinRequests ??= []
   db.removals ??= []
   db.deletionJobs ??= []
-  db.volunteerProfiles ??= []
-  // Demo data saved before general volunteers existed gains the seeded volunteer, so it can be signed in to
-  if (!db.users.some((u) => u.id === VOLUNTEER_USER.id) && !db.credentials.some((c) => c.email === VOLUNTEER_USER.email)) {
-    db.users.push(structuredClone(VOLUNTEER_USER))
-    db.credentials.push({ email: VOLUNTEER_USER.email!, userId: VOLUNTEER_USER.id, password: demoPasswordFor(VOLUNTEER_USER.email!) })
-    db.volunteerProfiles.push(structuredClone(VOLUNTEER_PROFILE))
+  // Demo data saved before general volunteers existed gains the seeded volunteers, so they can be signed in to.
+  // Only then: once saved data has volunteers, someone deleted on purpose stays deleted.
+  if (!db.volunteerProfiles) {
+    db.volunteerProfiles = []
+    for (const { user, profile } of SEEDED_VOLUNTEERS) {
+      if (user) {
+        if (db.users.some((u) => u.id === user.id) || db.credentials.some((c) => c.email === user.email)) continue
+        db.users.push(structuredClone(user))
+        db.credentials.push({ email: user.email!, userId: user.id, password: demoPasswordFor(user.email!) })
+      } else if (!db.users.some((u) => u.id === profile.userId)) {
+        continue
+      }
+      db.volunteerProfiles.push(structuredClone(profile))
+    }
   }
   // Like the database migration: every existing member keeps managing their organization, and demo
   // partners stay findable in search as the fresh seed has them

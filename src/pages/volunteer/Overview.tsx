@@ -1,8 +1,10 @@
-import { ArrowRight, CalendarCheck, CalendarClock, Check, ChevronRight, CircleCheck, CircleDot, Hourglass, Inbox, Route, TriangleAlert } from 'lucide-react'
+import { ArrowRight, CalendarCheck, CalendarClock, Check, ChevronRight, CircleCheck, CircleDot, HeartHandshake, Hourglass, Inbox, Route, Settings, TriangleAlert, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CareRideMark } from '../../modules/careride/brand'
 import { RequestStatusCard } from '../../components/RequestStatusCard'
 import { AssignmentRow } from '../../components/volunteer/AssignmentRow'
+import { InterestsSection } from '../../components/volunteer/InterestsSection'
+import { ServiceParticipation } from '../../components/volunteer/ServiceParticipation'
 import { OpportunityList } from '../../components/volunteer/OpportunityList'
 import { VolunteerLoadError } from '../../components/volunteer/states'
 import { VerificationSummary } from '../../components/volunteer/VerificationSummary'
@@ -15,7 +17,8 @@ import { useApp } from '../../hooks/useApp'
 import { useNow } from '../../hooks/useNow'
 import { useVolunteer } from '../../hooks/useVolunteer'
 import { commitmentsFrom, impactSummary, volunteerActions, type ActionKind, type VolunteerAction } from '../../logic/volunteerSummary'
-import { canDrive } from '../../volunteer/participation'
+import { canDrive, PARTICIPANT_KIND_LABELS } from '../../volunteer/participation'
+import { overviewDescription } from '../../volunteer/workspace'
 import { volunteerPaths as paths } from '../../volunteer/paths'
 import { greetingFor } from '../../logic/formatTime'
 
@@ -36,26 +39,95 @@ function actionLink(a: VolunteerAction): string {
   return to[a.kind]
 }
 
-// A volunteer's home: what needs them, what's next, and what they've given. Every number comes from their own records.
+// A volunteer's home, adapted to how they take part (src/volunteer/workspace.ts). Same greeting and page for
+// everyone; CareRide drivers keep their driving dashboard, general volunteers see their interests and services.
 export function Overview() {
+  const { workspace } = useVolunteer()
+  return workspace.experience === 'GENERAL_VOLUNTEER' ? <GeneralOverview /> : <DriverOverview />
+}
+
+// "Good morning, Alex." with today's date, and a line that suits how this person takes part
+function OverviewHeader({ name }: { name: string }) {
+  const { workspace } = useVolunteer()
+  const nowDate = new Date(useNow())
+  const first = name.trim().split(/\s+/)[0]
+  return (
+    <PageHeader
+      title={<Greeting greeting={greetingFor(nowDate.getHours())} name={first || undefined} />}
+      eyebrow={nowDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+      description={overviewDescription(workspace)}
+    />
+  )
+}
+
+// A general volunteer: who they are here, the ways they'd like to help, and honestly which services they're in
+// (none yet). No ride numbers, requests, commitments or driver alerts: they aren't a driver.
+function GeneralOverview() {
+  const { currentUser } = useApp()
+  const { volunteer } = useVolunteer()
+  if (!currentUser) return null
+  const since = volunteer.data?.createdAt
+    ? new Date(volunteer.data.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+    : undefined
+
+  return (
+    <div className="space-y-10">
+      <OverviewHeader name={currentUser.name} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="space-y-6 lg:col-span-2">
+          <InterestsSection />
+          <ServiceParticipation title="Your services" welcome />
+        </div>
+        <div className="space-y-6">
+          <section aria-labelledby="identity-title" className={panel}>
+            <div className={panelHead}>
+              <h2 id="identity-title" className={panelTitle}>
+                Volunteer profile
+              </h2>
+              <Link to={paths.profile} className={panelLink}>
+                View <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+            {/* A narrow column: each label sits above its value, so names and dates don't break mid-word */}
+            <dl className="divide-y divide-slate-100">
+              {(
+                [
+                  ['Name', currentUser.name],
+                  ['Taking part as', PARTICIPANT_KIND_LABELS.GENERAL_VOLUNTEER],
+                  ...(since ? ([['Volunteer since', since]] as const) : []),
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label} className="px-5 py-3">
+                  <dt className="text-xs font-semibold text-slate-500">{label}</dt>
+                  <dd className="mt-0.5 font-medium text-rc-navy">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+          <NextSteps
+            title="Your next steps"
+            steps={[
+              { to: paths.interests, icon: HeartHandshake, title: 'Keep your interests current', text: 'Add or remove ways you’d like to help.' },
+              { to: paths.profile, icon: UserRound, title: 'Review your profile', text: 'Your details and service participation.' },
+              { to: paths.settings, icon: Settings, title: 'Check your settings', text: 'Your password and account.' },
+            ]}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// A CareRide driver: what needs them, what's next, and what they've given. Every number comes from their own records.
+function DriverOverview() {
   const { currentUser } = useApp()
   const { driver, driverLoaded, rides, groups, offers, houseOf } = useVolunteer()
   const now = useNow()
   if (!currentUser) return null
 
   const nowDate = new Date(now)
-  const first = currentUser.name.trim().split(/\s+/)[0]
-  const greeting = greetingFor(nowDate.getHours())
-  const date = nowDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
   const approved = canDrive(driver)
-
-  const header = (
-    <PageHeader
-      title={<Greeting greeting={greeting} name={first || undefined} />}
-      eyebrow={date}
-      description="Your time makes a difference. Here's what's happening in your workspace."
-    />
-  )
+  const header = <OverviewHeader name={currentUser.name} />
 
   if (!driverLoaded) {
     return (
@@ -72,7 +144,8 @@ export function Overview() {
       <div className="space-y-6">
         {header}
         {driver ? <VerificationSummary driver={driver} /> : <p className="text-slate-600">There's no driver profile on this account.</p>}
-        {driver && <NextSteps />}
+        {driver && <NextSteps title="While you wait" steps={WAITING_STEPS} />}
+        <InterestsSection compact />
       </div>
     )
   }
@@ -216,6 +289,8 @@ export function Overview() {
 
           {driver && <RequestStatusCard driver={driver} showSettingsLink />}
 
+          <InterestsSection compact />
+
           <section aria-labelledby="impact-title" className={panel}>
             <div className={panelHead}>
               <h2 id="impact-title" className={panelTitle}>
@@ -259,19 +334,30 @@ export function Overview() {
   )
 }
 
-function NextSteps() {
+interface Step {
+  to: string
+  icon: typeof ArrowRight
+  title: string
+  text: string
+}
+
+// A driver still in review: what's worth checking meanwhile
+const WAITING_STEPS: Step[] = [
+  { to: paths.availability, icon: CalendarClock, title: 'Check your availability', text: 'Requests are only sent during these hours.' },
+  { to: paths.profile, icon: Hourglass, title: 'Review your profile', text: 'Vehicle, cities, and contact details.' },
+]
+
+// A short list of real next steps, each a link to a working page
+function NextSteps({ title, steps }: { title: string; steps: Step[] }) {
   return (
     <section aria-labelledby="meanwhile-title" className={panel}>
       <div className={panelHead}>
         <h2 id="meanwhile-title" className={panelTitle}>
-          While you wait
+          {title}
         </h2>
       </div>
       <ul className="divide-y divide-slate-100">
-        {[
-          { to: paths.availability, icon: CalendarClock, title: 'Check your availability', text: 'Requests are only sent during these hours.' },
-          { to: paths.profile, icon: Hourglass, title: 'Review your profile', text: 'Vehicle, cities, and contact details.' },
-        ].map(({ to, icon: Icon, title, text }) => (
+        {steps.map(({ to, icon: Icon, title, text }) => (
           <li key={to}>
             <Link to={to} className={`flex items-center gap-3 px-5 py-4 hover:bg-slate-50 ${focusRing}`}>
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-rc-blue" aria-hidden>

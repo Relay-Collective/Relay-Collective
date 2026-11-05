@@ -71,7 +71,6 @@ import { RideDetail as VolunteerRideDetail } from './pages/volunteer/RideDetail'
 import { Settings as VolunteerSettings } from './pages/volunteer/Settings'
 import { Transportation as VolunteerTransportation } from './pages/volunteer/Transportation'
 import { Verification } from './pages/volunteer/Verification'
-import { VolunteerHome } from './pages/volunteer/VolunteerHome'
 import { volunteerPaths } from './volunteer/paths'
 
 // "/home" always lands on the right main page for whoever is signed in, from what the backend says:
@@ -84,12 +83,6 @@ function RoleHome() {
   // Couldn't check the organization: fall back to the role's home, where the workspace explains its status
   if (orgId && !orgs.data && !orgs.error) return <FullPageLoader />
   return <Navigate to={orgs.error ? HOME_FOR[currentUser.role] : homePath(currentUser, orgs.data?.find((o) => o.id === orgId))} replace />
-}
-
-// "/volunteer" is each volunteer's home: drivers see their driving overview, general volunteers their interests.
-function VolunteerLanding() {
-  const { currentUser } = useApp()
-  return currentUser?.role === 'VOLUNTEER' ? <VolunteerHome /> : <VolunteerOverview />
 }
 
 // The website keeps the marketing page at "/". The app skips it: signed-in people
@@ -217,17 +210,19 @@ export default function App() {
               </Route>
             </Route>
 
-            {/* The volunteer workspace, for everyone who volunteers. Drivers have CareRide (transportation) in it.
-                General volunteers have no driver profile, so its driving pages send them back to their home. */}
+            {/* The volunteer workspace, for everyone who volunteers. It adapts to how each person takes part
+                (src/volunteer/workspace.ts). Drivers have CareRide (transportation) in it; general volunteers have no
+                driver profile, so CareRide's pages send them back to their home. */}
             <Route element={<RequireRole roles={['DRIVER', 'VOLUNTEER']} />}>
               <Route element={<VolunteerShell />}>
-                <Route path={volunteerPaths.overview} element={<VolunteerLanding />} />
+                <Route path={volunteerPaths.overview} element={<VolunteerOverview />} />
+                <Route path={volunteerPaths.interests} element={<VolunteerInterests />} />
+                <Route path={volunteerPaths.profile} element={<Profile />} />
                 <Route path={volunteerPaths.settings} element={<VolunteerSettings />} />
+                <Route path={volunteerPaths.help} element={<VolunteerHelp />} />
                 <Route path={volunteerPaths.feedback} element={<MyFeedback />} />
                 <Route path={`${volunteerPaths.feedback}/:id`} element={<MyFeedbackDetail />} />
-                <Route element={<RequireRole roles={['VOLUNTEER']} />}>
-                  <Route path={volunteerPaths.interests} element={<VolunteerInterests />} />
-                </Route>
+                {/* CareRide driving (CARERIDE_PATHS in src/volunteer/navigation.ts) */}
                 <Route element={<RequireRole roles={['DRIVER']} />}>
                   <Route path={volunteerPaths.opportunities} element={<Opportunities />} />
                   <Route path={volunteerPaths.commitments} element={<Commitments />} />
@@ -235,9 +230,7 @@ export default function App() {
                   <Route path={volunteerPaths.rides} element={<MyRides />} />
                   <Route path={`${volunteerPaths.rides}/:id`} element={<VolunteerRideDetail />} />
                   <Route path={volunteerPaths.availability} element={<Availability />} />
-                  <Route path={volunteerPaths.profile} element={<Profile />} />
                   <Route path={volunteerPaths.verification} element={<Verification />} />
-                  <Route path={volunteerPaths.help} element={<VolunteerHelp />} />
                 </Route>
               </Route>
               {/* Driver pages used to live under /driver. Old links and bookmarks still land on the same page. */}

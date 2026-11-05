@@ -25,6 +25,7 @@ const KNOWN_ISSUES: Record<string, Record<string, number>> = {
   // Only the "What's new" version badge, as on sign-in
   'general volunteer home': { 'label-content-name-mismatch': 1 },
   'volunteering interests': { 'label-content-name-mismatch': 1 },
+  'general volunteer profile': { 'label-content-name-mismatch': 1 },
   'admin overview': { 'label-content-name-mismatch': 7 },
   'organization overview on a phone': { 'label-content-name-mismatch': 5 },
   'volunteer overview on a phone': { 'label-content-name-mismatch': 5 },
@@ -84,6 +85,12 @@ const pages: { name: string; account?: Account; path: string; ready: (page: Page
     account: accounts.priya,
     path: '/volunteer/interests',
     ready: (p) => expect(p.getByRole('checkbox', { name: /^Food distribution/ })).toBeChecked(),
+  },
+  {
+    name: 'general volunteer profile',
+    account: accounts.priya,
+    path: '/volunteer/profile',
+    ready: (p) => expect(p.getByRole('region', { name: 'Service participation' })).toBeVisible(),
   },
   {
     name: 'admin overview',

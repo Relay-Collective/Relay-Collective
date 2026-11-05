@@ -30,6 +30,7 @@ export const accounts = {
   maya: { name: 'Maya', email: 'maya@careride.demo', password: DEMO_PASSWORD },
   jordan: { name: 'Jordan', email: 'jordan@careride.demo', password: DEMO_PASSWORD }, // driver, still pending review
   priya: { name: 'Priya', email: 'priya@careride.demo', password: DEMO_PASSWORD }, // general volunteer: no driver profile
+  alex: { name: 'Alex Morgan', email: 'alex@careride.demo', password: DEMO_PASSWORD }, // general volunteer, interested in Transportation
   admin: { name: 'Relay Collective Admin', email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
 } satisfies Record<string, Account>
 

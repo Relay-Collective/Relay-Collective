@@ -85,8 +85,9 @@ test.describe('general volunteers', () => {
     await expect(saved).toContainText('Not on Relay Collective yet.')
 
     const nav = page.getByRole('navigation', { name: 'Main' })
-    await expect(nav.getByRole('link', { name: 'Volunteering interests' })).toBeVisible()
-    for (const driving of ['CareRide', 'Opportunities', 'My commitments', 'Availability', 'My profile']) {
+    await expect(nav.getByRole('link', { name: 'My interests' })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'My profile' })).toBeVisible() // shared since the adaptive workspace; no driving details on it
+    for (const driving of ['CareRide', 'Opportunities', 'My commitments', 'Availability']) {
       await expect(nav.getByRole('link', { name: driving, exact: true })).toHaveCount(0)
     }
     // No driver verification banner or prompt for someone who never enrolled
@@ -95,7 +96,7 @@ test.describe('general volunteers', () => {
 
   test('interests can be added and removed, and stay saved after a refresh', async ({ page }) => {
     await signIn(page, accounts.priya)
-    await page.getByRole('link', { name: 'Update interests' }).click()
+    await page.getByRole('link', { name: 'Manage interests' }).click()
     await expect(page).toHaveURL(/\/volunteer\/interests$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Volunteering interests' })).toBeVisible()
     await expect(interest(page, 'Food distribution')).toBeChecked()
@@ -134,7 +135,6 @@ test.describe('general volunteers', () => {
       '/volunteer/transportation',
       '/volunteer/transportation/rides',
       '/volunteer/availability',
-      '/volunteer/profile',
       '/volunteer/profile/verification',
       '/driver',
       '/workspace',
@@ -154,12 +154,8 @@ test.describe('general volunteers', () => {
     const nav = page.getByRole('navigation', { name: 'Main' })
     await expect(nav.getByRole('link', { name: 'CareRide' })).toBeVisible()
     await expect(nav.getByRole('link', { name: 'Opportunities' })).toBeVisible()
-    await expect(nav.getByRole('link', { name: 'Volunteering interests' })).toHaveCount(0)
     await page.goto('/volunteer/profile/verification')
     await expect(page.getByRole('region', { name: 'Review status' }).getByRole('status')).toHaveText('You’re approved to drive.')
-    // The general volunteer's interests page isn't a driver page
-    await page.goto('/volunteer/interests')
-    await expect(page).toHaveURL(/\/volunteer$/)
   })
 
   test('platform admins see a general volunteer as a volunteer, not a driver', async ({ page }) => {

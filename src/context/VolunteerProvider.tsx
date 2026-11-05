@@ -8,6 +8,7 @@ import { buzz } from '../native/platform'
 import { dataService } from '../services'
 import type { Ride } from '../types'
 import { canDrive } from '../volunteer/participation'
+import { volunteerWorkspace } from '../volunteer/workspace'
 import { VolunteerContext } from './volunteerContext'
 
 // The driver comes from the signed-in account, never from the address bar.
@@ -15,7 +16,10 @@ import { VolunteerContext } from './volunteerContext'
 export function VolunteerProvider({ children }: { children: ReactNode }) {
   const { currentUser, refresh } = useApp()
   const [celebrating, setCelebrating] = useState<{ ride: Ride; count: number }>()
-  // Only a DRIVER account has a driver profile; a general volunteer's workspace never asks for one
+  // Every volunteer may have a volunteer profile (interests). Only a DRIVER account has a driver profile, so a
+  // general volunteer's workspace never asks for one. Each is loaded once here for the whole workspace.
+  const profileId = currentUser?.id ?? ''
+  const volunteer = useLoadable(async () => (profileId ? ((await dataService.getVolunteerProfile(profileId)) ?? null) : null), profileId)
   const userId = currentUser?.role === 'DRIVER' ? currentUser.id : ''
   const drivers = useLoadable(() => (userId ? dataService.listDrivers() : Promise.resolve([])), userId)
   const driver = drivers.data?.find((d) => d.userId === userId)
@@ -61,9 +65,10 @@ export function VolunteerProvider({ children }: { children: ReactNode }) {
     refresh()
   }
 
+  const workspace = useMemo(() => volunteerWorkspace(currentUser, driver, volunteer.data), [currentUser, driver, volunteer.data])
   const value = useMemo(
-    () => ({ driver, driverLoaded: !!drivers.data, rides, groups, offers, houseOf, feedback: feedback ?? [], celebrate }),
-    [driver, drivers.data, rides, groups, offers, houseOf, feedback, celebrate],
+    () => ({ workspace, volunteer, driver, driverLoaded: !!drivers.data, rides, groups, offers, houseOf, feedback: feedback ?? [], celebrate }),
+    [workspace, volunteer, driver, drivers.data, rides, groups, offers, houseOf, feedback, celebrate],
   )
   return (
     <VolunteerContext.Provider value={value}>

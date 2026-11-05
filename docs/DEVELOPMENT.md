@@ -34,6 +34,7 @@ Open **Sign in** and choose a one-tap demo account, or use one of the credential
 | Belkin House | `belkin@careride.demo` | Book, change, and track a client's ride. |
 | Frank | `frank@careride.demo` | Accept requests and complete rides. |
 | Priya | `priya@careride.demo` | A general volunteer (not a driver): see and update volunteering interests. |
+| Alex Morgan | `alex@careride.demo` | A general volunteer interested in transportation, which still doesn't make them a driver. |
 | Relay Collective Admin | `admin@careride.com` | Review pending approvals and manage accounts. |
 
 Additional partner, driver and volunteer accounts appear on the sign-in page. Demo records are fictional except for public place names and addresses. Belkin House, Richmond House, and Grace Mansion use their real addresses, and each starts with saved destinations taken from its case workers' answers in [PARTNER_ORG_NOTES.md](../PARTNER_ORG_NOTES.md).

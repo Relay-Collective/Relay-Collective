@@ -3,81 +3,75 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarClock,
+  CalendarDays,
+  ChevronDown,
+  CircleCheck,
+  Clock,
   DoorOpen,
   HandHelping,
   History,
-  House as HouseIcon,
   LoaderCircle,
-  MapPin,
-  Navigation,
-  Search,
   TriangleAlert,
   User as UserIcon,
   Zap,
 } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { DestinationPicker, FixedRoute } from '../components/booking/DestinationPicker'
 import { FormSection } from '../components/booking/FormSection'
 import { MatchLine } from '../components/booking/MatchLine'
 import { OptionTile } from '../components/booking/OptionTile'
 import { PassengerStepper } from '../components/booking/PassengerStepper'
-import { BOOK_AHEAD_DAYS, PickupTimePicker } from '../components/booking/PickupTimePicker'
+import { PickupTimePicker } from '../components/booking/PickupTimePicker'
 import { TripSummary } from '../components/booking/TripSummary'
-import { AddressPicker } from '../../../components/form/AddressPicker'
 import { FieldMessage } from '../../../components/form/FieldMessage'
 import { RequiredMark } from '../../../components/form/RequiredMark'
 import { TextField } from '../../../components/form/TextField'
 import { card, ghostButton, input, label, primaryButton } from '../../../components/ui'
-import { DEFAULT_PICKUP_INSTRUCTIONS } from '../../../constants'
 import { DEMO_FRAME_USER } from '../../../context/demoFrame'
 import { useApp } from '../../../hooks/useApp'
 import { useData } from '../../../hooks/useData'
 import { useHospitalWaitTimes } from '../hooks/useHospitalWaitTimes'
 import { maxPassengers } from '../../../logic/capacity'
 import { ON_DEMAND_GIVE_UP_MINUTES } from '../../../logic/dispatch'
+import {
+  blankForm,
+  bookingMode,
+  CUSTOM,
+  EDITABLE,
+  firstProblem,
+  initialForm,
+  isReturnTrip,
+  isUntouched,
+  missingItems,
+  parseDraft,
+  rideDetails,
+  sectionsDone,
+  validate,
+  type Errors,
+  type Field,
+  type FormState,
+  type Mode,
+} from '../logic/bookingForm'
 import { previewDriverMatch, type MatchCheck, type MatchPreview } from '../logic/driverMatchPreview'
 import { estimateFare } from '../../../logic/estimateFare'
 import { matchWaitTime, waitNote, waitSummary } from '../logic/hospitalWaitTimes'
-import { houseAddress, isRealAddress } from '../../../logic/maps'
-import { describePickup, parseLocalInput, quickPicks, toLocalInput } from '../logic/pickupTime'
-import { sortByPopularity } from '../logic/popularDestinations'
+import { houseAddress } from '../../../logic/maps'
+import { describePickup, parseLocalInput, quickPicks } from '../logic/pickupTime'
+import { frequentDestinations, sortByPopularity } from '../logic/popularDestinations'
 import { passengersLabel, riderLabel } from '../logic/rideText'
 import { MAX_NAME, MAX_NOTE, tooLong } from '../../../logic/validate'
 import { dataService } from '../../../services'
-import type { House, Ride, RideStatus, RideType, User } from '../../../types'
+import type { House, Ride, User } from '../../../types'
 import { careRidePaths as paths } from '../paths'
 
-const CUSTOM = 'custom'
+// The booking sheet and the summary: one white surface each, no nested frames
+const sheet = 'rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]'
+const focusRing = 'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2'
 
-// Past this many saved places, a search box helps staff find theirs.
-const SEARCH_AFTER = 6
-
-const EDITABLE: RideStatus[] = ['SEARCHING', 'OFFERED', 'NEEDS_ATTENTION', 'ACCEPTED']
-
-// new: a fresh booking. again: a fresh booking copied from an old ride.
-// return: the trip back from an outbound ride. edit: changing a booked ride.
-type Mode = 'new' | 'again' | 'return' | 'edit'
-
-interface FormState {
-  type: RideType
-  destinationId: string
-  customAddress: string // what's in the box, then the full picked address
-  customName: string // the picked place's name, e.g. a hospital, or its street address
-  customPicked: boolean // picked from the search list, so it's a real place drivers can find
-  pickupTime: string // datetime-local style
-  passengers: number
-  riderNames: string[]
-  pickupInstructions: string
-  needsWheelchair: boolean
-  needsAssistance: boolean
-  notes: string
-}
-
-type Field = 'destination' | 'customAddress' | 'pickupTime' | 'passengers' | 'riderNames' | 'pickupInstructions' | 'notes'
-
-// Where each checked field lives, in page order, so a failed send jumps to the first problem.
+// Where each checked field lives, so a failed send (or a "still needed" link) goes straight to it.
 const FIELD_TARGETS: Record<Field, { section: string; focus: string }> = {
-  destination: { section: 'where', focus: 'input[name="destination"]' },
+  destination: { section: 'where', focus: '#destination-search' },
   customAddress: { section: 'where', focus: '#custom-address' },
   pickupTime: { section: 'when', focus: '#pickup-time' },
   passengers: { section: 'who', focus: '#passengers-label' },
@@ -93,20 +87,23 @@ function scrollBehavior(): ScrollBehavior {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
 }
 
+// After the next paint, so a part that opens to show its problem (the calendar, the notes) is there to focus
 function jumpTo(field: Field) {
-  const { section, focus } = FIELD_TARGETS[field]
-  document.getElementById(section)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
-  document.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true })
+  requestAnimationFrame(() => {
+    const { section, focus } = FIELD_TARGETS[field]
+    document.getElementById(section)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
+    const target = document.querySelector<HTMLElement>(focus) ?? document.querySelector<HTMLElement>(`#${section} input, #${section} button`)
+    target?.focus({ preventScroll: true })
+  })
 }
 
 // ---- Unfinished bookings survive the back button, a refresh, or closing the tab
 
 const draftKey = (userId: string) => `careride-ride-draft:${userId}`
 
-function readDraft(userId: string): FormState | undefined {
+function readDraft(userId: string): Partial<FormState> | undefined {
   try {
-    const raw = localStorage.getItem(draftKey(userId))
-    return raw ? (JSON.parse(raw) as FormState) : undefined
+    return parseDraft(localStorage.getItem(draftKey(userId)))
   } catch {
     return undefined
   }
@@ -128,76 +125,9 @@ function clearDraft(userId: string): void {
   }
 }
 
-// Whether staff have entered anything worth keeping. The default pickup time moves with the clock, so it doesn't count.
-function isUntouched(form: FormState, now: number): boolean {
-  const blank = blankForm(now)
-  return JSON.stringify({ ...form, pickupTime: '' }) === JSON.stringify({ ...blank, pickupTime: '' })
-}
-
-function blankForm(now: number): FormState {
-  return {
-    type: 'SCHEDULED',
-    destinationId: '',
-    customAddress: '',
-    customName: '',
-    customPicked: false,
-    pickupTime: quickPicks(now)[0].value,
-    passengers: 1,
-    riderNames: [''],
-    pickupInstructions: DEFAULT_PICKUP_INSTRUCTIONS,
-    needsWheelchair: false,
-    needsAssistance: false,
-    notes: '',
-  }
-}
-
-// The who and how of an earlier ride, to start a new one from
-function copyRiders(ride: Ride): Pick<FormState, 'passengers' | 'riderNames' | 'needsWheelchair' | 'needsAssistance'> {
-  return {
-    passengers: ride.passengers,
-    riderNames: Array.from({ length: ride.passengers }, (_, i) => ride.riderNames?.[i] ?? ''),
-    needsWheelchair: ride.needsWheelchair,
-    needsAssistance: ride.needsAssistance,
-  }
-}
-
-function initialForm(mode: Mode, source: Ride | undefined, userId: string, now: number): { form: FormState; restored: boolean } {
-  const blank = blankForm(now)
-  if (mode === 'new') {
-    const draft = readDraft(userId)
-    if (!draft || isUntouched({ ...blank, ...draft }, now)) return { form: blank, restored: false }
-    // A saved time that has since passed goes back to the default
-    const stale = parseLocalInput(draft.pickupTime) <= now
-    return { form: { ...blank, ...draft, pickupTime: stale ? blank.pickupTime : draft.pickupTime }, restored: true }
-  }
-  if (!source) return { form: blank, restored: false }
-  // A typed address from an older ride counts as picked, unless it was never a real one
-  const destination = source.destinationId
-    ? { destinationId: source.destinationId, customAddress: '', customName: '', customPicked: false }
-    : {
-        destinationId: CUSTOM,
-        customAddress: source.destinationAddress,
-        customName: source.destinationName,
-        customPicked: isRealAddress(source.destinationAddress),
-      }
-  if (mode === 'return') return { form: { ...blank, ...copyRiders(source) }, restored: false }
-  if (mode === 'again') {
-    return {
-      form: { ...blank, ...destination, ...copyRiders(source), pickupInstructions: source.pickupInstructions ?? '', notes: source.notes ?? '' },
-      restored: false,
-    }
-  }
-  return {
-    form: {
-      ...destination,
-      ...copyRiders(source),
-      type: source.type,
-      pickupTime: source.type === 'SCHEDULED' ? toLocalInput(Date.parse(source.pickupTime)) : blank.pickupTime,
-      pickupInstructions: source.pickupInstructions ?? '',
-      notes: source.notes ?? '',
-    },
-    restored: false,
-  }
+// A text box that brings up the on-screen keyboard
+function isTextEntry(el: EventTarget): boolean {
+  return el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['radio', 'checkbox', 'button', 'submit'].includes(el.type))
 }
 
 // One-way trip. ?returnOf=<id> books the trip back, ?edit=<id> changes a booked ride,
@@ -208,7 +138,7 @@ export function RequestRide() {
   const returnOf = params.get('returnOf') ?? ''
   const editId = params.get('edit') ?? ''
   const againId = params.get('again') ?? ''
-  const mode: Mode = editId ? 'edit' : returnOf ? 'return' : againId ? 'again' : 'new'
+  const mode: Mode = bookingMode({ edit: editId, returnOf, again: againId })
   const sourceId = editId || returnOf || againId
 
   const houses = useData(() => dataService.listHouses(currentUser?.orgId), currentUser?.orgId)
@@ -249,12 +179,32 @@ export function RequestRide() {
 function InlineMatchHint({ match, checks }: { match?: MatchPreview; checks: MatchCheck[] }) {
   if (!match || match.count > 0 || !match.check || !checks.includes(match.check)) return null
   return (
-    <p role="status" className="mt-4 flex gap-2.5 rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ring-1 ring-amber-300">
-      <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+    <p role="status" className="mt-4 flex gap-2.5 rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
       <span>
-        <strong>Heads up:</strong> {match.reason}
+        <strong className="font-semibold">Heads up:</strong> {match.reason}
       </span>
     </p>
+  )
+}
+
+// One half of the "when" switch. A real radio, styled as a segment.
+function WhenOption({ checked, onChange, title, description, icon }: { checked: boolean; onChange: () => void; title: string; description: string; icon: ReactNode }) {
+  return (
+    <label
+      className={`flex min-h-14 cursor-pointer select-none items-center gap-2.5 rounded-xl px-3 py-2 transition duration-150 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500 ${
+        checked ? 'bg-white text-ink shadow-[var(--shadow-rest)] ring-1 ring-slate-200' : 'text-slate-600 hover:bg-white/60 hover:text-ink'
+      }`}
+    >
+      <input type="radio" name="when" checked={checked} onChange={onChange} className="sr-only" />
+      <span className={`shrink-0 ${checked ? 'text-brand-600' : 'text-slate-500'}`} aria-hidden>
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold leading-tight sm:text-base">{title}</span>
+        <span className="hidden text-sm text-slate-600 sm:block">{description}</span>
+      </span>
+    </label>
   )
 }
 
@@ -268,26 +218,33 @@ interface FormProps {
 function RideForm({ mode, source, house, user }: FormProps) {
   const { refresh } = useApp()
   const navigate = useNavigate()
-  const pastRides = useData(() => dataService.listRidesForHouse(house.id), house.id) ?? []
-  const destinations = useData(() => dataService.listDestinations(user.orgId), user.orgId) ?? []
+  const ridesForHouse = useData(() => dataService.listRidesForHouse(house.id), house.id)
+  const destinations = useData(() => dataService.listDestinations(user.orgId), user.orgId)
   // Anonymous eligibility only: enough to say how many drivers could take the ride, not who
   const drivers = useData(() => dataService.listDriverPool())
   const waits = useHospitalWaitTimes()
-  const sorted = sortByPopularity(destinations, pastRides, house.id)
+  const pastRides = ridesForHouse ?? []
+  // Places stay "loading" until past rides are in too, so the frequent list doesn't jump in afterwards
+  const places = destinations && ridesForHouse ? destinations : undefined
+  const sorted = sortByPopularity(places ?? [], pastRides, house.id)
+  const frequent = frequentDestinations(places ?? [], pastRides, house.id)
 
   // When the form was opened. The default pickup times are based on it.
   const [openedAt] = useState(() => Date.now())
   const picks = quickPicks(openedAt)
-  const [initial] = useState(() => initialForm(mode, source, user.id, openedAt))
+  const [initial] = useState(() => initialForm(mode, source, mode === 'new' ? readDraft(user.id) : undefined, openedAt))
   const [form, setForm] = useState<FormState>(initial.form)
   const [restored, setRestored] = useState(initial.restored && !DEMO_FRAME_USER) // the /demo deck fills the form on purpose
-  const [query, setQuery] = useState('')
   // Errors stay hidden until the first send, then update live as staff fix them.
   const [showErrors, setShowErrors] = useState(false)
   // The clock pickup times are checked against. Ticks every half minute so past times drop off the picker.
   const [now, setNow] = useState(openedAt)
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
+  // The full calendar opens on request, or straight away for a time that isn't one of the quick picks
+  const [moreTimes, setMoreTimes] = useState(() => initial.form.type === 'SCHEDULED' && !picks.some((p) => p.value === initial.form.pickupTime))
+  const [extrasOpen, setExtrasOpen] = useState(false)
+  const [typing, setTyping] = useState(false) // the on-screen keyboard is likely up
   const errorRef = useRef<HTMLParagraphElement>(null)
   // One id per booking attempt, kept across retries, so a lost response can't book the ride twice
   const requestId = useRef(crypto.randomUUID())
@@ -303,7 +260,7 @@ function RideForm({ mode, source, house, user }: FormProps) {
     else saveDraft(user.id, form)
   }, [mode, user.id, form, openedAt])
 
-  const isReturn = mode === 'return' || (mode === 'edit' && !!source?.returnOfRideId)
+  const isReturn = isReturnTrip(mode, source)
   const maxRiders = drivers ? maxPassengers(drivers) : form.passengers
   const update = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }))
 
@@ -313,44 +270,31 @@ function RideForm({ mode, source, house, user }: FormProps) {
 
   function startOver() {
     clearDraft(user.id)
-    setForm(blankForm(Date.now()))
+    const blank = blankForm(Date.now())
+    setForm(blank)
+    setMoreTimes(false)
     setRestored(false)
     setShowErrors(false)
   }
 
   const pickupMs = parseLocalInput(form.pickupTime)
   const pickupValid = !Number.isNaN(pickupMs)
+  const saved = places?.find((d) => d.id === form.destinationId)
 
-  function validate(at: number): Partial<Record<Field, string>> {
-    const found: Partial<Record<Field, string>> = {}
-    if (!isReturn && !form.destinationId) found.destination = 'Choose where the client is going.'
-    if (!isReturn && form.destinationId === CUSTOM) {
-      const address = form.customAddress.trim()
-      if (!address) found.customAddress = 'Search for the address the client is going to.'
-      else if (!form.customPicked) found.customAddress = 'Pick a matching address from the list, so the driver can find it.'
-      else found.customAddress = tooLong(address, MAX_NAME * 2)
+  function check(at: number): Errors {
+    const found = validate(form, { isReturn, maxRiders, at })
+    // A saved place that has since been removed can't be booked to
+    if (!isReturn && places && form.destinationId && form.destinationId !== CUSTOM && !saved) {
+      return { destination: 'Choose where the client is going.', ...found }
     }
-    if (form.type === 'SCHEDULED') {
-      if (!pickupValid) found.pickupTime = 'Choose a pickup date and time.'
-      else if (pickupMs < at) found.pickupTime = 'That time has already passed. Choose a later time.'
-      else if (pickupMs > at + BOOK_AHEAD_DAYS * 86_400_000) found.pickupTime = `Book up to ${BOOK_AHEAD_DAYS} days ahead.`
-    }
-    if (form.passengers > maxRiders) found.passengers = `A ride can take up to ${maxRiders} passengers. Book two rides for a bigger group.`
-    if (form.riderNames.some((n) => tooLong(n, MAX_NAME))) found.riderNames = `Keep each name under ${MAX_NAME} characters.`
-    found.pickupInstructions = tooLong(form.pickupInstructions, MAX_NOTE)
-    found.notes = tooLong(form.notes, MAX_NOTE)
-    return Object.fromEntries(Object.entries(found).filter(([, v]) => v))
+    return found
   }
 
-  const errors = validate(now)
+  const errors = check(now)
   const shown = showErrors ? errors : {}
-  const problemCount = Object.keys(errors).length
-
-  const whereDone = !errors.destination && !errors.customAddress
-  const whenDone = !errors.pickupTime
-  const whoDone = !errors.passengers && !errors.riderNames
-  const steps = [whereDone, whenDone, whoDone]
-  const doneCount = steps.filter(Boolean).length
+  const done = sectionsDone(errors)
+  const missing = missingItems(errors)
+  const ready = missing.length === 0
 
   // Whether any driver could take this ride, shown while filling in the form so staff aren't surprised.
   const pickupIso = form.type === 'ON_DEMAND' ? new Date(now).toISOString() : pickupValid ? new Date(pickupMs).toISOString() : ''
@@ -369,14 +313,11 @@ function RideForm({ mode, source, house, user }: FormProps) {
         )
       : undefined
 
-  const saved = destinations.find((d) => d.id === form.destinationId)
-  const usedBefore = new Set(pastRides.map((r) => r.destinationId))
-  const q = query.trim().toLowerCase()
-  const listed = q ? sorted.filter((d) => `${d.name} ${d.address}`.toLowerCase().includes(q)) : sorted
-  const listedWaits = listed.flatMap((d) => {
-    const wait = matchWaitTime(d.name, d.address, waits)
-    return wait ? [wait] : []
-  })
+  const waitFor = (name: string, address?: string) => {
+    const wait = matchWaitTime(name, address, waits)
+    return wait ? waitNote(wait) : undefined
+  }
+  const anyWaits = sorted.some((d) => matchWaitTime(d.name, d.address, waits))
   const chosenWait = isReturn
     ? undefined
     : saved
@@ -409,34 +350,14 @@ function RideForm({ mode, source, house, user }: FormProps) {
     const at = clock()
     setNow(at)
     setShowErrors(true)
-    const problems = validate(at)
-    const firstProblem = (Object.keys(FIELD_TARGETS) as Field[]).find((f) => problems[f])
-    if (firstProblem) {
-      jumpTo(firstProblem)
+    const problem = firstProblem(check(at))
+    if (problem) {
+      jumpTo(problem)
       return
     }
 
     const pickupTime = form.type === 'ON_DEMAND' ? new Date().toISOString() : new Date(pickupMs).toISOString()
-    const destination = isReturn
-      ? { destinationId: undefined, destinationName: house.name, destinationAddress: houseAddress(house) }
-      : saved
-        ? { destinationId: saved.id, destinationName: saved.name, destinationAddress: saved.address }
-        : {
-            destinationId: undefined,
-            destinationName: form.customName.trim() || form.customAddress.trim(),
-            destinationAddress: form.customAddress.trim(),
-          }
-    const details = {
-      type: form.type,
-      pickupTime,
-      passengers: form.passengers,
-      riderNames: form.riderNames.map((n) => n.trim()),
-      needsWheelchair: form.needsWheelchair,
-      needsAssistance: form.needsAssistance,
-      pickupInstructions: form.pickupInstructions.trim() || undefined,
-      notes: form.notes.trim() || undefined,
-      ...destination,
-    }
+    const details = rideDetails(form, { isReturn, saved, house, pickupTime })
 
     setError('')
     setSending(true)
@@ -476,9 +397,22 @@ function RideForm({ mode, source, house, user }: FormProps) {
     }
   }
 
+  // On phones, the bar at the bottom gets out of the way while the keyboard is up
+  function onFocusIn(e: FocusEvent) {
+    if (isTextEntry(e.target) && window.matchMedia('(pointer: coarse)').matches) setTyping(true)
+  }
+  function onFocusOut(e: FocusEvent) {
+    if (isTextEntry(e.target)) setTyping(false)
+  }
+
+  function reviewRide() {
+    document.getElementById('trip-summary')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
+    document.getElementById('trip-summary-heading')?.focus({ preventScroll: true })
+  }
+
   const title = { new: 'Request a ride', again: 'Book this ride again', return: 'Book the return trip', edit: 'Change this ride' }[mode]
   const intro = {
-    new: 'It takes about a minute.',
+    new: 'Three quick questions. Most rides take under a minute.',
     again: `We've copied the details from the ride to ${source?.destinationName}. Pick a new time.`,
     return: `Bring the client home from ${source?.destinationName}.`,
     edit:
@@ -489,8 +423,8 @@ function RideForm({ mode, source, house, user }: FormProps) {
   const sendLabel = { new: 'Request ride', again: 'Request ride', return: 'Book return trip', edit: 'Save changes' }[mode]
   const backTo = source && mode !== 'again' ? paths.ride(source.id) : paths.transport
 
-  const submitButton = (
-    <button type="submit" className={`${primaryButton} w-full`} disabled={sending}>
+  const submitButton = (wide: boolean) => (
+    <button type="submit" className={`${primaryButton} ${wide ? 'w-full' : 'px-5'}`} disabled={sending} aria-describedby={!ready && showErrors ? 'send-blockers' : undefined}>
       {sending ? (
         <>
           <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />
@@ -505,273 +439,218 @@ function RideForm({ mode, source, house, user }: FormProps) {
     </button>
   )
 
-  const problemNote = showErrors && problemCount > 0 && (
-    <p className="flex items-start gap-2 text-sm font-medium text-red-700">
-      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-      {problemCount === 1 ? '1 field needs' : `${problemCount} fields need`} a look. They're marked in red.
-    </p>
-  )
+  const missingText = missing.map((m) => m.label).join(', ')
+  const isQuickPick = picks.some((p) => p.value === form.pickupTime)
+  const calendarOpen = moreTimes || !!shown.pickupTime
+  const extrasShown = extrasOpen || !!shown.pickupInstructions || !!shown.notes
+  const extrasSummary = [
+    form.pickupInstructions.trim() ? `Meets: ${form.pickupInstructions.trim()}` : 'No meeting point',
+    form.notes.trim() ? 'Note added' : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="pb-28 lg:pb-0">
-      <div className="mb-6 animate-fade-up">
+    <form onSubmit={handleSubmit} onFocus={onFocusIn} onBlur={onFocusOut} noValidate className="pb-32 lg:pb-0">
+      <div className="mb-6 sm:mb-8">
         <Link
           to={backTo}
-          className="-ml-1 mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-slate-500 transition hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className={`-ml-1 mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-slate-600 transition hover:text-ink ${focusRing}`}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           {source && mode !== 'again' ? 'Back to the ride' : 'Back to your rides'}
         </Link>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{title}</h1>
-        <p className="mt-1 text-slate-600">
-          {intro} Fields marked{' '}
-          <span className="font-semibold text-red-600" aria-hidden>
-            *
-          </span>
-          <span className="sr-only">with a star</span> are required.
-        </p>
+        <h1 className="font-display text-3xl font-bold tracking-[-0.035em] text-balance text-ink sm:text-[2.5rem] sm:leading-[1.08]">{title}</h1>
+        <p className="mt-2 max-w-prose text-slate-600">{intro}</p>
         {restored && (
-          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900 ring-1 ring-brand-100">
+          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
             <History className="h-4 w-4 shrink-0" aria-hidden />
             <span className="flex-1">We kept the request you hadn't sent yet.</span>
-            <button type="button" className="font-semibold underline underline-offset-2" onClick={startOver}>
+            <button type="button" className={`min-h-9 rounded-lg font-semibold underline underline-offset-2 ${focusRing}`} onClick={startOver}>
               Start over
             </button>
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-8">
-        <div className="space-y-5">
-          <FormSection
-            id="where"
-            step={1}
-            title="Where to"
-            description={isReturn ? 'The trip back to your address.' : 'Pick a saved place or search any address.'}
-            required
-            done={whereDone}
-          >
-            {isReturn ? (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 p-4 font-semibold text-ink">
-                <span className="inline-flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-brand-600" aria-hidden />
-                  {from.name}
-                </span>
-                <ArrowRight className="h-4 w-4 text-slate-400" aria-label="to" />
-                <span className="inline-flex items-center gap-2">
-                  <HouseIcon className="h-5 w-5 text-coral-500" aria-hidden />
-                  {house.name}
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                <div>
-                  <span className={label}>Pick up from</span>
-                  <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-coral-50 text-coral-600" aria-hidden>
-                      <HouseIcon className="h-5 w-5" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block font-semibold text-ink">{house.name}</span>
-                      <span className="block truncate text-sm text-slate-500">{house.address}</span>
-                    </span>
-                  </div>
-                </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-8">
+        <div className="min-w-0 space-y-4">
+          <div className={`${sheet} divide-y divide-slate-100`}>
+            <FormSection
+              id="where"
+              step={1}
+              title="Where are we going?"
+              description={isReturn ? `The trip back to ${house.name}.` : undefined}
+              done={done.where && !!to}
+            >
+              {isReturn ? (
+                <FixedRoute from={from} to={{ name: house.name, detail: house.address }} />
+              ) : (
+                <DestinationPicker
+                  from={from}
+                  destinations={places}
+                  sorted={sorted}
+                  frequent={frequent}
+                  destinationId={form.destinationId}
+                  customAddress={form.customAddress}
+                  customName={form.customName}
+                  customPicked={form.customPicked}
+                  waitFor={waitFor}
+                  chosenWait={chosenWait ? waitNote(chosenWait) : undefined}
+                  destinationError={shown.destination}
+                  customAddressError={shown.customAddress}
+                  hint={anyWaits ? 'Wait times are to be seen right now. More urgent needs go first.' : undefined}
+                  onChoose={(destinationId) => update({ destinationId })}
+                  onCustom={(query) =>
+                    setForm((f) => ({
+                      ...f,
+                      destinationId: CUSTOM,
+                      // A search typed into the saved places carries over; otherwise the last address stays
+                      ...(query ? { customAddress: query, customName: '', customPicked: false } : {}),
+                    }))
+                  }
+                  onCustomQuery={(customAddress) => update({ customAddress, customName: '', customPicked: false })}
+                  onCustomSelect={(place) =>
+                    update({ customAddress: `${place.address}, ${place.city}`, customName: place.name ?? place.address, customPicked: true })
+                  }
+                />
+              )}
+              <InlineMatchHint match={match} checks={['city']} />
+            </FormSection>
 
-                <fieldset aria-describedby="destination-message">
-                  <legend className={label}>
-                    Going to
-                    <RequiredMark />
-                  </legend>
-                  {sorted.length > SEARCH_AFTER && (
-                    <div className="relative mb-3">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
-                      <input
-                        type="search"
-                        className={`${input} pl-11`}
-                        placeholder="Search saved places"
-                        aria-label="Search saved places"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+            <FormSection id="when" step={2} title="When do you need the ride?" done={done.when}>
+              <fieldset>
+                <legend className="sr-only">When does the client need the ride?</legend>
+                <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
+                  <WhenOption
+                    checked={form.type === 'SCHEDULED'}
+                    onChange={() => update({ type: 'SCHEDULED' })}
+                    title="Schedule for later"
+                    description="Pick a pickup time"
+                    icon={<CalendarClock className="h-5 w-5" />}
+                  />
+                  <WhenOption
+                    checked={form.type === 'ON_DEMAND'}
+                    onChange={() => update({ type: 'ON_DEMAND' })}
+                    title="As soon as possible"
+                    description="Find a driver now"
+                    icon={<Zap className="h-5 w-5" />}
+                  />
+                </div>
+              </fieldset>
+
+              {form.type === 'SCHEDULED' ? (
+                <div className="mt-5 space-y-4">
+                  <div role="group" aria-labelledby="quick-picks">
+                    <span className="mb-2 block text-sm font-semibold text-ink" id="quick-picks">
+                      Quick picks
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {picks.map((p) => {
+                        const on = form.pickupTime === p.value
+                        return (
+                          <button
+                            key={p.label}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => update({ pickupTime: p.value })}
+                            className={`min-h-11 rounded-full px-4 text-sm font-semibold transition active:scale-95 ${focusRing} ${
+                              on ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:ring-brand-300'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        )
+                      })}
+                      <button
+                        type="button"
+                        aria-expanded={calendarOpen}
+                        aria-controls="pickup-time"
+                        onClick={() => setMoreTimes((open) => !open)}
+                        className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition active:scale-95 ${focusRing} ${
+                          !isQuickPick && pickupValid
+                            ? 'bg-brand-600 text-white'
+                            : 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:ring-brand-300'
+                        }`}
+                      >
+                        <CalendarDays className="h-4 w-4" aria-hidden />
+                        {!isQuickPick && pickupValid && !calendarOpen ? describePickup(pickupMs, now) : 'Another time'}
+                        <ChevronDown className={`h-4 w-4 transition ${calendarOpen ? 'rotate-180' : ''}`} aria-hidden />
+                      </button>
+                    </div>
+                  </div>
+                  {calendarOpen && (
+                    <div className="animate-fade-up">
+                      <PickupTimePicker
+                        id="pickup-time"
+                        value={form.pickupTime}
+                        now={now}
+                        error={shown.pickupTime}
+                        onChange={(pickupTime) => update({ pickupTime })}
                       />
                     </div>
                   )}
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {listed.map((d) => {
-                      const wait = matchWaitTime(d.name, d.address, waits)
-                      return (
-                        <OptionTile
-                          key={d.id}
-                          name="destination"
-                          checked={form.destinationId === d.id}
-                          onChange={() => update({ destinationId: d.id })}
-                          title={d.name}
-                          description={d.address}
-                          note={wait ? waitNote(wait) : undefined}
-                          icon={<MapPin className="h-5 w-5" />}
-                          badge={usedBefore.has(d.id) ? 'Used before' : undefined}
-                          invalid={!!shown.destination}
-                        />
-                      )
-                    })}
-                    <OptionTile
-                      name="destination"
-                      checked={form.destinationId === CUSTOM}
-                      onChange={() => update({ destinationId: CUSTOM })}
-                      title="Somewhere else"
-                      description="Search any address"
-                      icon={<Navigation className="h-5 w-5" />}
-                      dashed
-                      invalid={!!shown.destination}
-                    />
-                  </div>
-                  {q && listed.length === 0 && (
-                    <p className="mt-3 text-sm text-slate-500">No saved place matches “{query.trim()}”. Choose “Somewhere else” to search for the address.</p>
+                  {pickupValid && !shown.pickupTime && (
+                    <p className="flex items-center gap-2 text-sm text-slate-700" aria-live="polite">
+                      <Clock className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+                      <span>
+                        Pickup <strong className="font-semibold text-ink">{describePickup(pickupMs, now)}</strong>
+                      </span>
+                    </p>
                   )}
-                  <FieldMessage
-                    id="destination-message"
-                    error={shown.destination}
-                    hint={
-                      listedWaits.length > 0
-                        ? 'Wait times are to be seen right now. More urgent needs go first.'
-                        : undefined
-                    }
-                  />
-                </fieldset>
-
-                {form.destinationId === CUSTOM && (
-                  <AddressPicker
-                    id="custom-address"
-                    className="animate-fade-up"
-                    label="Address"
-                    required
-                    placeholder="e.g. 1081 Burrard St or St. Paul's Hospital"
-                    hint="Search and pick the address from the list, so the driver can find it."
-                    selectedHint={chosenWait ? waitNote(chosenWait) : undefined}
-                    value={form.customAddress}
-                    selected={form.customPicked}
-                    error={shown.customAddress}
-                    onQueryChange={(customAddress) => update({ customAddress, customName: '', customPicked: false })}
-                    onSelect={(place) =>
-                      update({ customAddress: `${place.address}, ${place.city}`, customName: place.name ?? place.address, customPicked: true })
-                    }
-                  />
-                )}
-              </div>
-            )}
-            <InlineMatchHint match={match} checks={['city']} />
-          </FormSection>
-
-          <FormSection id="when" step={2} title="When" description="Book ahead, or find a driver now." required done={whenDone}>
-            <fieldset>
-              <legend className="sr-only">When does the client need the ride?</legend>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <OptionTile
-                  name="when"
-                  checked={form.type === 'SCHEDULED'}
-                  onChange={() => update({ type: 'SCHEDULED' })}
-                  title="Schedule for later"
-                  description="Pick a date and time"
-                  icon={<CalendarClock className="h-5 w-5" />}
-                />
-                <OptionTile
-                  name="when"
-                  checked={form.type === 'ON_DEMAND'}
-                  onChange={() => update({ type: 'ON_DEMAND' })}
-                  title="As soon as possible"
-                  description="Find a driver right now"
-                  icon={<Zap className="h-5 w-5" />}
-                />
-              </div>
-            </fieldset>
-
-            {form.type === 'SCHEDULED' ? (
-              <div key="scheduled" className="mt-4 animate-fade-up space-y-4">
-                <div>
-                  <span className={label} id="quick-picks">
-                    Quick picks
-                  </span>
-                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="quick-picks">
-                    {picks.map((p) => {
-                      const on = form.pickupTime === p.value
-                      return (
-                        <button
-                          key={p.label}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => update({ pickupTime: p.value })}
-                          className={`min-h-11 rounded-full border-2 px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 active:scale-95 ${
-                            on
-                              ? 'border-brand-600 bg-brand-600 text-white'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'
-                          }`}
-                        >
-                          {p.label}
-                        </button>
-                      )
-                    })}
-                  </div>
                 </div>
-                <PickupTimePicker
-                  id="pickup-time"
-                  value={form.pickupTime}
-                  now={now}
-                  error={shown.pickupTime}
-                  hint={pickupValid ? `Pickup: ${describePickup(pickupMs, now)}` : undefined}
-                  onChange={(pickupTime) => update({ pickupTime })}
-                />
-              </div>
-            ) : (
-              <p key="now" className="mt-4 flex animate-fade-up items-start gap-2 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-                <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-                Drivers taking requests right now are asked as soon as you send this. If nobody accepts within {ON_DEMAND_GIVE_UP_MINUTES} minutes, the request
-                is cancelled so you can make other plans.
-              </p>
-            )}
-            <InlineMatchHint match={match} checks={['schedule']} />
-          </FormSection>
+              ) : (
+                <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                  <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
+                  Drivers taking requests right now are asked as soon as you send this. If nobody accepts within {ON_DEMAND_GIVE_UP_MINUTES} minutes,
+                  the request is cancelled so you can make other plans.
+                </p>
+              )}
+              <InlineMatchHint match={match} checks={['schedule']} />
+            </FormSection>
 
-          <FormSection id="who" step={3} title="Who's riding" required done={whoDone}>
-            <div>
-              <span id="passengers-label" tabIndex={-1} className={`${label} focus:outline-none`}>
-                Passengers
-                <RequiredMark />
-              </span>
-              <PassengerStepper labelId="passengers-label" value={form.passengers} onChange={setPassengers} max={maxRiders} />
-              <FieldMessage id="passengers-message" error={shown.passengers} hint={`Up to ${maxRiders} per ride, the most any driver's vehicle can take.`} />
-            </div>
-            <fieldset className="mt-5" aria-describedby="rider-names-message">
-              <legend className={label}>
-                {form.passengers === 1 ? "Passenger's name" : "Passengers' names"}
-                <span className="ml-1 font-normal text-slate-500">(optional)</span>
-              </legend>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {form.riderNames.map((name, i) => (
-                  <div key={i} className="relative">
-                    <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden />
-                    <input
-                      id={`rider-name-${i}`}
-                      className={`${input} pl-11`}
-                      autoComplete="off"
-                      maxLength={MAX_NAME}
-                      aria-label={`Passenger ${i + 1} name`}
-                      aria-invalid={shown.riderNames && tooLong(name, MAX_NAME) ? true : undefined}
-                      placeholder={form.passengers === 1 ? 'e.g. Sam Rivera' : `Passenger ${i + 1}`}
-                      value={name}
-                      onChange={(e) => setForm((f) => ({ ...f, riderNames: f.riderNames.map((n, j) => (j === i ? e.target.value : n)) }))}
-                    />
-                  </div>
-                ))}
+            <FormSection id="who" step={3} title="Who is travelling?" done={done.who}>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                <div className="min-w-0">
+                  <span id="passengers-label" tabIndex={-1} className="block font-semibold text-ink focus:outline-none">
+                    Passengers
+                    <RequiredMark />
+                  </span>
+                  <span className="block text-sm text-slate-600">Up to {maxRiders} per ride, the most any driver's vehicle can take.</span>
+                </div>
+                <PassengerStepper labelId="passengers-label" value={form.passengers} onChange={setPassengers} max={maxRiders} />
               </div>
-              <FieldMessage id="rider-names-message" error={shown.riderNames} hint="Helps the driver know who to pick up." />
-            </fieldset>
-            <InlineMatchHint match={match} checks={['seats']} />
-          </FormSection>
+              <FieldMessage id="passengers-message" error={shown.passengers} />
+              <InlineMatchHint match={match} checks={['seats']} />
 
-          <FormSection id="extras" step={4} title="Extra details" description="Help the driver plan a smooth ride.">
-            <div className="space-y-5">
-              <fieldset>
-                <legend className={label}>Travel needs</legend>
+              <fieldset className="mt-6" aria-describedby="rider-names-message">
+                <legend className={label}>
+                  {form.passengers === 1 ? "Passenger's name" : "Passengers' names"}
+                  <span className="ml-1 font-normal text-slate-600">(optional)</span>
+                </legend>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {form.riderNames.map((name, i) => (
+                    <div key={i} className="relative">
+                      <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden />
+                      <input
+                        id={`rider-name-${i}`}
+                        className={`${input} pl-11`}
+                        autoComplete="off"
+                        maxLength={MAX_NAME}
+                        aria-label={`Passenger ${i + 1} name`}
+                        aria-invalid={shown.riderNames && tooLong(name, MAX_NAME) ? true : undefined}
+                        placeholder={form.passengers === 1 ? 'e.g. Sam Rivera' : `Passenger ${i + 1}`}
+                        value={name}
+                        onChange={(e) => setForm((f) => ({ ...f, riderNames: f.riderNames.map((n, j) => (j === i ? e.target.value : n)) }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <FieldMessage id="rider-names-message" error={shown.riderNames} hint="A first name helps the driver find the right person." />
+              </fieldset>
+
+              <fieldset className="mt-6">
+                <legend className={label}>Accessibility needs</legend>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <OptionTile
                     type="checkbox"
@@ -792,7 +671,30 @@ function RideForm({ mode, source, house, user }: FormProps) {
                 </div>
                 <InlineMatchHint match={match} checks={['wheelchair']} />
               </fieldset>
+            </FormSection>
+          </div>
 
+          {/* Secondary: open on request, and kept (never cleared) while closed */}
+          <section id="extras" aria-labelledby="extras-heading" className={`${sheet} scroll-mt-28`}>
+            <h2 id="extras-heading">
+              <button
+                type="button"
+                aria-expanded={extrasShown}
+                aria-controls="extras-panel"
+                onClick={() => setExtrasOpen((open) => !open)}
+                className={`flex min-h-16 w-full items-center gap-3 rounded-2xl px-5 py-4 text-left sm:px-7 ${focusRing}`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-x-2 font-display text-base font-bold text-ink">
+                    Notes for the driver
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-sans text-xs font-semibold text-slate-600">Optional</span>
+                  </span>
+                  {!extrasShown && <span className="mt-0.5 block truncate font-sans text-sm font-normal text-slate-600">{extrasSummary}</span>}
+                </span>
+                <ChevronDown className={`h-5 w-5 shrink-0 text-slate-500 transition ${extrasShown ? 'rotate-180' : ''}`} aria-hidden />
+              </button>
+            </h2>
+            <div id="extras-panel" hidden={!extrasShown} className="space-y-5 border-t border-slate-100 px-5 pb-6 pt-5 sm:px-7">
               <TextField
                 id="instructions"
                 label="Where the driver meets the client"
@@ -802,11 +704,10 @@ function RideForm({ mode, source, house, user }: FormProps) {
                 error={shown.pickupInstructions}
                 onChange={(e) => update({ pickupInstructions: e.target.value })}
               />
-
               <div>
                 <label className={label} htmlFor="notes">
                   Notes for the driver
-                  <span className="ml-1 font-normal text-slate-500">(optional)</span>
+                  <span className="ml-1 font-normal text-slate-600">(optional)</span>
                 </label>
                 <textarea
                   id="notes"
@@ -822,12 +723,16 @@ function RideForm({ mode, source, house, user }: FormProps) {
                 <FieldMessage id="notes-message" error={shown.notes} />
               </div>
             </div>
-          </FormSection>
+          </section>
 
           {/* TODO: suggest group rides (modules/careride/logic/groupRides.ts) before submitting */}
         </div>
 
-        <aside className="animate-fade-up lg:sticky lg:top-24" style={{ animationDelay: '120ms' }} aria-label="Trip summary">
+        <aside
+          id="trip-summary"
+          className="scroll-mt-24 lg:sticky lg:top-24 lg:-m-1 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:p-1"
+          aria-label="Trip summary"
+        >
           <TripSummary
             from={from}
             to={to}
@@ -836,43 +741,61 @@ function RideForm({ mode, source, house, user }: FormProps) {
             rider={riderLabel(form)}
             passengers={form.passengers}
             needs={[...(form.needsWheelchair ? ['Wheelchair'] : []), ...(form.needsAssistance ? ['Help in and out'] : [])]}
-            done={doneCount}
-            total={steps.length}
+            missing={missing}
+            showErrors={showErrors}
+            onJump={jumpTo}
           >
             <MatchLine match={match} />
             {error && (
-              <p ref={errorRef} role="alert" className="rounded-xl border-2 border-red-600 bg-red-50 p-3 text-sm text-red-900">
+              <p ref={errorRef} role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-900 ring-1 ring-red-600">
                 <strong>{mode === 'edit' ? "We couldn't save your changes." : "We couldn't send this ride."}</strong> {error}
               </p>
             )}
-            <div className="hidden space-y-3 lg:block">
-              {problemNote}
-              {submitButton}
+            <div className="hidden space-y-2 lg:block">
+              {submitButton(true)}
               {mode === 'edit' && (
                 <Link to={backTo} className={`${ghostButton} w-full`}>
                   Keep the ride as it was
                 </Link>
               )}
             </div>
+            {mode === 'edit' && (
+              <Link to={backTo} className={`${ghostButton} w-full lg:hidden`}>
+                Keep the ride as it was
+              </Link>
+            )}
           </TripSummary>
         </aside>
       </div>
 
+      <p id="send-blockers" className="sr-only">
+        {missing.length > 0 ? `Still needed: ${missingText}.` : ''}
+      </p>
+
       {/* On phones the send button stays in reach at the bottom of the screen. */}
-      <div className="native-bottom-chrome no-print fixed bottom-0 left-[var(--shell-inset,0px)] right-0 z-20 border-t border-slate-200/70 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3  lg:hidden">
-        <div className="mx-auto max-w-5xl space-y-2">
-          {problemNote}
-          <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1 text-sm">
-              <span className="block font-semibold text-ink">
-                {doneCount === steps.length ? 'Ready to send' : `${doneCount} of ${steps.length} steps done`}
-              </span>
-              <span className={`block truncate ${match && match.count === 0 ? 'font-semibold text-amber-700' : 'text-slate-500'}`}>
-                {match && match.count === 0 ? 'No driver fits yet' : to ? `To ${to.name} · ${passengersLabel(form.passengers)}` : 'Choose a destination'}
-              </span>
-            </div>
-            <div className="w-44 shrink-0">{submitButton}</div>
-          </div>
+      <div
+        className={`native-bottom-chrome no-print fixed bottom-0 left-[var(--shell-inset,0px)] right-0 z-20 border-t border-slate-200/70 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_-16px_rgb(17_24_32/0.25)] lg:hidden ${
+          typing ? 'max-lg:hidden' : ''
+        }`}
+      >
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <button type="button" onClick={reviewRide} className={`min-h-12 min-w-0 flex-1 rounded-xl px-1 text-left text-sm ${focusRing}`}>
+            <span className="sr-only">Review your ride. </span>
+            <span
+              className={`flex items-center gap-1.5 font-semibold ${ready ? 'text-emerald-800' : showErrors ? 'text-red-700' : 'text-ink'}`}
+            >
+              {ready ? <CircleCheck className="h-4 w-4 shrink-0" aria-hidden /> : showErrors && <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden />}
+              <span className="truncate">{ready ? 'Ready to send' : `${showErrors ? 'Fix' : 'Still needed'}: ${missingText}`}</span>
+            </span>
+            <span className={`block truncate ${match && match.count === 0 ? 'font-semibold text-amber-800' : 'text-slate-600'}`}>
+              {match && match.count === 0
+                ? 'No driver fits yet. Review'
+                : to
+                  ? `To ${to.name} · ${passengersLabel(form.passengers)}`
+                  : 'Review your ride'}
+            </span>
+          </button>
+          <div className="shrink-0">{submitButton(false)}</div>
         </div>
       </div>
     </form>

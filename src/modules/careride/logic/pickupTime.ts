@@ -1,4 +1,7 @@
 const MINUTE = 60_000
+
+// How far ahead a ride can be booked
+export const BOOK_AHEAD_DAYS = 60
 const HOUR = 60 * MINUTE
 
 // Formats a time for a datetime-local input, e.g. "2026-10-03T14:30".

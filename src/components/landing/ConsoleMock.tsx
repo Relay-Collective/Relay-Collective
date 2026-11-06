@@ -1,10 +1,7 @@
 import {
   Activity,
-  Bell,
   Blocks,
   Building2,
-  CalendarCheck,
-  CalendarClock,
   CalendarPlus,
   Check,
   ChevronDown,
@@ -15,13 +12,13 @@ import {
   Clock,
   Flag,
   HandHeart,
-  Inbox,
+  HeartHandshake,
   Layers,
   LayoutDashboard,
-  MapPin,
   MessagesSquare,
   Route,
   Search,
+  Settings,
   ShieldCheck,
   TriangleAlert,
   UserRound,
@@ -33,14 +30,16 @@ import type { ComponentType, ReactNode } from 'react'
 import { RouteField } from '../workspace/ServiceModuleCard'
 import { CareRideMark } from '../../modules/careride/brand'
 import { LogoMark } from '../brand/LogoMark'
-import { DEMO_DRIVER, DEMO_OFFER, DEMO_ORG, DEMO_PLATFORM_ACTIVITY, DEMO_REVIEWS, DEMO_STAFF } from './demo'
+import { InterestIcon } from '../volunteer/InterestPicker'
+import { interestDefinition } from '../../volunteer/interests'
+import { DEMO_ORG, DEMO_PLATFORM_ACTIVITY, DEMO_REVIEWS, DEMO_STAFF, DEMO_VOLUNTEER } from './demo'
 
-// The three workspaces, drawn for the landing page: the organization's, the volunteer driver's and the platform
+// The three workspaces, drawn for the landing page: the organization's, a general volunteer's and the platform
 // admin's. Each is a picture of the real screen (the same sidebar groups, labels, metrics and statuses, the route rail,
 // the greeting, CareRide's electric field), with made-up data, never the screens themselves. Hidden from screen
 // readers: the notes beside each picture say what it shows.
 
-export type ShowcaseRole = 'organization' | 'driver' | 'admin'
+export type ShowcaseRole = 'organization' | 'volunteer' | 'admin'
 
 type NavIcon = LucideIcon | ComponentType<{ className?: string }>
 interface NavItem {
@@ -73,21 +72,20 @@ const NAV: Record<ShowcaseRole, NavGroup[]> = {
       ],
     },
   ],
-  driver: [
+  // A general volunteer's sidebar (volunteer/navigation.ts): no CareRide pages, because they don't drive
+  volunteer: [
     {
       label: 'Workspace',
       items: [
         { label: 'Overview', icon: LayoutDashboard, current: true },
-        { label: 'Opportunities', icon: Inbox, badge: 1 },
-        { label: 'My commitments', icon: CalendarCheck },
+        { label: 'My interests', icon: HeartHandshake },
       ],
     },
-    { label: 'Your modules', items: [{ label: 'CareRide', icon: CareRideMark }] },
     {
       label: 'Personal',
       items: [
-        { label: 'Availability', icon: CalendarClock },
         { label: 'My profile', icon: UserRound },
+        { label: 'Settings', icon: Settings },
       ],
     },
   ],
@@ -122,11 +120,11 @@ const CONTEXT: Record<ShowcaseRole, { tile: string; initials: ReactNode; name: s
     crumb: DEMO_ORG,
     page: 'Overview',
   },
-  driver: {
+  volunteer: {
     tile: 'bg-cantaloupe text-midnight',
-    initials: 'M',
-    name: DEMO_DRIVER.first,
-    detail: DEMO_DRIVER.detail,
+    initials: DEMO_VOLUNTEER.initials,
+    name: `${DEMO_VOLUNTEER.first} ${DEMO_VOLUNTEER.last}`,
+    detail: DEMO_VOLUNTEER.detail,
     crumb: 'Volunteer workspace',
     page: 'Overview',
   },
@@ -151,7 +149,7 @@ export function ConsoleMock({ role }: { role: ShowcaseRole }) {
           <TopBar role={role} />
           <div className="relative px-4 pb-6 pt-5 sm:px-7 sm:pb-8 sm:pt-6">
             {role === 'organization' && <OrganizationOverview />}
-            {role === 'driver' && <DriverOverview />}
+            {role === 'volunteer' && <VolunteerOverview />}
             {role === 'admin' && <AdminOverview />}
           </div>
         </div>
@@ -223,8 +221,8 @@ function TopBar({ role }: { role: ShowcaseRole }) {
   const who =
     role === 'organization'
       ? { initials: 'AL', name: DEMO_STAFF.first + ' ' + DEMO_STAFF.last, tone: 'bg-electric-ink text-white' }
-      : role === 'driver'
-      ? { initials: 'M', name: DEMO_DRIVER.first, tone: 'bg-cantaloupe text-midnight' }
+      : role === 'volunteer'
+      ? { initials: DEMO_VOLUNTEER.initials, name: DEMO_VOLUNTEER.first, tone: 'bg-cantaloupe text-midnight' }
       : { initials: 'RC', name: 'Admin', tone: 'bg-midnight text-white' }
   return (
     <div className="relative flex h-12 items-center justify-between gap-3 border-b border-midnight/[0.06] px-4 sm:px-7">
@@ -435,77 +433,93 @@ function PlannedModule({ icon: Icon, name, text }: { icon: LucideIcon; name: str
   )
 }
 
-/* ---------- Volunteer driver: the request waiting, CareRide numbers, availability ---------- */
+/* ---------- General volunteer: their interests, their profile, and CareRide as a service they could join ---------- */
 
-function DriverOverview() {
+// The general volunteer's real Overview (pages/volunteer/Overview.tsx), in its words: interests first, then the
+// one service open to them. Nothing here is a ride, a request or an assignment, because they aren't a driver.
+function VolunteerOverview() {
   return (
     <>
-      <Greeting name={DEMO_DRIVER.first} />
+      <Greeting name={DEMO_VOLUNTEER.first} />
       <p className="mt-1.5 font-dm text-[11px] font-medium text-hush">Thursday, November 12</p>
-      <p className="mt-1 font-dm text-[13px] text-midnight-soft">Your time makes a difference. Here's what's happening in your workspace.</p>
+      <p className="mt-1 font-dm text-[13px] text-midnight-soft">Your willingness to help makes a difference. Here's your volunteering space.</p>
 
       <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        {/* The request sent to her, as the Opportunities card draws it */}
-        <Panel className="overflow-visible p-4">
+        <Panel className="overflow-visible">
           <Marker n={1} onPicture />
-          <div className="flex items-center gap-2 font-dm text-[11px]">
-            <span className="rounded-md bg-electric-wash px-1.5 py-0.5 font-semibold text-electric-ink">CareRide</span>
-            <span className="text-hush">Scheduled</span>
+          <div className="flex items-start justify-between gap-3 border-b border-hairline px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-grotesk text-[14px] font-semibold text-midnight">Your volunteering interests</p>
+              <p className="font-dm text-[11px] text-hush">The ways you've chosen to contribute.</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-0.5 font-dm text-[12px] font-semibold text-electric-ink">
+              Manage interests <ChevronRight className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <p className="mt-2.5 flex items-center gap-2 font-dm text-[12px] text-midnight-soft">
-            <MapPin className="h-3.5 w-3.5 shrink-0 text-hush" /> <span className="truncate">{DEMO_OFFER.from}</span>
+          <ul className="divide-y divide-hairline">
+            {DEMO_VOLUNTEER.interests.map((id) => (
+              <li key={id} className="flex items-start gap-3 px-4 py-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cantaloupe-wash text-cantaloupe-ink">
+                  <InterestIcon interest={id} className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1 font-dm">
+                  <p className="text-[13px] font-semibold text-midnight">{interestDefinition(id).label}</p>
+                  <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-hush">
+                    <Clock className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{id === 'TRANSPORTATION' ? 'CareRide is running. Driving is a separate enrollment.' : "Not on Relay Collective yet. We've saved your interest."}</span>
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="rounded-b-2xl border-t border-hairline px-4 py-2.5 font-dm text-[10px] text-hush">
+            Interests tell us how you'd like to contribute. They don't sign you up for anything.
           </p>
-          <p className="mt-1.5 flex items-center gap-2 font-grotesk text-[15px] font-semibold text-midnight">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-electric" /> {DEMO_OFFER.to}
-          </p>
-          <p className="mt-1.5 flex items-center gap-2 font-dm text-[12px] font-semibold text-midnight">
-            <CalendarClock className="h-3.5 w-3.5 shrink-0 text-hush" /> {DEMO_OFFER.when}
-            <span className="font-normal text-hush">· 1 passenger</span>
-          </p>
-          <p className="mt-2.5 font-dm text-[11px] text-hush">Please answer by {DEMO_OFFER.answerBy}. You can always decline.</p>
-          <div className="mt-3 flex gap-2 font-dm text-[12px] font-semibold">
-            <span className="rounded-full bg-midnight px-4 py-1.5 text-white shadow-[var(--shadow-press)]">Accept</span>
-            <span className="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-midnight">Decline</span>
-          </div>
         </Panel>
 
-        <Panel className="overflow-visible p-4">
+        <Panel className="overflow-visible">
           <Marker n={2} onPicture />
-          <div className="flex items-start gap-2.5">
-            <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-electric-wash text-electric-ink">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-electric-ink ring-2 ring-white" />
-            </span>
-            <div className="min-w-0 font-dm">
-              <p className="text-[13px] font-semibold text-midnight">Taking requests now</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-midnight-soft">Until 6 PM today. Hours: weekdays, 9 AM to 6 PM</p>
-            </div>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+            <p className="font-grotesk text-[14px] font-semibold text-midnight">Volunteer profile</p>
+            <span className="font-dm text-[12px] font-semibold text-electric-ink">View</span>
           </div>
-          <p className="mt-3 flex items-center gap-1.5 font-dm text-[12px] font-semibold text-electric-ink">
-            <CalendarClock className="h-3.5 w-3.5" /> Change availability
-          </p>
+          <dl className="divide-y divide-hairline font-dm">
+            {[
+              ['Name', `${DEMO_VOLUNTEER.first} ${DEMO_VOLUNTEER.last}`],
+              ['Taking part as', 'General volunteer'],
+              ['Volunteer since', DEMO_VOLUNTEER.since],
+            ].map(([label, value]) => (
+              <div key={label} className="px-4 py-2.5">
+                <dt className="text-[10px] font-semibold text-hush">{label}</dt>
+                <dd className="mt-0.5 truncate text-[12px] font-medium text-midnight">{value}</dd>
+              </div>
+            ))}
+          </dl>
         </Panel>
       </div>
 
-      <Panel className="mt-3 overflow-visible">
+      <p className="mt-6 font-grotesk text-[16px] font-semibold tracking-[-0.02em] text-midnight">Available services</p>
+      <Panel className="mt-2.5 overflow-visible">
         <Marker n={3} onPicture />
-        <div className="flex items-center gap-3 p-3">
-          <CareRideTile />
-          <div className="min-w-0 flex-1">
-            <p className="font-grotesk text-[16px] font-semibold leading-tight tracking-[-0.02em] text-midnight">CareRide</p>
-            <p className="font-dm text-[11px] text-hush">Your rides and requests</p>
+        <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)]">
+          <div className="flex items-start gap-2.5 p-1.5">
+            <CareRideTile />
+            <div className="min-w-0 flex-1 font-dm">
+              <p className="font-grotesk text-[16px] font-semibold leading-tight tracking-[-0.02em] text-midnight">Drive with CareRide</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-midnight">Help people reach essential services.</p>
+              <p className="mt-1.5 text-[11px] leading-snug text-midnight-soft">
+                Use the account you already have. The Relay Collective team verifies every driver before any ride is sent.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-midnight px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-[var(--shadow-press)]">
+                  Apply to drive <ChevronRight className="h-3 w-3" />
+                </span>
+                <span className="text-[11px] font-semibold text-electric-ink">Learn about CareRide</span>
+              </div>
+            </div>
           </div>
-          <RouteField className="hidden h-[58px] w-[170px] sm:block" />
+          <RouteField className="hidden min-h-[110px] sm:block" />
         </div>
-        <MetricStrip
-          className="rounded-b-2xl border-t border-hairline sm:grid-cols-4"
-          metrics={[
-            { label: 'Requests to answer', value: '1', hint: 'Waiting for your answer', icon: Inbox, raised: true },
-            { label: 'Under way', value: '0', hint: "Trips you've started", icon: Route },
-            { label: 'Upcoming rides', value: '2', hint: 'Accepted, not started', icon: CalendarCheck },
-            { label: 'Completed rides', value: '14', hint: 'Passengers dropped off', icon: CircleCheck },
-          ]}
-        />
       </Panel>
     </>
   )

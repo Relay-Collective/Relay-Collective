@@ -11,6 +11,9 @@ export const LINKS = {
   signIn: '/signin',
   register: '/register',
   registerOrg: '/register?role=partner',
+  // General volunteering: a volunteer profile and interests, no vehicle (onboarding/routing.ts → /onboarding/volunteer)
+  registerVolunteer: '/register?role=volunteer',
+  // CareRide driving only: straight into the driver sign-up, with vehicle and verification
   registerDriver: '/register?role=driver',
   // The pitch walkthrough shows the real transportation screens, step by step
   transportTour: '/demo',
@@ -61,6 +64,7 @@ export interface Capability {
   area: string
   title: string
   text: string
+  note?: string // a short line under the text, for what works today and what doesn't yet
   status: string
   availability: Availability
   icon: LucideIcon
@@ -91,10 +95,11 @@ export const CAPABILITIES: Capability[] = [
   },
   {
     id: 'volunteers',
-    area: 'Volunteer coordination',
-    title: 'Mobilize communities.',
-    text: 'Connect volunteers with the organizations that need them. Volunteer drivers can sign up today.',
-    status: 'Drivers today, more roles planned',
+    area: 'Volunteering',
+    title: 'Every contribution matters.',
+    text: 'Join as a volunteer, choose the ways you’d like to help, and keep them in your own workspace. From community outreach to transportation, it starts with your interests.',
+    note: 'CareRide is the first service taking volunteers today, as drivers. Coordinating other kinds of volunteering is planned.',
+    status: 'Volunteer registration open',
     availability: 'partial',
     icon: HandHeart,
     accent: 'cantaloupe',
@@ -103,7 +108,7 @@ export const CAPABILITIES: Capability[] = [
     id: 'grow',
     area: 'Next modules',
     title: 'Built to grow.',
-    text: 'Resource sharing and cross-organization services are planned next. Each new module starts from what the others already proved, so no organization builds it alone.',
+    text: 'Volunteer profiles and interests work today. Next: matching volunteers with opportunities organizations post, resource sharing, and cross-organization services. Each starts from what the others already proved, so no organization builds it alone.',
     status: 'Planned',
     availability: 'planned',
     icon: Layers,
@@ -119,7 +124,7 @@ export const FOUNDATION: string[] = ['Organization workspaces', 'Invitations and
 export const STEPS: { n: string; title: string; text: string }[] = [
   { n: '01', title: 'Join the foundation', text: 'Set up your organization’s workspace and invite your team. Every organization is reviewed before it goes live.' },
   { n: '02', title: 'Turn on what you need', text: 'Start with CareRide, for transportation, today. Each module uses the same accounts, roles, and requests, so there is nothing new to learn.' },
-  { n: '03', title: 'Grow with the network', text: 'What one organization helps build, every other one can use. Resource sharing and cross-organization services are planned.' },
+  { n: '03', title: 'Grow with the network', text: 'What one organization helps build, every other one can use. Volunteer opportunities, resource sharing, and cross-organization services are planned.' },
 ]
 
 /* ---------- Impact: what is true today, in words ---------- */

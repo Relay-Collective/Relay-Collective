@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react'
+import { VOLUNTEER_INTERESTS } from '../../../volunteer/interests'
 import { CAPABILITIES, FOUNDATION, LINKS, type Capability } from '../content'
 import { Accent, Reveal, SmartLink, StatusTag } from '../primitives'
 import { container, display, h2, lede, textLink } from '../styles'
@@ -6,12 +7,16 @@ import { container, display, h2, lede, textLink } from '../styles'
 // The real ride lifecycle, in the same words the app uses on its status badges
 const RIDE_STATES = ['Finding a driver', 'Driver confirmed', 'Picked up', 'Completed']
 
+// The interests a volunteer can choose at sign-up, in the app's own words and order (volunteer/interests.ts).
+// Only the ones with a running service are marked, so an interest never reads as a service of its own.
+const INTERESTS = VOLUNTEER_INTERESTS.filter((d) => d.id !== 'GENERAL')
+
 const byId = Object.fromEntries(CAPABILITIES.map((c) => [c.id, c])) as Record<string, Capability>
 
 // 02: the idea, then the proof. One statement (every nonprofit rebuilds the same tools; build them once) with one
 // supporting note, then the foundation and its modules. The foundation leads on the one midnight surface, because it
-// is the product; CareRide is the first module on it, the volunteer module has its first role, and the planned ones
-// are drawn in outline. #platform (the statement) and #solutions (the cards) are siblings, so the nav lights one at a time.
+// is the product; CareRide is the first module on it, volunteering is open to everyone (interests today, coordination
+// later), and the planned ones are drawn in outline. #platform (the statement) and #solutions (the cards) are siblings, so the nav lights one at a time.
 export function PlatformCapabilities() {
   const { transport, volunteers, organizations, grow } = byId
   return (
@@ -101,9 +106,21 @@ export function PlatformCapabilities() {
                 {volunteers.title}
               </h3>
               <p className="mt-4 font-dm text-[16px] leading-relaxed text-midnight-soft">{volunteers.text}</p>
+              <ul className="mt-6 flex flex-wrap gap-2" aria-label="Ways volunteers can choose to help">
+                {INTERESTS.map((d) => (
+                  <li
+                    key={d.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-porcelain px-3 py-1 font-dm text-[13px] font-medium text-midnight"
+                  >
+                    {d.label}
+                    {d.operational && <span className="text-hush">· CareRide</span>}
+                  </li>
+                ))}
+              </ul>
+              {volunteers.note && <p className="mt-4 font-dm text-[14px] leading-relaxed text-hush">{volunteers.note}</p>}
               <div className="mt-auto pt-6">
-                <SmartLink href={LINKS.registerDriver} className={textLink}>
-                  Volunteer as a driver <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
+                <SmartLink href={LINKS.registerVolunteer} className={textLink}>
+                  Become a volunteer <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
                 </SmartLink>
               </div>
             </div>
@@ -153,10 +170,11 @@ function CardHead({ capability, onDark = false }: { capability: Capability; onDa
 }
 
 // Layers stacking on one base: the foundation stays, the services above it grow. Only the solid layer exists today.
+// Volunteer profiles and interests are part of the foundation; coordinating volunteers beyond CareRide is not built yet.
 function GrowthDiagram() {
   const layers = [
     { label: 'CareRide · transportation', live: true },
-    { label: 'Volunteer roles' },
+    { label: 'Volunteer opportunities and scheduling' },
     { label: 'Resource sharing' },
     { label: 'Cross-organization services' },
   ]
@@ -164,7 +182,7 @@ function GrowthDiagram() {
     <div className="lg:col-span-5 lg:col-start-8" aria-hidden>
       <div className="flex flex-col-reverse gap-2">
         <div className="rounded-xl bg-midnight px-4 py-3 font-dm text-[14px] font-medium text-white">
-          Shared foundation <span className="text-white/60">· organizations, roles, requests</span>
+          Shared foundation <span className="text-white/60">· organizations, volunteers, roles, requests</span>
         </div>
         {layers.map((l, i) => (
           <div

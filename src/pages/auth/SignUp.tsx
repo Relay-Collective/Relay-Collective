@@ -18,7 +18,7 @@ import { CheckEmail } from './CheckEmail'
 
 const BRAND = {
   title: "Let's build stronger communities together.",
-  body: 'Create one account for yourself. Then register your organization, join your team, or offer your time as a driver.',
+  body: 'Create one account for yourself. Then register your organization, join an existing team, or contribute as a volunteer.',
 }
 
 function validate(name: string, email: string, password: string): FieldErrors {

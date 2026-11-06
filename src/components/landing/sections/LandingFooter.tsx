@@ -9,7 +9,9 @@ const COLUMNS: { title: string; id?: string; links: { label: string; href: strin
       { label: 'Log in', href: LINKS.signIn },
       { label: 'Create an account', href: LINKS.register },
       { label: 'Register your organization', href: LINKS.registerOrg },
-      { label: 'Volunteer as a driver', href: LINKS.registerDriver },
+      { label: 'Become a volunteer', href: LINKS.registerVolunteer },
+      // CareRide's own sign-up, for people who already know they want to drive
+      { label: 'Drive with CareRide', href: LINKS.registerDriver },
     ],
   },
   {

@@ -48,9 +48,9 @@ export function LandingHero() {
           </div>
 
           <p className="rcl-enter mt-6 font-dm text-[15px] text-midnight-soft" style={enter(700)}>
-            Want to volunteer?{' '}
-            <Link to={LINKS.registerDriver} className={`rounded font-semibold text-midnight underline decoration-electric decoration-2 underline-offset-[5px] hover:decoration-midnight ${focusRing}`}>
-              Volunteer as a driver
+            Want to make a difference?{' '}
+            <Link to={LINKS.registerVolunteer} className={`rounded font-semibold text-midnight underline decoration-electric decoration-2 underline-offset-[5px] hover:decoration-midnight ${focusRing}`}>
+              Join as a volunteer
             </Link>
           </p>
         </div>

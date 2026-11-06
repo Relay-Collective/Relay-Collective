@@ -29,8 +29,8 @@ const TONE: Record<Tone | 'arrived', string> = {
 }
 
 // What the platform brings together, each linking to where the page explains it.
-// Status follows CAPABILITIES in content.ts: volunteers are drivers today, resource sharing is planned.
-const PARTS: Record<PartKey, { title: string; text: string; icon: LucideIcon; tone: Tone; href: string; status?: 'drivers' | 'planned' }> = {
+// Status follows CAPABILITIES in content.ts: volunteer sign-up is open (coordination comes later), resource sharing is planned.
+const PARTS: Record<PartKey, { title: string; text: string; icon: LucideIcon; tone: Tone; href: string; status?: 'open' | 'planned' }> = {
   organizations: { title: 'Organizations', text: 'One shared workspace for every team.', icon: Building2, tone: 'electric', href: '#cap-orgs' },
   volunteers: {
     title: 'Volunteers',
@@ -38,7 +38,7 @@ const PARTS: Record<PartKey, { title: string; text: string; icon: LucideIcon; to
     icon: HandHeart,
     tone: 'cantaloupe',
     href: '#cap-volunteers',
-    status: 'drivers',
+    status: 'open',
   },
   transport: { title: 'CareRide', text: 'The first module. Rides to appointments.', icon: CarFront, tone: 'electric', href: '#cap-transport' },
   services: {
@@ -376,7 +376,7 @@ function Icon({ icon: I, tone, size }: { icon: LucideIcon; tone: Tone | 'arrived
 }
 
 // Live work and planned work never look the same: a half dot for a first step, a dashed ring for planned. Words too.
-function Status({ status }: { status: 'drivers' | 'planned' }) {
+function Status({ status }: { status: 'open' | 'planned' }) {
   const planned = status === 'planned'
   return (
     <span
@@ -392,7 +392,7 @@ function Status({ status }: { status: 'drivers' | 'planned' }) {
         }`}
         aria-hidden
       />
-      {planned ? 'Planned' : 'Drivers today'}
+      {planned ? 'Planned' : 'Sign-up open'}
     </span>
   )
 }
@@ -400,7 +400,7 @@ function Status({ status }: { status: 'drivers' | 'planned' }) {
 // One clear name per link, so the title, status and text are not read as one run-on word
 const label = (part: PartKey) => {
   const { title, text, status } = PARTS[part]
-  return `${title}${status ? ` (${status === 'planned' ? 'planned' : 'drivers today'})` : ''}. ${text}`
+  return `${title}${status ? ` (${status === 'planned' ? 'planned' : 'sign-up open'})` : ''}. ${text}`
 }
 
 const card = 'group block h-full rounded-[0.9em] focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-electric-ink'

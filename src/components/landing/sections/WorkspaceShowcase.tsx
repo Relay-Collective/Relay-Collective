@@ -1,12 +1,13 @@
-import { ArrowRight, Building2, CarFront, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Building2, HandHeart, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { ConsoleMock, Marker, type ShowcaseRole } from '../ConsoleMock'
 import { LINKS } from '../content'
 import { Accent, Reveal, SmartLink } from '../primitives'
 import { container, h2, lede, textLink } from '../styles'
 
-// 03: inside the workspaces. One platform, a workspace for each role that uses it: partner staff, volunteer drivers
-// and the people who run the platform. Each tab is a picture of that role's real overview (ConsoleMock) with three
+// 03: inside the workspaces. One platform, a workspace for each role that uses it: partner staff, volunteers
+// and the people who run the platform. The volunteer tab is a general volunteer's, not a driver's: CareRide driving
+// is one service a volunteer can join, and the CareRide section below shows it. Each tab is a picture of that role's real overview (ConsoleMock) with three
 // numbered notes that say what the picture shows, so the picture itself can stay hidden from screen readers.
 
 interface Role {
@@ -42,24 +43,27 @@ const ROLES: Role[] = [
     cta: { label: 'Register your organization', href: LINKS.registerOrg },
   },
   {
-    id: 'driver',
-    tab: 'Volunteer drivers',
-    short: 'Drivers',
-    workspace: 'volunteer driver workspace',
-    icon: CarFront,
-    who: 'For verified drivers, giving their time on their own schedule.',
+    id: 'volunteer',
+    tab: 'Volunteers',
+    short: 'Volunteers',
+    workspace: 'volunteer workspace',
+    icon: HandHeart,
+    who: 'For volunteers, choosing how they help and which services to join.',
     notes: [
       {
-        title: 'Requests come to you',
-        text: 'Rides that fit your vehicle, the cities you drive in and your hours. Accept what suits you and decline the rest.',
+        title: 'Start with what matters to you',
+        text: 'Choose the ways you’d like to help, from transportation to community outreach. Saving an interest doesn’t sign you up for anything.',
       },
       {
-        title: 'Drive when it suits you',
-        text: 'Choose the hours and cities you drive in. Requests only arrive inside them, and you always decide.',
+        title: 'Your volunteering, in one place',
+        text: 'Your profile and interests live in your own workspace. Add or change them whenever you like.',
       },
-      { title: 'See the difference you make', text: 'Your upcoming rides, the trip you are on, and every passenger you have dropped off.' },
+      {
+        title: 'Join a service when you’re ready',
+        text: 'CareRide is the first service open to volunteers. Apply to drive from the same account, and the team verifies you before any ride is sent.',
+      },
     ],
-    cta: { label: 'Volunteer as a driver', href: LINKS.registerDriver },
+    cta: { label: 'Become a volunteer', href: LINKS.registerVolunteer },
   },
   {
     id: 'admin',
@@ -105,8 +109,7 @@ export function WorkspaceShowcase() {
             Built for <Accent>every role.</Accent>
           </h2>
           <p className={`${lede} lg:col-span-4`}>
-            Partner staff, volunteer drivers and the people who run the platform each get a workspace built for their job, on the same accounts and
-            requests.
+            Partner staff, volunteers and the people who run the platform each get a workspace built for how they take part, on the same accounts.
           </p>
         </Reveal>
 
@@ -171,7 +174,7 @@ export function WorkspaceShowcase() {
               </div>
               <figcaption className="mt-5 flex items-center gap-2 font-dm text-[13px] text-hush">
                 <span className="h-px w-5 bg-hush/60" aria-hidden />
-                Illustrative demo of the {role.workspace}. The organizations, people, and rides shown are not real.
+                Illustrative demo of the {role.workspace}. The organizations, people, and activity shown are not real.
               </figcaption>
             </figure>
 

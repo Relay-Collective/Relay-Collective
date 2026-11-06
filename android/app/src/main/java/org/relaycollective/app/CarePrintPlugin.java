@@ -1,4 +1,4 @@
-package org.careride.app;
+package org.relaycollective.app;
 
 import android.content.Context;
 import android.print.PrintAttributes;

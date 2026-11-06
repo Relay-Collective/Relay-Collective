@@ -10,7 +10,7 @@ const liveOrigin = (
 ).replace(/\/+$/, '')
 
 const config: CapacitorConfig = {
-  appId: 'org.careride.app',
+  appId: 'org.relaycollective.app',
   appName: 'Relay Collective',
   webDir: 'dist',
   backgroundColor: '#ffffff',

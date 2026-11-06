@@ -1,4 +1,5 @@
 import { DEFAULT_REQUEST_HOURS, requestHoursError } from '../logic/requestHours'
+import { CITIES } from '../constants'
 import { MAX_NAME, isPhone, tooLong } from '../logic/validate'
 import type { NewDriver, NewDriverUser } from '../services/dataService'
 
@@ -21,6 +22,43 @@ export function splitDriverDraft({ name, phone, ...driver }: DriverDraft): [NewD
 }
 
 export type FieldErrors = Record<string, string | undefined>
+
+// The most passengers the backend accepts (private.insert_driver)
+export const MAX_SEATS = 20
+
+function compact(errors: FieldErrors): FieldErrors {
+  return Object.fromEntries(Object.entries(errors).filter(([, v]) => v))
+}
+
+// The rules for each part of a driver's sign-up, shared by driver onboarding and CareRide enrollment from the
+// volunteer workspace. The backend (private.insert_driver) checks the same things again.
+export function driverAboutErrors(d: Pick<DriverDraft, 'name' | 'phone'>): FieldErrors {
+  return compact({
+    name: d.name.trim() ? tooLong(d.name, MAX_NAME) : 'Enter your full name.',
+    phone: isPhone(d.phone) ? undefined : 'Enter a 10-digit phone number.',
+  })
+}
+
+export function driverVehicleErrors(d: Pick<DriverDraft, 'vehicle' | 'seats'>): FieldErrors {
+  return compact({
+    vehicle: d.vehicle.trim() ? tooLong(d.vehicle, MAX_NAME) : 'Describe your vehicle so clients can find it.',
+    seats: Number.isInteger(d.seats) && d.seats >= 1 && d.seats <= MAX_SEATS ? undefined : 'Choose how many passengers your vehicle can take.',
+  })
+}
+
+export function driverAreaErrors(d: Pick<DriverDraft, 'serviceCities'>): FieldErrors {
+  return compact({
+    serviceCities: !d.serviceCities.length
+      ? 'Pick at least one city.'
+      : d.serviceCities.every((c) => (CITIES as readonly string[]).includes(c))
+        ? undefined
+        : `Choose ${CITIES.join(' or ')}.`,
+  })
+}
+
+export function driverRequestErrors(d: Pick<DriverDraft, 'requestHours'>): FieldErrors {
+  return compact({ requestHours: requestHoursError(d.requestHours) })
+}
 
 export function needsProfessionalProof(value: Pick<DriverDraft, 'background'>): boolean {
   return value.background === 'TAXI' || value.background === 'RIDESHARE'

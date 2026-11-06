@@ -1,19 +1,28 @@
-import { ArrowRight, Car, CheckCircle2, Pencil, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Car, CheckCircle2, ShieldCheck } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { StatusScreen } from '../../components/auth/StatusScreen'
-import { focusRing, softPanel } from '../../components/auth/styles'
+import { softPanel } from '../../components/auth/styles'
 import { DriverAboutFields, DriverRequestFields, DriverVehicleFields } from '../../components/DriverFields'
-import { emptyDriverDraft, splitDriverDraft, type DriverDraft, type FieldErrors } from '../../components/driverDraft'
+import {
+  driverAboutErrors,
+  driverAreaErrors,
+  driverRequestErrors,
+  driverVehicleErrors,
+  emptyDriverDraft,
+  splitDriverDraft,
+  type DriverDraft,
+  type FieldErrors,
+} from '../../components/driverDraft'
 import { FieldMessage } from '../../components/form/FieldMessage'
 import { OnboardingLayout } from '../../components/onboarding/OnboardingLayout'
 import { OnboardingStep } from '../../components/onboarding/OnboardingStep'
+import { ReviewCard } from '../../components/onboarding/ReviewCard'
 import type { StepItem } from '../../components/onboarding/OnboardingStepper'
 import { label as labelClass, primaryButton } from '../../components/ui'
 import { BACKGROUND_LABELS } from '../../constants'
 import { useApp } from '../../hooks/useApp'
-import { describeRequestHours, requestHoursError } from '../../logic/requestHours'
-import { MAX_NAME, isPhone, tooLong } from '../../logic/validate'
+import { describeRequestHours } from '../../logic/requestHours'
 import { clearDraft, loadDraft, saveDraft } from '../../onboarding/drafts'
 import { focusFirstError } from '../../onboarding/focus'
 import { onboardingPaths } from '../../onboarding/routing'
@@ -30,24 +39,12 @@ interface ProviderDraft {
 // Who can sign up as a driver themselves. Organization drivers are added by their transport provider.
 const BACKGROUNDS: DriverBackground[] = ['TAXI', 'RIDESHARE', 'INDEPENDENT']
 
-function compact(errors: FieldErrors): FieldErrors {
-  return Object.fromEntries(Object.entries(errors).filter(([, v]) => v))
-}
-
-// Same rules as the driver sign-up has always had; the backend checks them again.
+// Same rules as the driver sign-up has always had, shared with CareRide enrollment; the backend checks them again.
 const VALIDATE: Record<StepId, (d: ProviderDraft) => FieldErrors> = {
-  about: ({ driver: d }) =>
-    compact({
-      name: d.name.trim() ? tooLong(d.name, MAX_NAME) : 'Enter your full name.',
-      phone: isPhone(d.phone) ? undefined : 'Enter a 10-digit phone number.',
-    }),
-  vehicle: ({ driver: d }) =>
-    compact({
-      vehicle: d.vehicle.trim() ? tooLong(d.vehicle, MAX_NAME) : 'Describe your vehicle so clients can find it.',
-      serviceCities: d.serviceCities.length ? undefined : 'Pick at least one city.',
-    }),
-  requests: ({ driver: d }) => compact({ requestHours: requestHoursError(d.requestHours) }),
-  review: (d) => compact({ acknowledged: d.acknowledged ? undefined : 'Please confirm to submit.' }),
+  about: ({ driver: d }) => driverAboutErrors(d),
+  vehicle: ({ driver: d }) => ({ ...driverVehicleErrors(d), ...driverAreaErrors(d) }),
+  requests: ({ driver: d }) => driverRequestErrors(d),
+  review: (d) => (d.acknowledged ? {} : { acknowledged: 'Please confirm to submit.' }),
 }
 
 interface StepDef extends StepItem {
@@ -248,6 +245,7 @@ function ProviderFlow({ identity }: { identity: Identity }) {
             />
             <ReviewCard
               title="Vehicle and area"
+              icon={<Car className="h-4 w-4 text-rc-teal-ink" aria-hidden />}
               onEdit={() => go(1)}
               rows={[
                 ['Vehicle', d.vehicle],
@@ -284,34 +282,5 @@ function ProviderFlow({ identity }: { identity: Identity }) {
         )}
       </OnboardingStep>
     </OnboardingLayout>
-  )
-}
-
-function ReviewCard({ title, onEdit, rows }: { title: string; onEdit: () => void; rows: [string, string][] }) {
-  return (
-    <section className="rounded-xl border border-rc-line bg-white">
-      <div className="flex items-center justify-between gap-3 border-b border-rc-line px-5 py-3">
-        <h2 className="flex items-center gap-2 font-heading text-base font-bold text-rc-navy">
-          {title === 'Vehicle and area' && <Car className="h-4 w-4 text-rc-teal-ink" aria-hidden />}
-          {title}
-        </h2>
-        <button
-          type="button"
-          onClick={onEdit}
-          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-rc-blue hover:bg-brand-50 ${focusRing}`}
-          aria-label={`Edit ${title.toLowerCase()}`}
-        >
-          <Pencil className="h-4 w-4" aria-hidden /> Edit
-        </button>
-      </div>
-      <dl className="grid gap-x-6 gap-y-2.5 px-5 py-4 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
-        {rows.map(([k, v]) => (
-          <div key={k} className="contents">
-            <dt className="text-slate-500">{k}</dt>
-            <dd className="font-medium text-rc-navy">{v || '—'}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
   )
 }

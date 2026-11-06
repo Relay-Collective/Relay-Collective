@@ -66,3 +66,17 @@ export function isGeneralVolunteer(user: Pick<User, 'role'> | undefined): boolea
 export function canDrive(driver: Pick<Driver, 'status'> | undefined): boolean {
   return driver?.status === 'APPROVED'
 }
+
+// How a driver came to CareRide, for the admin console. Descriptive only: every driver is reviewed the same way.
+export type DriverApplicationSource = 'VOLUNTEER_WORKSPACE' | 'DRIVER_SIGN_UP' | 'TRANSPORT_PROVIDER'
+
+export const DRIVER_APPLICATION_SOURCE_LABELS: Record<DriverApplicationSource, string> = {
+  VOLUNTEER_WORKSPACE: 'Existing volunteer, from their workspace',
+  DRIVER_SIGN_UP: 'Driver sign-up',
+  TRANSPORT_PROVIDER: 'Added by their transport provider',
+}
+
+export function driverApplicationSource(driver: Pick<Driver, 'appliedAsVolunteer' | 'orgId'>): DriverApplicationSource {
+  if (driver.appliedAsVolunteer) return 'VOLUNTEER_WORKSPACE'
+  return driver.orgId ? 'TRANSPORT_PROVIDER' : 'DRIVER_SIGN_UP'
+}

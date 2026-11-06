@@ -42,7 +42,7 @@ export function Approvals() {
     return {
       item,
       name: personName(d.userId) ?? 'Unnamed driver',
-      type: 'Driver verification',
+      type: d.appliedAsVolunteer ? 'Driver verification · existing volunteer' : 'Driver verification',
       detail: [BACKGROUND_LABELS[d.background], `${d.seats} ${d.seats === 1 ? 'seat' : 'seats'}`, d.wheelchairAccessible && 'Wheelchair accessible', affiliation].filter(Boolean).join(' · '),
       to: adminPaths.review('drivers', d.id),
     }

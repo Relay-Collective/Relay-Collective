@@ -1,4 +1,5 @@
 import { ArrowRight, FileText, Info } from 'lucide-react'
+import { DRIVER_APPLICATION_SOURCE_LABELS, driverApplicationSource } from '../../volunteer/participation'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ORG_KIND } from '../../admin/labels'
@@ -136,6 +137,7 @@ export function Review() {
             driver && (
               <DetailList
                 rows={[
+                  ['Applied through', DRIVER_APPLICATION_SOURCE_LABELS[driverApplicationSource(driver)]],
                   ['Drives as', BACKGROUND_LABELS[driver.background]],
                   ['Organization', orgName(driver.orgId) ?? 'Independent'],
                   ['Vehicle', driver.vehicle],

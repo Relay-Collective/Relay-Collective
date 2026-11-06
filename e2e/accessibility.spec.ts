@@ -26,6 +26,7 @@ const KNOWN_ISSUES: Record<string, Record<string, number>> = {
   'general volunteer home': { 'label-content-name-mismatch': 1 },
   'volunteering interests': { 'label-content-name-mismatch': 1 },
   'general volunteer profile': { 'label-content-name-mismatch': 1 },
+  'CareRide application': { 'label-content-name-mismatch': 1 },
   'admin overview': { 'label-content-name-mismatch': 7 },
   'organization overview on a phone': { 'label-content-name-mismatch': 5 },
   'volunteer overview on a phone': { 'label-content-name-mismatch': 5 },
@@ -91,6 +92,12 @@ const pages: { name: string; account?: Account; path: string; ready: (page: Page
     account: accounts.priya,
     path: '/volunteer/profile',
     ready: (p) => expect(p.getByRole('region', { name: 'Service participation' })).toBeVisible(),
+  },
+  {
+    name: 'CareRide application',
+    account: accounts.priya,
+    path: '/volunteer/careride/apply',
+    ready: (p) => expect(p.getByRole('heading', { level: 1, name: 'Drive with CareRide.' })).toBeVisible(),
   },
   {
     name: 'admin overview',

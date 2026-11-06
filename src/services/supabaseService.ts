@@ -52,6 +52,7 @@ import type {
   VolunteerProfile,
 } from '../types'
 import { interestsError, normalizeInterests } from '../volunteer/interests'
+import { careRideApplicationError, emptyCareRideDraft, needsPhone, toApplication as toCareRideApplication } from '../volunteer/enrollment'
 import {
   ALL_RIDES_LIMIT,
   type DataService,
@@ -81,7 +82,7 @@ const HOUSE_COLUMNS = 'id, org_id, name, address, city, phone'
 // A volunteer profile with its interests, embedded through volunteer_interests' foreign key
 const VOLUNTEER_COLUMNS = 'id, profile_id, created_at, updated_at, volunteer_interests(interest)'
 const DRIVER_COLUMNS =
-  'id, profile_id, org_id, background, vehicle, wheelchair_accessible, seats, service_cities, request_hours, status, created_at, reviewed_at, reviewed_by'
+  'id, profile_id, org_id, background, vehicle, wheelchair_accessible, seats, service_cities, request_hours, status, created_at, reviewed_at, reviewed_by, applied_as_volunteer'
 const DESTINATION_COLUMNS = 'id, org_id, name, address, city, notes'
 const RIDE_COLUMNS = [
   'id, type, org_id, house_id, requested_by, rider_names, passengers, pickup_address, pickup_instructions',
@@ -155,6 +156,7 @@ interface DriverRow {
   created_at: string
   reviewed_at: string | null
   reviewed_by: string | null
+  applied_as_volunteer?: boolean // from 20261105120000 on
 }
 
 interface DestinationRow {
@@ -393,6 +395,7 @@ function toDriver(row: DriverRow): Driver {
     createdAt: iso(row.created_at),
     reviewedAt: iso(row.reviewed_at),
     reviewedBy: row.reviewed_by ?? undefined,
+    appliedAsVolunteer: row.applied_as_volunteer || undefined,
   }
 }
 
@@ -1052,6 +1055,22 @@ export const supabaseService: DataService = {
     const saved = await readVolunteerProfile(user.id)
     if (!saved) throw new Error("We couldn't load your interests. Please refresh the page.")
     return saved
+  },
+
+  async applyToCareRide(application) {
+    const user = await requireUser(await currentAuthUser())
+    const phoneRequired = needsPhone(user)
+    const problem = careRideApplicationError(application, phoneRequired)
+    if (problem) throw new Error(problem)
+    const { data, error } = await getSupabase().rpc('apply_to_careride', {
+      p_details: toCareRideApplication({ ...emptyCareRideDraft, ...application, phone: application.phone ?? '' }, phoneRequired),
+    })
+    if (error) {
+      if (error.code === '23514') throw new Error('Please check your details and try again.')
+      fail(error, "We couldn't submit your application. Nothing was sent, so please try again.")
+    }
+    const result = data as { driverId: string; status: VerificationStatus; created: boolean }
+    return { driverId: result.driverId, status: result.status, created: result.created }
   },
 
   async getOrganizationApplication(orgId) {

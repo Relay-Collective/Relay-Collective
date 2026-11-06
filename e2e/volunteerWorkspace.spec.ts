@@ -49,7 +49,7 @@ test.describe('adaptive volunteer workspace', () => {
     const interests = interestsRegion(page)
     await expect(interests.getByText('The ways you’ve chosen to contribute.')).toBeVisible()
     await expect(interests.getByRole('listitem')).toHaveCount(2)
-    await expect(interests.getByRole('listitem').filter({ hasText: 'Transportation' })).toContainText('isn’t open to volunteer accounts yet')
+    await expect(interests.getByRole('listitem').filter({ hasText: 'Transportation' })).toContainText('apply from your Overview')
     await expect(interests.getByRole('listitem').filter({ hasText: 'Community outreach' })).toContainText('Not on Relay Collective yet')
 
     // No service yet: said plainly, with CareRide shown as running but not theirs

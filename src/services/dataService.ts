@@ -72,6 +72,18 @@ export interface NewVolunteer {
   phone?: string // optional: volunteers aren't required to share one
   interests: VolunteerInterest[] // at least one; descriptive only, never access
 }
+// What a general volunteer sends to apply to drive with CareRide. Everything else (who they are, their name and
+// email, their interests) is already on the account, and the backend takes it from the session.
+export type CareRideApplication = Pick<Driver, 'vehicle' | 'seats' | 'wheelchairAccessible' | 'serviceCities' | 'requestHours'> & {
+  phone?: string // only read when the profile has no phone yet: driving needs one
+}
+// What applying did. created is false when the account had already applied: the existing application is returned
+// as it is, never a second one.
+export interface CareRideEnrollmentResult {
+  driverId: string
+  status: VerificationStatus
+  created: boolean
+}
 // A new invitation. The token is shown once, to build the link; the backend keeps only its hash.
 export interface CreatedInvitation {
   invitation: Invitation
@@ -220,6 +232,9 @@ export interface DataService {
   getVolunteerProfile(userId: string): Promise<VolunteerProfile | undefined>
   // Replaces the signed-in volunteer's interests (at least one). Changes nothing else, driving included.
   updateMyVolunteerInterests(interests: VolunteerInterest[]): Promise<VolunteerProfile>
+  // The signed-in general volunteer applies to drive with CareRide, on the same account: a PENDING driver profile,
+  // never an approved one. Their volunteer profile and interests are kept. Safe to repeat (see CareRideEnrollmentResult).
+  applyToCareRide(application: CareRideApplication): Promise<CareRideEnrollmentResult>
   // The application behind an organization: its members and platform admins only
   getOrganizationApplication(orgId: string): Promise<OrganizationApplication | undefined>
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CareRideMark } from '../../modules/careride/brand'
 import { RequestStatusCard } from '../../components/RequestStatusCard'
 import { AssignmentRow } from '../../components/volunteer/AssignmentRow'
+import { CareRideEnrollmentCard } from '../../components/volunteer/CareRideEnrollmentCard'
 import { InterestsSection } from '../../components/volunteer/InterestsSection'
 import { ServiceParticipation } from '../../components/volunteer/ServiceParticipation'
 import { OpportunityList } from '../../components/volunteer/OpportunityList'
@@ -76,6 +77,7 @@ function GeneralOverview() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         <div className="space-y-6 lg:col-span-2">
           <InterestsSection />
+          <CareRideEnrollmentCard />
           <ServiceParticipation title="Your services" welcome />
         </div>
         <div className="space-y-6">

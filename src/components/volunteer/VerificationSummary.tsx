@@ -33,6 +33,12 @@ const STATE_ICON = { done: Check, waiting: Clock, missing: CircleX } as const
 const STATE_CLASS = { done: 'bg-emerald-700 text-white', waiting: 'bg-sun-100 text-amber-900', missing: 'bg-slate-100 text-slate-600' } as const
 const STATE_TEXT = { done: 'Complete', waiting: 'In progress', missing: 'Needs attention' } as const
 
+// A volunteer who applied from their workspace reads about their CareRide application; everyone else, as before
+function panelName(driver: Driver): string {
+  if (!driver.appliedAsVolunteer || driver.status === 'APPROVED') return 'Driver verification'
+  return driver.status === 'PENDING' ? 'CareRide application under review' : 'CareRide application'
+}
+
 // The driver's review status in words, and what it's based on
 export function VerificationSummary({ driver, detailed = false }: { driver: Driver; detailed?: boolean }) {
   const look = LOOK[driver.status]
@@ -41,7 +47,7 @@ export function VerificationSummary({ driver, detailed = false }: { driver: Driv
     <section aria-labelledby="verification-title" className={panel}>
       <div className={panelHead}>
         <h2 id="verification-title" className={panelTitle}>
-          {detailed ? 'Review status' : 'Driver verification'}
+          {detailed ? 'Review status' : panelName(driver)}
         </h2>
         {!detailed && (
           <Link to={volunteerPaths.verification} className={panelLink}>

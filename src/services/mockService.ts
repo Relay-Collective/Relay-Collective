@@ -69,6 +69,8 @@ import { deleteDemoFile, getDemoFile, putDemoFile } from './demoFiles'
 import * as feedbackStore from './mockFeedback'
 import { backfilledEvents, seed, SEEDED_VOLUNTEERS, demoPasswordFor, type Database, type StoredJoinRequest } from './seed'
 import { interestsError, normalizeInterests } from '../volunteer/interests'
+import { canDrive } from '../volunteer/participation'
+import { canApplyToCareRide, careRideApplicationError, emptyCareRideDraft, needsPhone, toApplication } from '../volunteer/enrollment'
 
 // Hackathon backend: keeps everything in the browser's localStorage.
 // Swap this file for a real backend later; screens won't need to change.
@@ -821,6 +823,29 @@ export const mockService: DataService = {
       return { ...profile, interests: [...profile.interests] }
     }),
 
+  // Same rules as apply_to_careride() (20261105120000_careride_volunteer_enrollment.sql): the account comes from the
+  // session, the driver profile is always PENDING, and the profile, volunteer profile and interests are kept.
+  applyToCareRide: (application) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      if (!me) throw new Error('Join Relay Collective as a volunteer first.')
+      if (me.role === 'DRIVER') {
+        const existing = db.drivers.find((d) => d.userId === me.id)
+        if (existing) return { driverId: existing.id, status: existing.status, created: false }
+        throw new Error('This account has no driver profile. Contact the Relay Collective team.')
+      }
+      if (!canApplyToCareRide(me)) throw new Error('This account can’t apply to drive with CareRide.')
+      const phoneRequired = needsPhone(me)
+      const problem = careRideApplicationError(application, phoneRequired)
+      if (problem) throw new Error(problem)
+      const { phone, ...details } = toApplication({ ...emptyCareRideDraft, ...application, phone: application.phone ?? '' }, phoneRequired)
+      const driver: Driver = { ...details, id: newId('d'), userId: me.id, background: 'INDEPENDENT', status: 'PENDING', appliedAsVolunteer: true, createdAt: now() }
+      db.drivers.push(driver)
+      if (phone) me.phone = phone
+      me.role = 'DRIVER'
+      return { driverId: driver.id, status: driver.status, created: true }
+    }),
+
   getOrganizationApplication: (orgId) =>
     transact((db) => {
       const user = signedInUser(db)
@@ -1289,6 +1314,8 @@ export const mockService: DataService = {
 
   setDriverStatus: (driverId, status) =>
     transact((db) => {
+      // Like review_driver(): only a platform admin decides
+      if (signedInUser(db)?.role !== 'PLATFORM_ADMIN') throw new Error('Only a CareRide admin can review drivers.')
       const driver = findOrThrow(db.drivers, driverId, 'Driver')
       Object.assign(driver, { status, reviewedAt: now(), reviewedBy: readSession() })
       return driver
@@ -1427,6 +1454,10 @@ export const mockService: DataService = {
     transact((db) => {
       const offer = findOrThrow(db.offers, offerId, 'Offer')
       const ride = findOrThrow(db.rides, offer.rideId, 'Ride')
+      // Like respond_to_offer(): only an approved driver answers, whatever offers exist
+      if (!canDrive(db.drivers.find((d) => d.id === offer.driverId))) {
+        throw new Error('Your driver account needs to be approved before you can answer requests.')
+      }
       if (offer.status !== 'PENDING') {
         throw new Error(ride.driverId ? 'Another driver already accepted this ride.' : 'This request is no longer open.')
       }

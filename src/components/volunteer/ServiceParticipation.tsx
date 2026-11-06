@@ -1,9 +1,11 @@
 import { ArrowRight, Compass } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useApp } from '../../hooks/useApp'
 import { useCurrentOrg } from '../../hooks/useCurrent'
 import { useVolunteer } from '../../hooks/useVolunteer'
 import { CareRideMark } from '../../modules/careride/brand'
 import { volunteerPaths } from '../../volunteer/paths'
+import { canApplyToCareRide } from '../../volunteer/enrollment'
 import { DRIVER_KIND_LABELS } from '../../volunteer/participation'
 import { VerificationBadge } from '../admin/VerificationBadge'
 import { panel, panelHead, panelLink, panelTitle } from '../workspace/styles'
@@ -14,6 +16,7 @@ import { panel, panelHead, panelLink, panelTitle } from '../workspace/styles'
 // welcome: the general volunteer's Overview, where no enrollment is where the journey starts.
 export function ServiceParticipation({ title = 'Service participation', welcome = false }: { title?: string; welcome?: boolean }) {
   const { workspace } = useVolunteer()
+  const { currentUser } = useApp()
   const org = useCurrentOrg()
   const enrolled = workspace.careRide !== 'NOT_ENROLLED'
 
@@ -58,7 +61,7 @@ export function ServiceParticipation({ title = 'Service participation', welcome 
             <span className="block text-sm text-slate-600">
               {enrolled && workspace.driverKind
                 ? DRIVER_KIND_LABELS[workspace.driverKind]
-                : 'Running today. Driving is a separate enrollment, and isn’t open to volunteer accounts yet.'}
+                : 'Running today. Driving is a separate application, verified by the Relay Collective team.'}
               {enrolled && org ? ` · ${org.name}` : ''}
             </span>
           </span>
@@ -76,6 +79,13 @@ export function ServiceParticipation({ title = 'Service participation', welcome 
         <div className="border-t border-slate-100 px-3 py-2">
           <Link to={volunteerPaths.verification} className={panelLink}>
             Driver verification <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
+      )}
+      {!enrolled && canApplyToCareRide(currentUser) && (
+        <div className="border-t border-slate-100 px-3 py-2">
+          <Link to={volunteerPaths.careRideApply} className={panelLink}>
+            Apply to drive with CareRide <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
       )}

@@ -55,7 +55,7 @@ export function BuildStamp({ className = '' }: { className?: string }) {
       </p>
       <p className="mt-1 flex flex-wrap items-center gap-1">
         {info.sha ? (
-          <span className="min-w-0 break-all font-mono text-[11px] text-slate-600">{info.sha}</span>
+          <span className="min-w-0 break-all font-mono text-xs text-slate-600">{info.sha}</span>
         ) : (
           <span>Commit hash is not in this build.</span>
         )}

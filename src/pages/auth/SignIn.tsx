@@ -265,7 +265,7 @@ export function SignIn() {
                     aria-label={`Sign in as ${u.name}`}
                     className={`group inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white py-0.5 pl-0.5 pr-3 text-left text-sm font-semibold text-ink transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 ${tone.border}`}
                   >
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${tone.solid}`} aria-hidden>
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${tone.solid}`} aria-hidden>
                       {busy === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : initials(u.name)}
                     </span>
                     {u.name}

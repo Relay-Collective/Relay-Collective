@@ -304,7 +304,7 @@ export function LiveScreens({ index, onChange }: Props) {
               <div className={`h-4 w-4 rounded-full border-2 bg-white transition ${i <= index ? 'border-brand-500' : 'border-slate-300'}`} />
               {i === index && demo && <PlayRing key={runKey} ms={playTime(s)} done={idle} />}
             </div>
-            <div className={`mt-1 whitespace-nowrap text-sm font-bold ${i === index ? 'text-ink' : 'text-slate-400'}`}>{s.short}</div>
+            <div className={`mt-1 whitespace-nowrap text-sm font-bold ${i === index ? 'text-ink' : 'text-slate-500'}`}>{s.short}</div>
           </button>
         ))}
       </div>
@@ -500,7 +500,7 @@ function Screen({
           aria-hidden
         >
           <span className="absolute inset-0 animate-ping rounded-full bg-coral-500/50" />
-          <span className="absolute inset-[18%] rounded-full bg-coral-500/35" style={{ boxShadow: '0 0 0 3px #f5573f' }} />
+          <span className="absolute inset-[18%] rounded-full bg-coral-500/35" style={{ boxShadow: '0 0 0 3px var(--color-coral-500)' }} />
         </span>
       )}
     </div>

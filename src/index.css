@@ -48,7 +48,7 @@
   --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-step-forward: step-forward 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-step-back: step-back 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-pop: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-pop: pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shake: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   --animate-confetti: confetti 2.6s cubic-bezier(0.25, 0.6, 0.5, 1) forwards;
@@ -167,12 +167,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  html { scroll-behavior: auto !important; }
+  /* Looping and travelling motion stops. State changes keep a short fade so they are still noticed. */
+  .animate-float, .animate-travel-x, .animate-travel-y, .animate-confetti, .animate-shake, .animate-ring-fill {
+    animation: none !important;
   }
+  .animate-fade-up, .animate-step-forward, .animate-step-back, .animate-pop, .animate-status-in, .animate-dim-in {
+    animation: reduced-fade 0.2s ease-out both !important;
+  }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes reduced-fade {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
 }
 
 @media print {

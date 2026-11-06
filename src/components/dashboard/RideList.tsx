@@ -176,7 +176,7 @@ function DayGroups({ rides, now, render }: { rides: Ride[]; now: number; render:
     <div className="space-y-4">
       {groups.map((g) => (
         <div key={g.label}>
-          <h3 className="px-3 pb-1 font-sans text-sm font-bold text-slate-400">{g.label}</h3>
+          <h3 className="px-3 pb-1 font-sans text-sm font-bold text-slate-500">{g.label}</h3>
           <ul className="space-y-1">{g.rides.map(render)}</ul>
         </div>
       ))}

@@ -127,7 +127,7 @@ export function Pitch({ slide, step, onStep }: Props) {
       {id === 'lessons' && (
         <Slide title="A few big lessons.">
           <div className="mx-auto grid max-w-5xl gap-4">
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-5 px-7 text-base font-bold text-slate-400">
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-5 px-7 text-base font-bold text-slate-500">
               <span>What we learned</span>
               <span className="w-12" />
               <span>What we changed</span>
@@ -212,7 +212,7 @@ function Heard({ icon: Icon, heard, changed }: { icon: LucideIcon; heard: string
 function List({ heading, items, icon: Icon = Check, bare = false }: { heading: string; items: string[]; icon?: LucideIcon; bare?: boolean }) {
   return (
     <div className={bare ? '' : 'rounded-xl border border-slate-200/80 bg-white p-6'}>
-      <h3 className="text-xl font-extrabold text-slate-400">{heading}</h3>
+      <h3 className="text-xl font-extrabold text-slate-500">{heading}</h3>
       <ul className="mt-4 space-y-3">
         {items.map((item) => (
           <li key={item} className="flex items-start gap-3 text-2xl font-bold">

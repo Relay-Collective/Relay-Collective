@@ -77,7 +77,7 @@ export function HeroPreview() {
                   >
                     {done && <Check className="h-3 w-3" strokeWidth={3} />}
                   </span>
-                  <span className={`whitespace-nowrap text-[11px] font-semibold ${done ? 'text-ink' : 'text-slate-400'}`}>{step}</span>
+                  <span className={`whitespace-nowrap text-xs font-semibold ${done ? 'text-ink' : 'text-slate-500'}`}>{step}</span>
                 </li>
               )
             })}

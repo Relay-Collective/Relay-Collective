@@ -7,7 +7,7 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-brand-700 hover:bg-brand-100"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-brand-700 hover:bg-brand-100"
       aria-label={`Copy ${label}`}
       onClick={() => {
         void copyText(text).then(() => {

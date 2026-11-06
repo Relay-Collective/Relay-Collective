@@ -118,7 +118,7 @@ function RideTimeline({ ride }: { ride: Ride }) {
                 {next && <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className={`font-semibold ${done ? 'text-ink' : next ? 'text-brand-800' : 'text-slate-400'}`}>
+                <p className={`font-semibold ${done ? 'text-ink' : next ? 'text-brand-800' : 'text-slate-500'}`}>
                   {s.label}
                   {next && waiting && i === 1 && <span className="font-normal text-slate-500"> · asking drivers now</span>}
                 </p>

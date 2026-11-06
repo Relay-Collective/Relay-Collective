@@ -6,7 +6,8 @@ const PREFIX = 'rc-onboarding:'
 // The one-step registration form from before identity-first onboarding
 const LEGACY_KEYS = ['careride-register-draft-v5']
 
-export type DraftKind = 'organization' | 'provider' | 'volunteer'
+// careride: a general volunteer's CareRide driver application, from the volunteer workspace
+export type DraftKind = 'organization' | 'provider' | 'volunteer' | 'careride'
 
 function key(kind: DraftKind, identityId: string): string {
   return `${PREFIX}${kind}:${identityId}`
@@ -23,6 +24,15 @@ export function loadDraft<T extends object>(kind: DraftKind, identityId: string,
     // Missing, blocked, or broken: start fresh
   }
   return { value: fallback }
+}
+
+// Whether an unfinished draft is saved for this identity on this device
+export function hasDraft(kind: DraftKind, identityId: string): boolean {
+  try {
+    return localStorage.getItem(key(kind, identityId)) !== null
+  } catch {
+    return false
+  }
 }
 
 export function saveDraft<T extends object>(kind: DraftKind, identityId: string, value: T, step: string): void {

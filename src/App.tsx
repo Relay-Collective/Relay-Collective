@@ -60,6 +60,7 @@ import { Team } from './pages/workspace/Team'
 import { paths } from './workspace/paths'
 import { VolunteerShell } from './components/volunteer/VolunteerShell'
 import { Availability } from './pages/volunteer/Availability'
+import { CareRideApplication } from './pages/volunteer/CareRideApplication'
 import { Commitments } from './pages/volunteer/Commitments'
 import { Help as VolunteerHelp } from './pages/volunteer/Help'
 import { Interests as VolunteerInterests } from './pages/volunteer/Interests'
@@ -217,6 +218,8 @@ export default function App() {
               <Route element={<VolunteerShell />}>
                 <Route path={volunteerPaths.overview} element={<VolunteerOverview />} />
                 <Route path={volunteerPaths.interests} element={<VolunteerInterests />} />
+                {/* A general volunteer applies to drive, on the same account. The page sends anyone already enrolled home. */}
+                <Route path={volunteerPaths.careRideApply} element={<CareRideApplication />} />
                 <Route path={volunteerPaths.profile} element={<Profile />} />
                 <Route path={volunteerPaths.settings} element={<VolunteerSettings />} />
                 <Route path={volunteerPaths.help} element={<VolunteerHelp />} />

@@ -12,6 +12,7 @@ export const volunteerPaths = {
   ride: (rideId: string) => `${TRANSPORT}/rides/${encodeURIComponent(rideId)}`,
   availability: `${ROOT}/availability`,
   interests: `${ROOT}/interests`, // general volunteers' volunteering interests
+  careRideApply: `${ROOT}/careride/apply`, // a general volunteer applies to drive with CareRide (not a driving page)
   profile: `${ROOT}/profile`,
   verification: `${ROOT}/profile/verification`,
   settings: `${ROOT}/settings`,

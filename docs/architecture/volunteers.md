@@ -4,9 +4,10 @@ Relay Collective treats volunteering as a platform-level identity. Driving for C
 transportation capability that a person may also hold. Someone can volunteer without a vehicle, and choosing
 an interest never grants access to anything.
 
-This is Phase 1. It covers the identity, the data model, registration, interest editing, and a small home
-screen. It doesn't include volunteer opportunities, matching or scheduling. CareRide is still the only
-operational service.
+Phase 1 covers the identity, the data model, registration and interest editing. Phase 2 is the adaptive workspace.
+Phase 3 lets an existing general volunteer apply to drive with CareRide on the same account
+([CareRide enrollment for volunteers](#careride-enrollment-for-volunteers-phase-3)). None of this includes volunteer
+opportunities, matching or scheduling. CareRide is still the only operational service.
 
 ## The model
 
@@ -191,6 +192,131 @@ rides untouched. Removing Transportation from a driver's interests changes nothi
 Phase 1's separate general volunteer home (`VolunteerHome`) and its `useMyVolunteerProfile` hook were folded
 into `Overview` and the provider.
 
+## CareRide enrollment for volunteers (Phase 3)
+
+A general volunteer applies to drive from their own workspace, on the account they already have. They don't sign up
+again, and they don't give an email or password again. Their volunteer profile, interests and history stay as they
+are. Applying never grants driving: only a platform admin's approval does, through the existing driver review.
+
+### The decision: enrollment changes the role, approval grants driving
+
+```text
+Before                               After applying                        After approval
+profiles.role = VOLUNTEER            profiles.role = DRIVER                (unchanged)
+volunteer_profiles + interests       volunteer_profiles + interests        (unchanged)
+no drivers row                       drivers row, status = PENDING,        status = APPROVED
+                                     applied_as_volunteer = true           (review_driver(), admins only)
+can't see or take rides              can't see or take rides               rides, like every driver
+```
+
+`apply_to_careride()` inserts the driver row and changes the role to `DRIVER` in one transaction. The profile id,
+login, name, email, volunteer profile and interests aren't touched. This is the smallest change that keeps
+authorization exactly as it was:
+
+- **Every CareRide rule already reads "DRIVER + driver row" as enrolled and `status = 'APPROVED'` as allowed to
+  drive.** That includes `private.my_driver_id()`, `acts_for_driver()`, `respond_to_offer()` (which refuses any
+  driver that isn't approved), dispatch (approved drivers only), RLS, and the app's `RequireRole` and
+  `RequireApprovedDriver` guards. A volunteer who has applied looks exactly like someone who signed up at
+  `/onboarding/provider`: pending, with nothing to act on. No ride function had to learn a second way of being a driver.
+- **General volunteering never depended on the role.** `volunteer_profiles` is keyed by profile, any role may hold
+  one, and Phase 2 already shows interests, My interests and the profile to `DRIVER` accounts. So the change loses
+  nothing. `VOLUNTEER` means "volunteers, not enrolled in a service". `DRIVER` means "enrolled in CareRide, at
+  whatever verification status".
+- **Changing the role on approval instead** would have left a `VOLUNTEER` account with a driver row, which every
+  rule today treats as inconsistent (`serviceRoles()` ignores it on purpose). Each ride rule and screen would have
+  needed a second check, and a later rejection would have needed a role change back. A generic permissions
+  framework wasn't needed for one service.
+
+Interest selection still plays no part. Transportation is neither needed to apply nor removed, added or read at
+any point. A driver can drop it and keep driving.
+
+### Database
+
+One migration, `20261105120000_careride_volunteer_enrollment.sql`. It's additive and changes no existing function:
+
+| Object | Kind | Purpose |
+| --- | --- | --- |
+| `drivers.applied_as_volunteer` | column, `boolean not null default false` | Tells the admin console that this driver enrolled from the volunteer workspace. Descriptive only, never read for access. Existing rows are `false`. It isn't in the drivers column update grant. |
+| `public.apply_to_careride(jsonb)` | RPC, `security definer` | Applies for the signed-in account. Returns `{driverId, status, created}`. Execute is granted to `authenticated` only. |
+
+What `apply_to_careride()` does:
+
+- **Identity.** It uses `auth.uid()` only. The profile, status, background and organization never come from the browser. Any `status`, `background` or `orgId` sent is ignored, and a volunteer driver is always `INDEPENDENT`.
+- **Validation.** It calls `private.insert_driver()`, the same function as every driver sign-up: vehicle (required, up to 80 characters), seats (1–20), cities (Vancouver or Richmond, at least one), request hours (`private.valid_request_hours`). Driving needs a phone. One already on the profile is kept as it is. Otherwise the one sent is checked with `private.valid_phone` and saved.
+- **Who.** An active `VOLUNTEER` applies. A `DRIVER` with a driver row gets that application back unchanged (`created: false`), whatever its status. A `DRIVER` without one is refused with "contact the team", and nothing is made up. A login with no profile, organization staff, admins and closed accounts are refused.
+- **Repeats and races.** It takes the same per-login advisory lock as every onboarding path, then locks the profile row `FOR UPDATE`, and `drivers.profile_id` is unique. A double tap, a second tab or a retry after a dropped response all get the first application back. A decision (approved or rejected) is never reset.
+
+Approval is unchanged: `review_driver()` (platform admins only) sets the status. Nothing else is needed, because the
+role is already `DRIVER`.
+
+**Closing and deleting** need no changes. `deactivate_my_account()` takes the `DRIVER` branch (open offers expire,
+accepted rides go back to dispatch). Permanent deletion already lists, erases and verifies both `driver_profile`
+and `volunteer_profile` for any account (tested in `tests/db/careRideEnrollment.test.ts`).
+
+### The app
+
+| Where | What |
+| --- | --- |
+| Overview (general volunteer) | **Drive with CareRide** card: "Help people reach essential services.", **Apply to drive**, and **Learn about CareRide** (expands in place). With a draft on this device it reads **Continue application** and shows "Application not submitted yet". |
+| Your services / Service participation | An "Apply to drive with CareRide" link while not enrolled. |
+| `/volunteer/careride/apply` | The application, inside the workspace shell. Six steps: About CareRide, Your details (from the account; only a missing phone is asked for), Vehicle, Service area, Driving availability, Review (with the licence acknowledgement driver sign-up uses). Then a confirmation: "Your CareRide application has been submitted." Anyone who can't apply (already enrolled, or not a general volunteer) is sent to `/volunteer`. |
+| Overview / Profile after applying | The CareRide driver workspace in review, as for any pending driver. The panel reads **CareRide application under review** (or **CareRide application** once decided). Interests, My interests, the profile and Settings are all still there. |
+| Admin → Approvals | The existing driver queue. Volunteers who applied show as "Driver verification · existing volunteer". The review page adds **Applied through**: existing volunteer from their workspace, driver sign-up, or added by a transport provider. Approve and Reject are the existing actions. |
+
+**Reused, not copied.** The vehicle, cities and request-hours fields are `DriverVehicleFields`, `DriverCityFields`
+and `DriverRequestFields`. The step rules (`driverVehicleErrors`, `driverAreaErrors`, `driverRequestErrors`,
+`driverAboutErrors`) moved out of `ProviderOnboarding` into `components/driverDraft.ts`, and both flows use them.
+`ReviewCard` moved to `components/onboarding/ReviewCard.tsx`. The enrollment rules (`canApplyToCareRide`,
+`careRideApplicationErrors`, `toApplication`, `careRideEnrollmentView`) live in `src/volunteer/enrollment.ts`. Both
+backends and the page use them.
+
+**Session.** After the backend confirms, the page calls `reloadSession()`. The same signed-in account now has role
+`DRIVER`, so `VolunteerProvider` loads the driver profile and the workspace becomes the CareRide one by itself. No
+sign-out, no redirect loop. The confirmation stays on screen because it's held in the page, not derived from the
+role. An admin's approval reaches the volunteer through the app's usual data refresh, and no new session is needed.
+
+**Drafts.** The existing onboarding drafts (`onboarding/drafts.ts`, kind `careride`) are kept per signed-in
+identity in localStorage. They hold only the form answers (phone, vehicle, seats, accessibility, cities, hours),
+never a password, token or document, and the acknowledgement is always asked again. Nothing is saved for just
+reading the introduction. The draft is cleared after a confirmed submission, as soon as the account is enrolled
+(so a stale draft can't be sent), and on sign-out. If a submission fails (network, expired session), the error is
+shown, the draft stays, and nothing claims the application was sent.
+
+**States**, from `careRideEnrollmentView()`:
+
+| State | Shown |
+| --- | --- |
+| Not enrolled | Apply to drive |
+| Application incomplete (draft on this device) | Continue application |
+| Pending | CareRide application under review. Requests and commitments aren't in the navigation, and opening them directly explains why. |
+| Approved | The full CareRide dashboard: opportunities, commitments, availability, verification, rides, impact |
+| Rejected | "Your driver application wasn't approved." No ride actions. General volunteering is unchanged. |
+| Existing driver | Their workspace as before. No enrollment card, and the apply page sends them home. |
+
+### Mock backend
+
+`mockService.applyToCareRide()` applies the same rules with the same shared validators. It takes the account from
+the session, always creates a `PENDING` `INDEPENDENT` driver with `appliedAsVolunteer`, changes the role, keeps
+the volunteer profile and returns an existing application unchanged. Two related demo gaps were closed so the mock
+matches the database: `setDriverStatus()` now refuses anyone but a platform admin (like `review_driver()`), and
+`respondToOffer()` refuses an offer to a driver who isn't approved (like `respond_to_offer()`). Priya and Alex,
+the seeded general volunteers, have no phone, so the demo shows the phone step.
+
+### Tests
+
+- `tests/careRideEnrollment.test.ts`: eligibility, the shared validation (vehicle, cities, hours, phone), identity, interest and session continuity, duplicates, pending, approved and rejected, existing drivers, admin-only review, workspace navigation per state, drafts, deletion.
+- `tests/db/careRideEnrollment.test.ts` (PGlite, real migrations): creation, identity and interest preservation, always pending, refusals leave nothing, the browser can't pick a status, background or organization, repeats and simultaneous submissions make one driver row, the unique constraint, no self-approval or role change, data isolation between volunteers, pending and rejected drivers can't accept rides, approved ones can, existing drivers unaffected, closing and permanent deletion.
+- `e2e/careRideEnrollment.spec.ts`: apply and land in review, the account reused, validation, draft resume, admin approval and the driver workspace afterwards, rejection, two tabs making one application, driver pages closed while pending, existing drivers, a full ride from request to drop-off by a newly approved volunteer driver, and the whole flow on a phone. `e2e/accessibility.spec.ts` checks the application page too.
+
+### Rolling out Phase 3 to staging
+
+1. `npm run test:db` locally.
+2. Link the CLI to **staging**. `npm run db:status` should list exactly `20261105120000` as pending (after Phase 1's two files).
+3. `npm run db:push`. It's additive: one defaulted column and one new function.
+4. Deploy the frontend to staging. **Order matters:** the new frontend reads `drivers.applied_as_volunteer` in every driver query, so apply the migration first.
+5. Smoke test: as a general volunteer, apply and see "under review", with interests intact and requests closed. As an admin, find them in Approvals ("existing volunteer") and approve. As the volunteer, see the CareRide dashboard and take a ride. Also check that an existing driver is unchanged.
+6. **Rollback:** roll the frontend back first, because the old one never calls the function or reads the column. Then, if needed, `drop function public.apply_to_careride(jsonb)` and `alter table public.drivers drop column applied_as_volunteer`. Accounts that already applied stay valid pending or approved `DRIVER` accounts with their volunteer profiles.
+
 ## Existing drivers
 
 Nothing about an existing `DRIVER` account changes. The role, driver row, verification status, offers, rides,
@@ -234,9 +360,20 @@ Nothing has been applied to any hosted project. Production isn't touched by this
 
 ## Known limitations and technical debt
 
-- **One profile per login.** A volunteer can't also join an organization or enrol as a driver on the same
-  login: `register_driver_profile()` and `submit_join_request()` refuse an account that already has a role.
-  Optional CareRide enrollment for volunteers is Phase 2.
+- **One profile per login.** A volunteer can't also join an organization on the same login
+  (`submit_join_request()` refuses an account that already has a role). Driving is open to them since Phase 3
+  through `apply_to_careride()`. `register_driver_profile()` still refuses them, on purpose: it's the sign-up for
+  a new identity.
+- **No resubmission after a rejection.** The existing driver review has no "apply again" path for anyone, and
+  Phase 3 keeps that policy: `apply_to_careride()` returns the rejected application unchanged. The team can still
+  change its decision on the review page. A self-service resubmission (with a cool-down, or a request to
+  reconsider) is a product decision still to be made.
+- **Professional providers and organization drivers** don't enroll this way. A volunteer is always enrolled as
+  `INDEPENDENT` (a volunteer driver). Taxi and rideshare drivers still use driver sign-up.
+- **Driver documents** still aren't uploaded in the app, for anyone. The team checks the licence directly, as the
+  application says.
+- **A pending applicant sees the driver workspace in review**, including CareRide's Rides and Availability pages.
+  That's the same as every pending driver. Pages with ride actions explain that they open after approval.
 - **Name and phone can't be edited** by a volunteer in the app, the same as for drivers. The Relay Collective
   team changes them.
 - **Copied functions.** Four functions were redefined by copying their latest version. A later change to
@@ -251,7 +388,10 @@ Nothing has been applied to any hosted project. Production isn't touched by this
 ## Future extension
 
 - **Done in Phase 2:** the adaptive workspace above, with drivers' interests shown and editable.
-- **Next: optional CareRide enrollment for general volunteers.** It needs:
+- **Done in Phase 3:** optional CareRide enrollment for general volunteers
+  ([above](#careride-enrollment-for-volunteers-phase-3)). It followed this outline, as a separate
+  `apply_to_careride()` rather than a change to `register_driver_profile()`, so new-identity sign-up stayed as it was.
+  The outline, as planned:
   1. **Database.** `register_driver_profile()` refuses a login that already has a profile. Let an active
      `VOLUNTEER` call it: insert a `PENDING` `drivers` row through `private.insert_driver()`, and change the
      role to `DRIVER` in the same transaction, keeping `volunteer_profiles`. Every CareRide policy and ride

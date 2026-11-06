@@ -137,7 +137,7 @@ describe('workspace presentation', () => {
   test('each interest says what it means for this person, from their actual enrollment', () => {
     const general = volunteerWorkspace(VOLUNTEER, undefined, profile('TRANSPORTATION', 'FOOD_DISTRIBUTION'))
     assert.match(interestStatus('TRANSPORTATION', general), /separate enrollment/)
-    assert.match(interestStatus('TRANSPORTATION', general), /isn’t open to volunteer accounts yet/)
+    assert.match(interestStatus('TRANSPORTATION', general), /apply from your Overview/)
     assert.match(interestStatus('FOOD_DISTRIBUTION', general), /Not on Relay Collective yet/)
     assert.equal(interestStatus('TRANSPORTATION', volunteerWorkspace(DRIVER, driverRow('APPROVED'), null)), 'You drive with CareRide.')
     assert.match(interestStatus('TRANSPORTATION', volunteerWorkspace(DRIVER, driverRow('PENDING'), null)), /being reviewed/)

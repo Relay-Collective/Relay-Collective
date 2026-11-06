@@ -40,7 +40,7 @@ export function OnboardingStepper({ steps, current, furthest, onSelect, disabled
         const text = (
           <span className="min-w-0 pt-1">
             <span className={`block text-sm font-semibold ${active ? 'text-rc-navy' : finished ? 'text-slate-700' : 'text-slate-500'}`}>{step.title}</span>
-            <span className={`mt-0.5 block text-[13px] leading-snug ${active ? 'text-slate-600' : 'text-slate-400'}`}>{step.description}</span>
+            <span className={`mt-0.5 block text-[13px] leading-snug ${active ? 'text-slate-600' : 'text-slate-500'}`}>{step.description}</span>
           </span>
         )
         const state = active ? 'current step' : finished ? 'completed' : 'not started'

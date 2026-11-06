@@ -100,6 +100,7 @@ const TITLES: [prefix: string, title: string][] = [
   [paths.verification, 'Driver verification'],
   [paths.profile, 'My profile'],
   [paths.interests, 'My interests'],
+  [paths.careRideApply, 'Apply to drive'],
   [paths.settings, 'Settings'],
   [paths.help, 'Help'],
   [paths.feedback, 'My feedback'],

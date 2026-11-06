@@ -89,6 +89,7 @@ export interface Driver {
   createdAt?: string // when they signed up (or were added)
   reviewedAt?: string // when a platform admin last approved or rejected them
   reviewedBy?: string // User id of that admin
+  appliedAsVolunteer?: boolean // enrolled from the volunteer workspace, as an existing general volunteer. Descriptive only.
 }
 
 // A ride's driver as the booking organization sees them. The workspace provides it; CareRide's lists show it.

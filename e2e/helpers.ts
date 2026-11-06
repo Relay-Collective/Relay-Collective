@@ -9,6 +9,15 @@ export async function choose(radio: Locator): Promise<void> {
   await expect(radio).toBeChecked()
 }
 
+// Chooses a saved destination the way a keyboard user does: focus its row, then Enter. Enter (like a click)
+// closes the list, leaving the chosen place on one line with a Change button.
+export async function pickDestination(page: Page, name: RegExp): Promise<void> {
+  const radio = page.getByRole('radio', { name })
+  await radio.focus()
+  await radio.press('Enter')
+  await expect(page.getByRole('button', { name: 'Change destination' })).toBeFocused()
+}
+
 export interface Booking {
   destination: RegExp
   when: 'asap' | 'Tomorrow, 9 AM' | 'Tomorrow, 1 PM' | 'In 2 hours'
@@ -20,7 +29,8 @@ export interface Booking {
 export async function bookRide(page: Page, booking: Booking): Promise<string> {
   await page.goto('/workspace/transportation/new')
   await expect(page.getByRole('heading', { level: 1, name: 'Request a ride' })).toBeVisible()
-  await choose(page.getByRole('radio', { name: booking.destination }))
+  await pickDestination(page, booking.destination)
+  await expect(page.getByRole('region', { name: 'Where are we going?' }).getByText(booking.destination)).toBeVisible()
   if (booking.when === 'asap') {
     await choose(page.getByRole('radio', { name: /^As soon as possible/ }))
   } else {

@@ -1,14 +1,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { parseLocalInput, toLocalInput } from '../../logic/pickupTime'
+import { BOOK_AHEAD_DAYS, parseLocalInput, toLocalInput } from '../../logic/pickupTime'
 import { FieldMessage } from '../../../../components/form/FieldMessage'
 import { RequiredMark } from '../../../../components/form/RequiredMark'
 import { label } from '../../../../components/ui'
 
 const DAY = 86_400_000
 const SLOT_MINUTES = 15
-// How far ahead a ride can be booked
-export const BOOK_AHEAD_DAYS = 60
 
 interface Props {
   id: string

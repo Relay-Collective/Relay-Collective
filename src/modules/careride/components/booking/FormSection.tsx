@@ -1,52 +1,40 @@
 import { Check } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { RequiredMark } from '../../../../components/form/RequiredMark'
-import { card } from '../../../../components/ui'
 
 interface Props {
   id: string
   step: number
   title: string
   description?: string
-  required?: boolean
-  done?: boolean // the step number turns into a green check
+  done?: boolean // shows "Done" with a green check beside the title
+  className?: string
   children: ReactNode
 }
 
-// One numbered card in a long form. Required sections get a red star, the rest an "Optional" tag.
-export function FormSection({ id, step, title, description, required, done, children }: Props) {
+// One numbered question in the booking sheet. The number says where it sits in the order; the
+// title asks the question in plain words. Sections share one card, split by hairlines.
+export function FormSection({ id, step, title, description, done, className = '', children }: Props) {
   const headingId = `${id}-heading`
   return (
-    <section
-      id={id}
-      aria-labelledby={headingId}
-      className={`${card} animate-fade-up scroll-mt-28 p-5 sm:p-6`}
-      style={{ animationDelay: `${step * 60}ms` }}
-    >
+    <section id={id} aria-labelledby={headingId} className={`scroll-mt-28 px-5 py-6 sm:px-7 sm:py-7 ${className}`}>
       <div className="mb-5 flex items-start gap-3">
-        <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-300 ${
-            done ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600'
-          }`}
-          aria-hidden
-        >
-          {done ? <Check className="h-4 w-4 animate-pop" strokeWidth={3} /> : step}
+        <span className="w-7 shrink-0 pt-[0.2rem] font-display text-sm font-semibold tabular-nums text-slate-500" aria-hidden>
+          {String(step).padStart(2, '0')}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 id={headingId} className="text-lg font-bold leading-8">
+          <h2 id={headingId} className="font-display text-xl font-bold leading-7 tracking-[-0.02em] text-balance text-ink">
             {title}
-            {required ? (
-              <RequiredMark />
-            ) : (
-              <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 align-middle font-sans text-xs font-semibold text-slate-600">
-                Optional
-              </span>
-            )}
           </h2>
-          {description && <p className="text-sm text-slate-500">{description}</p>}
+          {description && <p className="mt-0.5 text-sm text-slate-600">{description}</p>}
         </div>
+        {done && (
+          <span className="mt-0.5 inline-flex shrink-0 animate-pop items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+            <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+            Done
+          </span>
+        )}
       </div>
-      {children}
+      <div className="sm:pl-10">{children}</div>
     </section>
   )
 }

@@ -20,9 +20,9 @@ interface Props {
 export function OptionTile({ type = 'radio', name, checked, onChange, title, description, note, icon, badge, dashed, invalid, autoFocus }: Props) {
   return (
     <label
-      className={`group flex min-h-16 cursor-pointer select-none items-center gap-3 rounded-xl border-2 px-4 py-3 transition duration-150 active:scale-[0.99] has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 ${
+      className={`group flex min-h-16 cursor-pointer select-none items-center gap-3 rounded-xl border px-4 py-3 transition duration-150 active:scale-[0.99] has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 ${
         checked
-          ? 'border-brand-500 bg-brand-50/70'
+          ? 'border-brand-600 bg-brand-50/70 shadow-[inset_0_0_0_1px_var(--color-brand-600)]'
           : `bg-white hover:border-brand-300 hover:bg-slate-50/60 ${invalid ? 'border-red-300' : 'border-slate-200'} ${dashed ? 'border-dashed' : ''}`
       }`}
     >
@@ -42,7 +42,7 @@ export function OptionTile({ type = 'radio', name, checked, onChange, title, des
           <span className="font-semibold text-ink">{title}</span>
           {badge && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{badge}</span>}
         </span>
-        {description && <span className="block truncate text-sm text-slate-500">{description}</span>}
+        {description && <span className="block text-sm text-slate-600">{description}</span>}
         {note && <span className="mt-0.5 block text-sm font-medium text-slate-600">{note}</span>}
       </span>
       <span

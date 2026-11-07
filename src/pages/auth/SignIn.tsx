@@ -1,48 +1,29 @@
-import { AlertCircle, ArrowRight, Building2, Car, Loader2, Mail, ShieldCheck } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import logoMark from '../../assets/logo-mark.png'
-import { AuthShell } from '../../components/auth/AuthShell'
-import { CopyButton } from '../../components/CopyButton'
+import { Mail } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { AuthLayout } from '../../components/auth/AuthLayout'
+import { FormAlert } from '../../components/auth/FormAlert'
+import { SubmitButton } from '../../components/auth/SubmitButton'
+import { authLead, authTitle, textLink } from '../../components/auth/styles'
 import { PasswordField } from '../../components/form/PasswordField'
 import { TextField } from '../../components/form/TextField'
-import { primaryButton, ROLE_TONE, tones } from '../../components/ui'
 import { useApp } from '../../hooks/useApp'
-import { HOME_FOR } from '../../logic/homeFor'
 import { returnPath } from '../../logic/returnPath'
 import { EMAIL } from '../../logic/validate'
-import { isDemoBackend } from '../../services'
-import { ADMIN_EMAIL, ADMIN_PASSWORD, DEMO_EMAIL_DOMAIN, DEMO_PASSWORD, demoPasswordFor } from '../../services/seed'
-import type { UserRole } from '../../types'
+import { dataService, isDemoBackend } from '../../services'
+import { UnconfirmedEmailError } from '../../services/dataService'
+import type { User } from '../../types'
+import { DemoAccounts } from './DemoAccounts'
+import { FullPageLoader } from './FullPageLoader'
+import { signedInPath, type SignedInState } from './SignedIn'
 
-// The two kinds of people who sign in. Picking one first keeps the page about them.
-type Audience = 'PARTNER' | 'DRIVER'
-
-const AUDIENCES: Record<Audience, { label: string; icon: ReactNode; subtitle: string; register: string; registerLabel: string }> = {
-  PARTNER: {
-    label: 'Partner organization',
-    icon: <Building2 className="h-5 w-5" />,
-    subtitle: 'Sign in to book and track rides for the people you serve.',
-    register: '/register?role=partner',
-    registerLabel: 'Register your organization',
-  },
-  DRIVER: {
-    label: 'Driver',
-    icon: <Car className="h-5 w-5" />,
-    subtitle: 'Sign in to see ride requests and your trips.',
-    register: '/register?role=driver',
-    registerLabel: 'Become a driver',
-  },
+const SIGN_IN_BRAND = {
+  title: 'Welcome back to the collective.',
+  body: 'The people, services, and resources your community depends on—all connected.',
 }
 
-// Demo accounts, grouped by what each kind of account does.
-const ROLE_GROUPS: { role: UserRole; title: string; text: string; icon: ReactNode }[] = [
-  { role: 'PARTNER', title: 'Partner organizations', text: 'Book rides for clients and track them.', icon: <Building2 className="h-5 w-5" /> },
-  { role: 'DRIVER', title: 'Drivers', text: 'Accept ride requests and drive trips.', icon: <Car className="h-5 w-5" /> },
-  { role: 'PLATFORM_ADMIN', title: 'Relay Collective admin', text: 'Approve organizations and drivers.', icon: <ShieldCheck className="h-5 w-5" /> },
-]
-
 // Remembers who last signed in on this device, so returning staff only type a password.
+// Just the email: the session itself is kept by the auth provider, as configured.
 const LAST_EMAIL_KEY = 'careride:last-email'
 
 function readLastEmail(): string {
@@ -61,28 +42,19 @@ function saveLastEmail(email: string) {
   }
 }
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
 function focusField(id: string) {
   const el = document.getElementById(id) as HTMLInputElement | null
   el?.focus()
   el?.select()
 }
 
-type Pane = 'form' | 'demo'
-
 export function SignIn() {
-  const { users, currentUser, signIn } = useApp()
+  const { users, ready, identity, sessionExpired, signIn } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = returnPath((location.state as { from?: string } | null)?.from)
+  const [params] = useSearchParams()
+  const from = returnPath((location.state as { from?: string } | null)?.from) ?? returnPath(params.get('next'))
+  const notice = (location.state as { notice?: string } | null)?.notice
 
   const [rememberedEmail] = useState(readLastEmail)
   const [email, setEmail] = useState(rememberedEmail)
@@ -91,29 +63,23 @@ export function SignIn() {
   const [error, setError] = useState<string>()
   const [attempts, setAttempts] = useState(0) // replays the shake on each failed try
   const [busy, setBusy] = useState<string>() // which button is working
-  const [params] = useSearchParams()
-  // Phones show one side at a time. /signin?demo opens on the demo accounts.
-  const [pane, setPane] = useState<Pane>(() => (params.has('demo') ? 'demo' : 'form'))
-  // /signin?as=driver opens on the driver side
-  const [audience, setAudience] = useState<Audience>(() => (params.get('as') === 'driver' ? 'DRIVER' : 'PARTNER'))
-  const who = AUDIENCES[audience]
-
-  // The chosen kind of account comes first; the admin is always last. Demo accounts exist only on the local mock.
-  const demoUsers = isDemoBackend ? users.filter((u) => u.email?.endsWith(DEMO_EMAIL_DOMAIN) || u.email === ADMIN_EMAIL) : []
-  const groups = ROLE_GROUPS.map((g) => ({ ...g, users: demoUsers.filter((u) => u.role === g.role) }))
-    .filter((g) => g.users.length > 0)
-    .sort((a, b) => Number(b.role === audience) - Number(a.role === audience))
-  const hasDemo = groups.length > 0
+  const [unconfirmed, setUnconfirmed] = useState(false)
+  const [resent, setResent] = useState<string>()
 
   async function attempt(key: string, emailValue: string, passwordValue: string) {
+    if (busy) return
     setBusy(key)
     setError(undefined)
+    setUnconfirmed(false)
+    setResent(undefined)
     try {
-      const user = await signIn(emailValue, passwordValue)
+      await signIn(emailValue, passwordValue)
       if (key === 'form') saveLastEmail(emailValue)
-      navigate(from ?? HOME_FOR[user.role], { replace: true })
+      // A page of its own says it worked, then sends them on to `from`, onboarding or home
+      navigate(signedInPath, { replace: true, state: { from, fresh: true } satisfies SignedInState })
     } catch (err) {
       setError((err as Error).message)
+      setUnconfirmed(err instanceof UnconfirmedEmailError)
       setAttempts((n) => n + 1)
       setBusy(undefined)
       if (key === 'form') requestAnimationFrame(() => focusField('password'))
@@ -132,45 +98,50 @@ export function SignIn() {
     attempt('form', email.trim(), password)
   }
 
-  const formPane = (
-    <form onSubmit={handleSubmit} noValidate className="flex w-full flex-col p-6 sm:p-10">
-      <div className="my-auto">
-        <img src={logoMark} alt="" className="mb-5 h-14 w-14" />
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Welcome back</h1>
+  // Wait for the session check, so a signed-in visitor never sees the form flash first
+  if (!ready) return <FullPageLoader />
+  // Already signed in on this device (and not mid sign-in here): say so on its own page
+  if (identity && !busy) return <Navigate to={signedInPath} replace state={{ from } satisfies SignedInState} />
 
-        <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1" role="radiogroup" aria-label="I'm signing in as a">
-          {(Object.keys(AUDIENCES) as Audience[]).map((a) => {
-            const on = audience === a
-            return (
-              <button
-                key={a}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                onClick={() => setAudience(a)}
-                className={`flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                  on ? `bg-white text-ink shadow-md` : 'text-slate-500 hover:text-ink'
-                }`}
-              >
-                <span className={on ? tones[ROLE_TONE[a]].text : ''} aria-hidden>
-                  {AUDIENCES[a].icon}
-                </span>
-                {AUDIENCES[a].label}
-              </button>
-            )
-          })}
-        </div>
-        <p className="mt-3 text-slate-600">{who.subtitle}</p>
+  return (
+    <AuthLayout
+      brand={SIGN_IN_BRAND}
+      aside={
+        <>
+          <span className="hidden sm:inline">New to Relay Collective? </span>
+          <Link to="/register" className={textLink}>
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <h1 className={authTitle}>
+        <span className="lg:hidden">{SIGN_IN_BRAND.title}</span>
+        <span className="hidden lg:inline">Sign in to your account</span>
+      </h1>
+      <p className={authLead}>One account for every organization and service you're part of on Relay Collective.</p>
 
-        <div className="mt-8 space-y-5">
+      {sessionExpired && (
+        <FormAlert tone="info" className="mt-6">
+          Your session ended, so we signed you out. Sign in again to pick up where you left off.
+        </FormAlert>
+      )}
+      {notice && (
+        <FormAlert tone="info" className="mt-6">
+          {notice}
+        </FormAlert>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate className="mt-8">
+        <div className="space-y-5">
           <TextField
             id="email"
-            label="Email"
+            label="Email address"
             type="email"
             inputMode="email"
             autoComplete="email"
             autoFocus={!rememberedEmail}
-            placeholder="you@example.org"
+            placeholder="you@organization.org"
             icon={<Mail className="h-5 w-5" />}
             value={email}
             error={fieldErrors.email}
@@ -180,165 +151,78 @@ export function SignIn() {
               setError(undefined)
             }}
           />
-          <PasswordField
-            id="password"
-            label="Password"
-            autoComplete="current-password"
-            autoFocus={!!rememberedEmail}
-            value={password}
-            error={fieldErrors.password}
-            onChange={(e) => {
-              setPassword(e.target.value)
-              setFieldErrors((f) => ({ ...f, password: undefined }))
-              setError(undefined)
-            }}
-          />
+          <div>
+            <PasswordField
+              id="password"
+              label="Password"
+              autoComplete="current-password"
+              autoFocus={!!rememberedEmail}
+              value={password}
+              error={fieldErrors.password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setFieldErrors((f) => ({ ...f, password: undefined }))
+                setError(undefined)
+              }}
+            />
+            <p className="mt-2 text-right text-sm">
+              {isDemoBackend ? (
+                <span className="text-slate-500">Forgot your password? Ask your organization's admin to reset it.</span>
+              ) : (
+                <Link to="/forgot-password" className={textLink}>
+                  Forgot your password?
+                </Link>
+              )}
+            </p>
+          </div>
         </div>
 
         {error && (
-          <p key={attempts} role="alert" className="mt-5 flex animate-shake items-start gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 ring-1 ring-red-200">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <FormAlert key={attempts} shake className="mt-5">
             {error}
-          </p>
+            {unconfirmed && (
+              <button
+                type="button"
+                className={`mt-1 block text-left ${textLink}`}
+                onClick={() =>
+                  dataService.resendVerification(email.trim()).then(
+                    () => setResent('If a confirmation is waiting for this address, we sent a new link.'),
+                    (err: Error) => setResent(err.message),
+                  )
+                }
+              >
+                Send a new confirmation link
+              </button>
+            )}
+          </FormAlert>
+        )}
+        {resent && (
+          <FormAlert tone="info" className="mt-3">
+            {resent}
+          </FormAlert>
         )}
 
-        <button type="submit" className={`${primaryButton} mt-6 w-full`} disabled={!!busy}>
-          {busy === 'form' ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-              Signing in…
-            </>
-          ) : (
-            <>
-              Sign in
-              <ArrowRight className="h-5 w-5" aria-hidden />
-            </>
-          )}
-        </button>
+        <SubmitButton busy={busy === 'form'} busyLabel="Signing in…" className="mt-6 w-full">
+          Sign in
+        </SubmitButton>
+      </form>
 
-        {isDemoBackend ? (
-          <p className="mt-4 text-center text-sm text-slate-500">Forgot your password? Ask your organization's admin to reset it.</p>
-        ) : (
-          <p className="mt-4 text-center text-sm">
-            <Link to="/forgot-password" className="font-semibold text-brand-700 hover:underline">
-              Forgot your password?
-            </Link>
-          </p>
-        )}
-      </div>
-
-      <p className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-slate-600">
+      <p className="mt-8 text-center text-sm text-slate-600">
         New to Relay Collective?{' '}
-        <Link to={who.register} className="font-semibold text-brand-700 hover:underline">
-          {who.registerLabel}
+        <Link to="/register" className={textLink}>
+          Create an account
         </Link>
       </p>
-    </form>
-  )
 
-  const demoPane = (
-    <section aria-labelledby="demo-heading" className="h-full bg-slate-50 p-6 sm:p-8">
-      <h2 id="demo-heading" className="text-2xl font-extrabold tracking-tight">
-        Look around first
-      </h2>
-      <p className="mt-1 text-sm text-slate-600">Tap anyone below to sign in as them. No password needed.</p>
-
-      <ul className="mt-4 divide-y divide-slate-200">
-        {groups.map((g) => {
-          const tone = tones[ROLE_TONE[g.role]]
-          return (
-            <li key={g.role} className="py-4">
-              <h3 className="flex items-center gap-2 font-bold leading-tight">
-                <span className={tone.text} aria-hidden>
-                  {g.icon}
-                </span>
-                {g.title}
-              </h3>
-              <p className="text-sm text-slate-500">{g.text}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {g.users.map((u) => (
-                  <button
-                    key={u.id}
-                    type="button"
-                    disabled={!!busy}
-                    onClick={() => attempt(u.id, u.email!, demoPasswordFor(u.email!))}
-                    aria-label={`Sign in as ${u.name}`}
-                    className={`group inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white py-0.5 pl-0.5 pr-3 text-left text-sm font-semibold text-ink transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 ${tone.border}`}
-                  >
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${tone.solid}`} aria-hidden>
-                      {busy === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : initials(u.name)}
-                    </span>
-                    {u.name}
-                    <ArrowRight className="-ml-2 h-4 w-0 text-slate-400 opacity-0 transition-all group-hover:ml-0 group-hover:w-4 group-hover:opacity-100" aria-hidden />
-                  </button>
-                ))}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-
-      <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3 text-sm text-slate-600">
-        <span>
-          Typing it in instead? Password: <code className="rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-ink">{DEMO_PASSWORD}</code>
-          {' '}(admin: <code className="rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-ink">{ADMIN_PASSWORD}</code>)
-        </span>
-        <CopyButton text={DEMO_PASSWORD} label="demo password" />
-      </div>
-    </section>
-  )
-
-  return (
-    <AuthShell
-      width="wide"
-      aside={
-        <>
-          <span className="hidden sm:inline">New to Relay Collective? </span>
-          <Link to="/register" className="font-semibold text-brand-700 hover:underline">
-            Create an account
-          </Link>
-        </>
-      }
-    >
-      <div className="animate-fade-up space-y-5">
-        {currentUser && (
-          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4">
-            <p className="text-sm text-brand-900">
-              You're signed in as <strong>{currentUser.name}</strong>.
-            </p>
-            <Link to={from ?? HOME_FOR[currentUser.role]} className="inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:underline">
-              Continue <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </div>
-        )}
-
-        {hasDemo && (
-          <div className="mx-auto grid max-w-sm grid-cols-2 gap-1 rounded-xl bg-white p-1 ring-1 ring-slate-200 lg:hidden" role="group" aria-label="Show">
-            {(['form', 'demo'] as Pane[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                aria-pressed={pane === p}
-                onClick={() => setPane(p)}
-                className={`min-h-11 rounded-xl text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                  pane === p ? 'bg-white text-ink shadow-md' : 'text-slate-500 hover:text-ink'
-                }`}
-              >
-                {p === 'form' ? 'Sign in' : 'Try a demo'}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div
-          className={`mx-auto grid overflow-hidden rounded-xl border border-slate-200 bg-white ${
-            hasDemo ? 'max-w-5xl lg:grid-cols-2' : 'max-w-md'
-          }`}
-        >
-          <div className={pane === 'form' || !hasDemo ? 'flex' : 'hidden lg:flex'}>{formPane}</div>
-          {hasDemo && <div className={`lg:border-l lg:border-slate-100 ${pane === 'demo' ? '' : 'hidden lg:block'}`}>{demoPane}</div>}
-        </div>
-      </div>
-    </AuthShell>
+      {isDemoBackend && (
+        <DemoAccounts
+          users={users}
+          busyId={busy}
+          disabled={!!busy}
+          defaultOpen={params.has('demo')}
+          onPick={(u: User, demoPassword) => attempt(u.id, u.email!, demoPassword)}
+        />
+      )}
+    </AuthLayout>
   )
 }

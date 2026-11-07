@@ -1,133 +1,142 @@
-import { BadgeCheck, Building2, Car, ClipboardCheck, Users } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { DashboardHeader } from '../../components/dashboard/DashboardHeader'
-import { StatTile } from '../../components/dashboard/StatTile'
-import { card, primaryButton, secondaryButton } from '../../components/ui'
-import { BACKGROUND_LABELS, ORG_TYPE_LABELS } from '../../constants'
-import { faresSavedFor, formatDollars } from '../../logic/estimateFare'
-import { describeRequestHours } from '../../logic/requestHours'
-import { useApp } from '../../hooks/useApp'
-import { useData } from '../../hooks/useData'
-import { dataService } from '../../services'
-import type { VerificationStatus } from '../../types'
+import { Building2, Car, ChevronRight, ClipboardCheck } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ORG_KIND } from '../../admin/labels'
+import { adminPaths } from '../../admin/paths'
+import { DataTable, type Column } from '../../components/admin/DataTable'
+import { DateText, FilterTabs, Toolbar } from '../../components/admin/controls'
+import { VerificationBadge } from '../../components/admin/VerificationBadge'
+import { PageHeader } from '../../components/workspace/PageHeader'
+import { EmptyState, SectionError, SkeletonRows } from '../../components/workspace/states'
+import { focusRing, panel } from '../../components/workspace/styles'
+import { BACKGROUND_LABELS } from '../../constants'
+import { useAdmin } from '../../hooks/useAdmin'
+import { approvalQueue, recentDecisions, type ApprovalItem } from '../../logic/adminSummary'
 
-// e.g. "1 organization · 2 drivers", skipping a kind with none waiting
-function waitingNote(orgs: number, drivers: number): string {
-  const parts = [orgs && `${orgs} ${orgs === 1 ? 'organization' : 'organizations'}`, drivers && `${drivers} ${drivers === 1 ? 'driver' : 'drivers'}`]
-  return parts.filter(Boolean).join(' · ')
+type View = 'pending' | 'organizations' | 'drivers' | 'decided'
+
+interface Row {
+  item: ApprovalItem
+  name: string
+  type: string
+  detail: string
+  to: string
 }
 
+// Every application waiting for a platform admin, oldest first, plus the decisions already made
 export function Approvals() {
-  const { currentUser, users, refresh } = useApp()
-  const pending = useData(() => dataService.listPending())
-  const orgs = useData(() => dataService.listOrganizations()) ?? []
-  const impact = useData(() => dataService.getImpact())
-  const waiting = (pending?.orgs.length ?? 0) + (pending?.drivers.length ?? 0)
+  const { orgs, drivers, personName, orgName } = useAdmin()
+  const [params, setParams] = useSearchParams()
+  const view = (['pending', 'organizations', 'drivers', 'decided'].includes(params.get('view') ?? '') ? params.get('view') : 'pending') as View
 
-  async function setOrg(id: string, status: VerificationStatus) {
-    await dataService.setOrgStatus(id, status)
-    refresh()
+  const ready = orgs.data && drivers.data
+  const pending = ready ? approvalQueue(orgs.data!, drivers.data!) : []
+  const decided = ready ? recentDecisions(orgs.data!, drivers.data!) : []
+
+  const toRow = (item: ApprovalItem): Row => {
+    if (item.subject === 'ORGANIZATION') {
+      const o = orgs.data!.find((x) => x.id === item.id)!
+      return { item, name: o.name, type: 'Organization registration', detail: `${ORG_KIND[o.type].label} · ${o.contactName}`, to: adminPaths.review('organizations', o.id) }
+    }
+    const d = drivers.data!.find((x) => x.id === item.id)!
+    const affiliation = orgName(d.orgId)
+    return {
+      item,
+      name: personName(d.userId) ?? 'Unnamed driver',
+      type: d.appliedAsVolunteer ? 'Driver verification · existing volunteer' : 'Driver verification',
+      detail: [BACKGROUND_LABELS[d.background], `${d.seats} ${d.seats === 1 ? 'seat' : 'seats'}`, d.wheelchairAccessible && 'Wheelchair accessible', affiliation].filter(Boolean).join(' · '),
+      to: adminPaths.review('drivers', d.id),
+    }
   }
 
-  async function setDriver(id: string, status: VerificationStatus) {
-    await dataService.setDriverStatus(id, status)
-    refresh()
-  }
+  const source = view === 'decided' ? decided : pending.filter((i) => view === 'pending' || (view === 'organizations' ? i.subject === 'ORGANIZATION' : i.subject === 'DRIVER'))
+  const rows = ready ? source.map(toRow) : []
+
+  const columns: Column<Row>[] = [
+    {
+      id: 'name',
+      header: 'Applicant',
+      sortValue: (r) => r.name.toLowerCase(),
+      cell: (r) => (
+        <span className="flex items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600" aria-hidden>
+            {r.item.subject === 'ORGANIZATION' ? <Building2 className="h-4 w-4" /> : <Car className="h-4 w-4" />}
+          </span>
+          <span className="min-w-0">
+            <Link to={r.to} className={`rounded font-semibold text-rc-navy hover:underline ${focusRing}`}>
+              {r.name}
+            </Link>
+            <span className="block text-xs text-slate-500">{r.type}</span>
+          </span>
+        </span>
+      ),
+    },
+    { id: 'submitted', header: 'Submitted', sortValue: (r) => r.item.submittedAt, cell: (r) => <DateText at={r.item.submittedAt} /> },
+    { id: 'detail', header: 'Details', className: 'hidden lg:table-cell', cell: (r) => <span className="text-slate-600">{r.detail}</span> },
+    { id: 'status', header: 'Status', cell: (r) => <VerificationBadge status={r.item.status} /> },
+    {
+      id: 'action',
+      header: '',
+      align: 'right',
+      cell: (r) => (
+        <Link to={r.to} aria-label={`${r.item.status === 'PENDING' ? 'Review' : 'View'} ${r.name}`} className={`inline-flex min-h-11 items-center gap-1 rounded-lg px-2 font-semibold text-rc-blue hover:bg-brand-50 ${focusRing}`}>
+          {r.item.status === 'PENDING' ? 'Review' : 'View'} <ChevronRight className="h-4 w-4" aria-hidden />
+        </Link>
+      ),
+    },
+  ]
+
+  const count = (v: View) =>
+    !ready ? undefined : v === 'decided' ? decided.length : v === 'pending' ? pending.length : pending.filter((i) => i.subject === (v === 'organizations' ? 'ORGANIZATION' : 'DRIVER')).length
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <DashboardHeader
-          name={currentUser?.name ?? 'admin'}
-          summary={
-            pending === undefined
-              ? 'Loading…'
-              : waiting > 0
-                ? `${waiting} ${waiting === 1 ? 'account is' : 'accounts are'} waiting for review.`
-                : 'All caught up. Nothing is waiting for review.'
-          }
-          actions={
-            <Link to="/admin/accounts" className={`${secondaryButton} min-h-12`}>
-              <Users className="h-5 w-5" aria-hidden />
-              All accounts
-            </Link>
-          }
-        />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile
-            label="Waiting for review"
-            value={waiting}
-            icon={<ClipboardCheck className="h-5 w-5" />}
-            tone="amber"
-            note={waiting ? waitingNote(pending?.orgs.length ?? 0, pending?.drivers.length ?? 0) : 'All caught up'}
-            alert={waiting > 0}
+    <div>
+      <PageHeader title="Approvals" description="Review new organizations and drivers before they take part. Nothing is approved automatically." />
+      <section aria-label="Applications" className={panel}>
+        <Toolbar>
+          <FilterTabs
+            label="Show"
+            value={view}
+            onChange={(v) => setParams(v === 'pending' ? {} : { view: v }, { replace: true })}
+            options={[
+              { id: 'pending' as View, label: 'All pending', count: count('pending'), alert: true },
+              { id: 'organizations' as View, label: 'Organizations', count: count('organizations'), alert: true },
+              { id: 'drivers' as View, label: 'Drivers', count: count('drivers'), alert: true },
+              { id: 'decided' as View, label: 'Decided', count: count('decided') },
+            ]}
           />
-          <StatTile label="Organizations" value={impact?.organizations ?? '–'} icon={<Building2 className="h-5 w-5" />} tone="ink" note="Approved partners" />
-          <StatTile label="Verified drivers" value={impact?.verifiedDrivers ?? '–'} icon={<BadgeCheck className="h-5 w-5" />} tone="teal" note="Ready to get requests" />
-          <StatTile label="Free rides" value={impact?.ridesCompleted ?? '–'} icon={<Car className="h-5 w-5" />} tone="brand" note={impact ? `${formatDollars(faresSavedFor(impact.ridesCompleted))} saved, one fare per trip` : undefined} />
-        </div>
-      </div>
-      {/* TODO: how we verify organizations and drivers is still an open question */}
-
-      <section>
-        <h2 className="mb-3 text-xl font-bold">Organizations</h2>
-        {pending?.orgs.length === 0 && <p>No organizations waiting.</p>}
-        <div className="space-y-3">
-          {pending?.orgs.map((org) => (
-            <div key={org.id} className={card}>
-              <p className="break-words text-lg font-semibold">{org.name}</p>
-              <p className="text-slate-600">
-                {ORG_TYPE_LABELS[org.type]} · {org.contactName}, {org.contactPhone}
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:flex">
-                <button type="button" className={primaryButton} onClick={() => setOrg(org.id, 'APPROVED')}>
-                  Approve
-                </button>
-                <button type="button" className={secondaryButton} onClick={() => setOrg(org.id, 'REJECTED')}>
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-xl font-bold">Drivers</h2>
-        {pending?.drivers.length === 0 && <p>No drivers waiting.</p>}
-        <div className="space-y-3">
-          {pending?.drivers.map((driver) => (
-            <div key={driver.id} className={card}>
-              <p className="break-words text-lg font-semibold">{users.find((u) => u.id === driver.userId)?.name}</p>
-              <p className="text-slate-600">
-                {BACKGROUND_LABELS[driver.background]}
-                {driver.orgId && ` · ${orgs.find((o) => o.id === driver.orgId)?.name}`}
-              </p>
-              <p className="text-slate-600">
-                {driver.vehicle} · {driver.seats} spaces
-                {driver.wheelchairAccessible && ' · Wheelchair accessible'} · {driver.serviceCities.join(', ')}
-              </p>
-              <p className="text-slate-600">
-                Requests: {describeRequestHours(driver.requestHours)}
-              </p>
-              {(driver.licenceFile || driver.proofFile) && (
-                <p className="text-slate-600">
-                  {driver.licenceFile && `Licence: ${driver.licenceFile}`}
-                  {driver.licenceFile && driver.proofFile && ' · '}
-                  {driver.proofFile && `Professional proof: ${driver.proofFile}`}
-                </p>
-              )}
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:flex">
-                <button type="button" className={primaryButton} onClick={() => setDriver(driver.id, 'APPROVED')}>
-                  Approve
-                </button>
-                <button type="button" className={secondaryButton} onClick={() => setDriver(driver.id, 'REJECTED')}>
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        </Toolbar>
+        {!ready ? (
+          orgs.error || drivers.error ? <SectionError message="We couldn't load applications. Please try again." /> : <SkeletonRows rows={4} label="Loading applications" />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardCheck className="h-6 w-6" />}
+            title={view === 'decided' ? 'No decisions recorded yet' : 'All caught up'}
+            text={view === 'decided' ? 'Approved and rejected applications will be listed here.' : 'No applications are waiting for review.'}
+          />
+        ) : (
+          <DataTable
+            caption="Applications, with submission date, details, and status"
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => r.item.id}
+            noun={['application', 'applications']}
+            resetKey={view}
+            card={(r) => (
+              <Link to={r.to} className={`flex items-start gap-3 p-4 ${focusRing} focus-visible:ring-inset`}>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-medium text-slate-500">{r.type}</span>
+                  <span className="block font-semibold text-rc-navy">{r.name}</span>
+                  <span className="block text-sm text-slate-600">{r.detail}</span>
+                  <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <VerificationBadge status={r.item.status} />
+                    Submitted <DateText at={r.item.submittedAt} />
+                  </span>
+                </span>
+                <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400" aria-hidden />
+              </Link>
+            )}
+          />
+        )}
       </section>
     </div>
   )

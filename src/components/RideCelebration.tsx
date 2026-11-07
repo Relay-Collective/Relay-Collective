@@ -53,7 +53,7 @@ export function RideCelebration({ ride, count, onClose, onUndo }: Props) {
       ref={dialog}
       onClose={onClose}
       aria-labelledby="celebrate-title"
-      className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl p-8 text-center text-ink shadow-xl backdrop:bg-slate-900/50"
+      className="m-auto w-[min(26rem,calc(100vw-2rem))] rc-dialog rounded-[20px] p-8 text-center text-ink shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
     >
       {/* Inside the dialog so it draws above the backdrop */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
@@ -76,10 +76,10 @@ export function RideCelebration({ ride, count, onClose, onUndo }: Props) {
           />
         ))}
       </div>
-      <span className="mx-auto mb-4 flex h-16 w-16 animate-pop items-center justify-center rounded-xl bg-teal-700 text-white" aria-hidden>
+      <span className="mx-auto mb-4 flex h-16 w-16 animate-pop items-center justify-center rounded-xl bg-coral-600 text-white" aria-hidden>
         <PartyPopper className="h-8 w-8" />
       </span>
-      <h2 id="celebrate-title" className="font-display text-2xl font-extrabold tracking-tight">
+      <h2 id="celebrate-title" className="font-display text-2xl font-bold tracking-tight">
         {milestone ? milestoneTitle(count) : 'Ride complete. Thank you!'}
       </h2>
       <p className="mt-2 text-slate-600">

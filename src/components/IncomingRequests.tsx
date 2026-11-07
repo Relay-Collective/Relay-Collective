@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { useData } from '../hooks/useData'
-import { passengersLabel } from '../logic/rideText'
+import { passengersLabel } from '../modules/careride/domain'
 import { dataService } from '../services'
 import type { Ride } from '../types'
 import { ghostButton, primaryButton, secondaryButton } from './ui'
@@ -47,11 +47,11 @@ export function IncomingRequests() {
   }
 
   const confirmation = answered && (
-    <div role="status" className="rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+    <div role="status" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
       <div className="flex items-start gap-3">
         <span
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-            answered.error ? 'bg-amber-50 text-amber-600' : 'bg-teal-50 text-teal-600'
+            answered.error ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'
           }`}
           aria-hidden
         >
@@ -64,7 +64,7 @@ export function IncomingRequests() {
           {answered.accepted && !answered.error && (
             <Link
               to="/org/bookings"
-              className="text-sm font-semibold text-teal-700 underline underline-offset-2"
+              className="text-sm font-semibold text-brand-700 underline underline-offset-2"
               onClick={() => setAnswered(undefined)}
             >
               See pickup details
@@ -90,11 +90,11 @@ export function IncomingRequests() {
       <div
         role="alertdialog"
         aria-labelledby="incoming-title"
-        className="overflow-hidden rounded-xl border border-teal-200 bg-white shadow-xl"
+        className="overflow-hidden rounded-xl border border-brand-200 bg-white shadow-xl"
       >
-        <div className="flex items-center gap-2 bg-teal-700 px-5 py-3 text-white">
+        <div className="flex items-center gap-2 bg-brand-700 px-5 py-3 text-white">
           <BellRing className="h-5 w-5 animate-pulse" aria-hidden />
-          <h2 id="incoming-title" className="font-extrabold">
+          <h2 id="incoming-title" className="font-bold">
             New ride request{forDriver && ` for ${forDriver}`}
           </h2>
           {showing.length > 1 && <span className="ml-auto text-sm font-semibold">+{showing.length - 1} more</span>}

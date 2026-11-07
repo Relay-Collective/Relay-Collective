@@ -16,6 +16,7 @@ import {
   pickupTimeAfterEdit,
 } from '../logic/dispatch'
 import { etaTimestamp } from '../logic/driverEta'
+import { BLOCKER_MESSAGES, DELETED_NAME, emailMatches } from '../logic/accountDeletion'
 import { faresSavedFor } from '../logic/estimateFare'
 import {
   FEEDBACK_NOT_YET,
@@ -26,9 +27,50 @@ import {
   canGiveFeedback,
 } from '../logic/feedback'
 import { rideEventsBetween, type RideEventDraft } from '../logic/rideEvents'
-import type { Driver, House, OfferStatus, Organization, Ride, RideFeedback, RideStatus, User } from '../types'
-import type { DataService, NewAccount, NewDriver, NewDriverUser, RideChanges } from './dataService'
-import { backfilledEvents, seed, type Database } from './seed'
+import { EMAIL, MAX_NAME, isPhone } from '../logic/validate'
+import { MIN_SEARCH_LENGTH, optionalText, rankDirectory } from '../logic/membership'
+import type {
+  AccountDeletionAction,
+  AccountDeletionBlocker,
+  AccountDeletionCategory,
+  AccountDeletionCategoryKey,
+  AccountDeletionJob,
+  AccountDeletionPreview,
+  Driver,
+  House,
+  Identity,
+  Invitation,
+  InvitationState,
+  JoinRequest,
+  MyJoinRequest,
+  OfferStatus,
+  OrgRole,
+  Organization,
+  OrganizationMember,
+  Ride,
+  RideFeedback,
+  RideStatus,
+  User,
+} from '../types'
+import {
+  ALL_RIDES_LIMIT,
+  type DataService,
+  type NewAccount,
+  type NewDriver,
+  type NewDriverUser,
+  type RideChanges,
+  type Session,
+  MAX_DIRECTORY_DESCRIPTION,
+  MAX_JOIN_MESSAGE,
+  MAX_JOIN_POSITION,
+  MAX_REVIEW_NOTE,
+} from './dataService'
+import { deleteDemoFile, getDemoFile, putDemoFile } from './demoFiles'
+import * as feedbackStore from './mockFeedback'
+import { backfilledEvents, seed, SEEDED_VOLUNTEERS, demoPasswordFor, type Database, type StoredJoinRequest } from './seed'
+import { interestsError, normalizeInterests } from '../volunteer/interests'
+import { canDrive } from '../volunteer/participation'
+import { canApplyToCareRide, careRideApplicationError, emptyCareRideDraft, needsPhone, toApplication } from '../volunteer/enrollment'
 
 // Hackathon backend: keeps everything in the browser's localStorage.
 // Swap this file for a real backend later; screens won't need to change.
@@ -59,6 +101,36 @@ function load(): Database {
 function upgrade(db: Database): Database {
   db.events ??= backfilledEvents(db)
   db.feedback ??= []
+  db.identities ??= []
+  db.applications ??= []
+  db.invitations ??= []
+  db.productFeedback ??= feedbackStore.emptyFeedbackStore()
+  db.joinRequests ??= []
+  db.removals ??= []
+  db.deletionJobs ??= []
+  // Demo data saved before general volunteers existed gains the seeded volunteers, so they can be signed in to.
+  // Only then: once saved data has volunteers, someone deleted on purpose stays deleted.
+  if (!db.volunteerProfiles) {
+    db.volunteerProfiles = []
+    for (const { user, profile } of SEEDED_VOLUNTEERS) {
+      if (user) {
+        if (db.users.some((u) => u.id === user.id) || db.credentials.some((c) => c.email === user.email)) continue
+        db.users.push(structuredClone(user))
+        db.credentials.push({ email: user.email!, userId: user.id, password: demoPasswordFor(user.email!) })
+      } else if (!db.users.some((u) => u.id === profile.userId)) {
+        continue
+      }
+      db.volunteerProfiles.push(structuredClone(profile))
+    }
+  }
+  // Like the database migration: every existing member keeps managing their organization, and demo
+  // partners stay findable in search as the fresh seed has them
+  for (const user of db.users) if (user.role === 'PARTNER') user.orgRole ??= 'ADMIN'
+  for (const org of db.organizations) {
+    const seeded = seed.organizations.find((o) => o.id === org.id)
+    org.discoverability ??= seeded?.discoverability ?? 'invitation_only'
+    org.directoryDescription ??= seeded?.directoryDescription
+  }
   return db
 }
 
@@ -263,6 +335,261 @@ function signedInUser(db: Database): User | undefined {
   return db.users.find((u) => u.id === readSession())
 }
 
+// The signed-in identity and its profile. An identity id becomes the profile id when onboarding finishes.
+function sessionFor(db: Database, id: string): Session | undefined {
+  // Removed from their organization: the login carries on as an identity without a role, like a new sign-up
+  const removal = db.removals.find((r) => r.userId === id)
+  if (removal) return sessionFor(db, removal.identityId)
+  const user = db.users.find((u) => u.id === id)
+  if (user) return { identity: { id: user.id, email: user.email ?? '', name: user.name }, user }
+  const identity = db.identities.find((i) => i.id === id)
+  return identity && { identity }
+}
+
+// The signed-in identity that hasn't got a role yet. Onboarding turns it into a profile.
+function identityToOnboard(db: Database): Identity {
+  const id = readSession()
+  if (!id) throw new Error('Please sign in first.')
+  const identity = db.identities.find((i) => i.id === id)
+  if (!identity) throw new Error('This account already has a Relay Collective role.')
+  return identity
+}
+
+function finishOnboarding(db: Database, identity: Identity, user: User): User {
+  db.identities = db.identities.filter((i) => i.id !== identity.id)
+  db.users.push(user)
+  // Joined some way: any request still waiting is no longer needed (approval marks its own one afterwards)
+  for (const r of db.joinRequests) {
+    if (r.userId === identity.id && r.status === 'pending') Object.assign(r, { status: 'cancelled', cancelledAt: now() })
+  }
+  return user
+}
+
+// ---- Permanent account deletion. Same rules and counts as the database functions
+// (20261029150000_account_deletion.sql). Ride history here records names, not profile ids, so it's matched by both.
+
+function requireDeletionAdmin(db: Database): User {
+  const me = signedInUser(db)
+  if (me?.role !== 'PLATFORM_ADMIN') throw new Error('Only Relay Collective admins can delete accounts.')
+  return me
+}
+
+function checkAdminPassword(db: Database, admin: User, password: string): void {
+  if (!password) throw new Error('Enter your password to confirm it’s you.')
+  if (!db.credentials.some((c) => c.userId === admin.id && c.password === password)) throw new Error('That password isn’t right.')
+}
+
+function deletedProfile(db: Database, userId: string): AccountDeletionJob | undefined {
+  return db.deletionJobs.find((j) => j.profileId === userId && j.status === 'completed')
+}
+
+const OPEN_RIDE: RideStatus[] = ['SEARCHING', 'OFFERED', 'ACCEPTED', 'NEEDS_ATTENTION', 'PICKED_UP']
+
+function deletionPlan(db: Database, me: User, user: User) {
+  const login = db.credentials.find((c) => c.userId === user.id)
+  const driver = db.drivers.find((d) => d.userId === user.id)
+  const store = db.productFeedback
+  const submissions = store.submissions.filter((f) => f.submittedBy === user.id)
+  const files = [
+    ...store.attachments.filter((a) => a.uploadedAt && submissions.some((f) => f.id === a.feedbackId)).map((a) => a.storagePath),
+  ]
+  const removed = db.removals.some((r) => r.userId === user.id)
+  const canSignIn = (u: User) => db.credentials.some((c) => c.userId === u.id) && !db.removals.some((r) => r.userId === u.id)
+  const colleagues = db.users.filter((u) => u.id !== user.id && u.orgId === user.orgId && u.role === user.role && canSignIn(u))
+
+  const blockers: AccountDeletionBlocker[] = []
+  if (user.id === me.id) blockers.push('SELF')
+  if (user.role === 'PLATFORM_ADMIN' && !db.users.some((u) => u.id !== user.id && u.role === 'PLATFORM_ADMIN' && canSignIn(u))) {
+    blockers.push('LAST_PLATFORM_ADMIN')
+  }
+  if (user.role === 'PARTNER' && user.orgRole === 'ADMIN' && canSignIn(user) && colleagues.length && !colleagues.some((u) => u.orgRole === 'ADMIN')) {
+    blockers.push('LAST_ORG_ADMIN')
+  }
+  if (user.role === 'PARTNER' && canSignIn(user) && !colleagues.length && db.rides.some((r) => r.orgId === user.orgId && OPEN_RIDE.includes(r.status))) {
+    blockers.push('ORG_OPEN_RIDES')
+  }
+  if (user.role === 'ORG_ADMIN' && !colleagues.length && db.drivers.some((d) => d.orgId === user.orgId)) blockers.push('LAST_PROVIDER_ADMIN')
+  if (driver && db.rides.some((r) => r.driverId === driver.id && r.status === 'PICKED_UP')) blockers.push('DRIVER_ON_TRIP')
+  if (!login) blockers.push('NO_SIGN_IN_EMAIL')
+
+  const n = (count: number | boolean) => Number(count)
+  const counts: [AccountDeletionCategoryKey, AccountDeletionAction, number][] = [
+    ['auth_account', 'delete', n(!!login)],
+    ['profile', 'anonymize', 1],
+    ['volunteer_profile', 'delete', n(db.volunteerProfiles.some((p) => p.userId === user.id))],
+    ['organization_membership', 'remove', n((user.role === 'PARTNER' || user.role === 'ORG_ADMIN') && !!user.orgId && !removed)],
+    ['driver_profile', 'delete', n(!!driver)],
+    ['driver_documents', 'delete', n(!!driver?.licenceFile) + n(!!driver?.proofFile)],
+    [
+      'open_rides',
+      'reassign',
+      driver
+        ? db.rides.filter(
+            (r) =>
+              (r.driverId === driver.id && r.status === 'ACCEPTED') ||
+              db.offers.some((o) => o.rideId === r.id && o.driverId === driver.id && o.status === 'PENDING'),
+          ).length
+        : 0,
+    ],
+    ['product_feedback', 'delete', submissions.length],
+    ['personal_files', 'delete', files.length],
+    ['feedback_assignments', 'detach', store.submissions.filter((f) => f.assignedTo === user.id).length],
+    ['feedback_replies', 'retain', store.messages.filter((m) => m.authorId === user.id && !submissions.some((f) => f.id === m.feedbackId)).length],
+    ['join_requests', 'delete', db.joinRequests.filter((r) => r.userId === user.id).length],
+    ['invitations', 'delete', db.invitations.filter((i) => login && i.email === normalizeEmail(login.email)).length],
+    ['ride_issue_reports', 'delete', driver ? db.feedback.filter((f) => f.authorRole === 'DRIVER' && f.driverId === driver.id).length : 0],
+    ['rides_requested', 'retain', db.rides.filter((r) => r.requestedBy === user.id).length],
+    ['rides_driven', 'retain', driver ? db.rides.filter((r) => r.driverId === driver.id && ['PICKED_UP', 'COMPLETED', 'NO_SHOW'].includes(r.status)).length : 0],
+    ['ride_ratings', 'retain', 0], // the demo doesn't record which staff member rated a ride
+    ['ride_history', 'anonymize', db.events.filter((e) => e.actorRole === user.role && e.actorName === user.name).length],
+    ['organization_applications', 'retain', db.applications.filter((a) => a.submittedBy === user.id).length],
+    ['preferences', 'none', 0],
+    ['deletion_record', 'retain', 1],
+  ]
+  const categories: AccountDeletionCategory[] = counts.map(([key, action, count]) => ({ key, action, count }))
+  return { blockers, categories, files }
+}
+
+function deletionPreview(db: Database, me: User, userId: string): AccountDeletionPreview {
+  const done = deletedProfile(db, userId)
+  const user = db.users.find((u) => u.id === userId)
+  if (done) return { state: 'DELETED', profileId: userId, role: user?.role ?? 'PARTNER', blockers: [], categories: [], job: done }
+  if (!user) throw new Error('Account not found. It may already have been deleted.')
+  const plan = deletionPlan(db, me, user)
+  return {
+    state: plan.blockers.length ? 'BLOCKED' : 'READY',
+    profileId: user.id,
+    name: user.name,
+    email: db.credentials.find((c) => c.userId === user.id)?.email,
+    role: user.role,
+    orgName: db.organizations.find((o) => o.id === user.orgId)?.name,
+    blockers: plan.blockers,
+    categories: plan.categories,
+  }
+}
+
+// Everything about the person goes or loses its name. Their profile stays as a placeholder while rides,
+// invitations or replies point at it, like the database's.
+function eraseAccount(db: Database, user: User): void {
+  const login = db.credentials.find((c) => c.userId === user.id)
+  const driver = db.drivers.find((d) => d.userId === user.id)
+  if (driver) {
+    releaseDriverWork(db, driver.id)
+    for (const ride of db.rides) {
+      if (['COMPLETED', 'NO_SHOW', 'CANCELLED'].includes(ride.status)) continue
+      if (ride.preferredDriverId === driver.id) ride.preferredDriverId = undefined
+      if (ride.reconfirmDriverId === driver.id) ride.reconfirmDriverId = undefined
+    }
+    db.feedback = db.feedback.filter((f) => !(f.authorRole === 'DRIVER' && f.driverId === driver.id))
+    db.drivers = db.drivers.filter((d) => d.id !== driver.id)
+  }
+
+  db.volunteerProfiles = db.volunteerProfiles.filter((p) => p.userId !== user.id)
+
+  const store = db.productFeedback
+  const theirs = new Set(store.submissions.filter((f) => f.submittedBy === user.id).map((f) => f.id))
+  store.submissions = store.submissions.filter((f) => !theirs.has(f.id))
+  store.messages = store.messages.filter((m) => !theirs.has(m.feedbackId))
+  store.attachments = store.attachments.filter((a) => !theirs.has(a.feedbackId))
+  store.history = store.history.filter((h) => !theirs.has(h.feedbackId))
+  for (const f of store.submissions) if (f.assignedTo === user.id) f.assignedTo = undefined
+
+  for (const e of db.events) if (e.actorRole === user.role && e.actorName === user.name) e.actorName = DELETED_NAME
+  db.joinRequests = db.joinRequests.filter((r) => r.userId !== user.id)
+  if (login) db.invitations = db.invitations.filter((i) => i.email !== normalizeEmail(login.email))
+  db.credentials = db.credentials.filter((c) => c.userId !== user.id)
+  db.identities = db.identities.filter((i) => i.id !== user.id)
+
+  const pointedAt =
+    db.rides.some((r) => r.requestedBy === user.id) ||
+    db.invitations.some((i) => i.invitedBy === user.id) ||
+    db.applications.some((a) => a.submittedBy === user.id) ||
+    store.messages.some((m) => m.authorId === user.id) ||
+    db.removals.some((r) => r.userId === user.id || r.by === user.id)
+  if (pointedAt) Object.assign(user, { name: DELETED_NAME, email: undefined, phone: '' })
+  else db.users = db.users.filter((u) => u.id !== user.id)
+}
+
+// ---- Organization membership. Same rules as the database functions (20261029120000_organization_membership.sql).
+
+const MAX_REQUESTS_PER_DAY = 5
+
+function isActiveMember(db: Database, u: User): boolean {
+  return u.role === 'PARTNER' && !db.removals.some((r) => r.userId === u.id) && db.credentials.some((c) => c.userId === u.id)
+}
+
+// The signed-in administrator's organization, or a refusal in their words
+function adminOrgId(db: Database, action: string): string {
+  const user = signedInUser(db)
+  if (!user || !isActiveMember(db, user) || user.orgRole !== 'ADMIN' || !user.orgId) {
+    throw new Error(`Only your organization's administrators can ${action}.`)
+  }
+  return user.orgId
+}
+
+function discoverable(db: Database, org: Organization): boolean {
+  return org.status === 'APPROVED' && org.type === 'PARTNER_ORG' && org.discoverability === 'discoverable' && db.houses.some((h) => h.orgId === org.id)
+}
+
+// An organization with active members always keeps an active administrator
+function keepAnAdmin(db: Database, leaving: User): void {
+  if (leaving.orgRole !== 'ADMIN') return
+  const others = db.users.filter((u) => u.id !== leaving.id && u.orgId === leaving.orgId && isActiveMember(db, u))
+  if (others.length && !others.some((u) => u.orgRole === 'ADMIN')) {
+    throw new Error('Your organization needs at least one administrator. Make another member an administrator first.')
+  }
+}
+
+function applicantOf(db: Database, userId: string): Identity | undefined {
+  const user = db.users.find((u) => u.id === userId)
+  return db.identities.find((i) => i.id === userId) ?? (user && { id: user.id, email: user.email ?? '', name: user.name })
+}
+
+function toMyJoinRequest(db: Database, r: StoredJoinRequest): MyJoinRequest {
+  return {
+    id: r.id,
+    orgId: r.orgId,
+    orgName: db.organizations.find((o) => o.id === r.orgId)?.name ?? 'Organization',
+    orgCity: db.houses.find((h) => h.orgId === r.orgId)?.city,
+    status: r.status,
+    requestedPosition: r.requestedPosition,
+    message: r.message,
+    createdAt: r.createdAt,
+    reviewedAt: r.reviewedAt,
+    cancelledAt: r.cancelledAt,
+  }
+}
+
+function findJoinRequest(db: Database, requestId: string, orgId: string): StoredJoinRequest {
+  const request = db.joinRequests.find((r) => r.id === requestId && r.orgId === orgId)
+  if (!request) throw new Error("This request wasn't found.")
+  return request
+}
+
+function activeMemberOf(db: Database, profileId: string, orgId: string): User {
+  const member = db.users.find((u) => u.id === profileId && u.orgId === orgId && isActiveMember(db, u))
+  if (!member) throw new Error("This person isn't an active member of your organization.")
+  return member
+}
+
+function withoutToken({ token, ...invitation }: Invitation & { token: string }): Invitation {
+  void token
+  return invitation
+}
+
+const INVITATION_DAYS = 7
+const MAX_OPEN_INVITATIONS = 25
+
+function invitationState(db: Database, inv: Invitation, identity: Identity | undefined): InvitationState {
+  if (inv.revokedAt) return 'REVOKED'
+  if (inv.acceptedAt) return 'USED'
+  if (new Date(inv.expiresAt).getTime() <= Date.now()) return 'EXPIRED'
+  if (!identity || inv.email !== normalizeEmail(identity.email)) return 'WRONG_ACCOUNT'
+  if (db.users.some((u) => u.id === identity.id)) return 'HAS_ACCOUNT'
+  if (db.organizations.find((o) => o.id === inv.orgId)?.status !== 'APPROVED') return 'UNAVAILABLE'
+  return 'VALID'
+}
+
 // Adds one line to a ride's history. No actor means Relay Collective made the change on its own.
 function logEvent(db: Database, rideId: string, actor: User | undefined, { kind, detail }: RideEventDraft): void {
   db.events.push({ id: newId('event'), rideId, kind, at: now(), actorRole: actor?.role, actorName: actor?.name, detail })
@@ -323,7 +650,7 @@ function addDriver(
     orgId: driver.orgId,
   }
   if (login) addLogin(db, user.id, login.email, login.password)
-  const created: Driver = { ...driver, id: newId('d'), userId: user.id, status: 'PENDING' }
+  const created: Driver = { ...driver, id: newId('d'), userId: user.id, status: 'PENDING', createdAt: now() }
   db.users.push(user)
   db.drivers.push(created)
   return { driver: created, user }
@@ -336,19 +663,21 @@ function driverIdsForOrg(db: Database, orgId: string): string[] {
 export const mockService: DataService = {
   restoreSession: () =>
     transact((db) => {
-      const userId = readSession()
-      const user = db.users.find((u) => u.id === userId)
-      if (userId && !user) writeSession('') // account was removed or the demo was reset
-      return user
+      const id = readSession()
+      const session = id ? sessionFor(db, id) : undefined
+      if (id && !session) writeSession('') // account was removed or the demo was reset
+      // Removed from their organization: carry on as the identity their login moved to
+      if (session && session.identity.id !== id) writeSession(session.identity.id)
+      return session
     }),
 
   signIn: (email, password) =>
     transact((db) => {
       const login = db.credentials.find((c) => c.email === normalizeEmail(email))
-      const user = login && login.password === password && db.users.find((u) => u.id === login.userId)
-      if (!user) throw new Error("That email and password don't match. Please try again.")
-      writeSession(user.id)
-      return user
+      const session = login && login.password === password ? sessionFor(db, login.userId) : undefined
+      if (!session) throw new Error("That email and password don't match. Please try again.")
+      writeSession(session.identity.id)
+      return session
     }),
 
   signOut: () => {
@@ -375,6 +704,434 @@ export const mockService: DataService = {
       login.password = newPassword
     }),
 
+  signUp: (account) =>
+    transact((db) => {
+      const email = normalizeEmail(account.email)
+      if (!EMAIL.test(email)) throw new Error('Enter a valid email address.')
+      if (account.password.length < MIN_PASSWORD_LENGTH) throw new Error(`Use at least ${MIN_PASSWORD_LENGTH} characters.`)
+      if (db.credentials.some((c) => c.email === email)) {
+        throw new Error("We couldn't create an account with that email. If you've signed up before, sign in instead.")
+      }
+      // The demo can't send email, so new identities are signed in straight away
+      const identity: Identity = { id: newId('u'), email, name: account.name.trim() }
+      db.identities.push(identity)
+      addLogin(db, identity.id, email, account.password)
+      writeSession(identity.id)
+      return { status: 'SIGNED_IN' as const, identity }
+    }),
+
+  resendVerification: () => Promise.resolve(),
+
+  submitOrganizationApplication: (app) =>
+    transact((db) => {
+      const id = readSession()
+      const existing = db.users.find((u) => u.id === id)
+      // A retry after the first call went through returns the same account, never a second organization
+      if (existing?.role === 'PARTNER' && db.applications.some((a) => a.submittedBy === existing.id)) return existing
+      const identity = identityToOnboard(db)
+      if (!app.serviceCategories.length) throw new Error('Choose at least one kind of work your organization does.')
+      const org: Organization = {
+        id: newId('org'),
+        name: app.orgName.trim(),
+        type: 'PARTNER_ORG',
+        contactName: app.contactName.trim(),
+        contactPhone: app.contactPhone.trim(),
+        status: 'PENDING',
+        createdAt: now(),
+      }
+      const house: House = { id: newId('house'), orgId: org.id, name: org.name, address: app.address.trim(), city: app.city, phone: org.contactPhone }
+      db.organizations.push(org)
+      db.houses.push(house)
+      db.applications.push({
+        orgId: org.id,
+        kind: app.kind,
+        website: app.website?.trim() || undefined,
+        description: app.description.trim(),
+        contactEmail: normalizeEmail(app.contactEmail),
+        contactRole: app.contactRole.trim(),
+        serviceCategories: [...new Set(app.serviceCategories)],
+        platformInterests: [...new Set(app.platformInterests)],
+        submittedBy: identity.id,
+        submittedAt: now(),
+      })
+      return finishOnboarding(db, identity, {
+        id: identity.id,
+        name: identity.name,
+        email: identity.email,
+        phone: org.contactPhone,
+        role: 'PARTNER',
+        orgId: org.id,
+        houseId: house.id,
+        orgRole: 'ADMIN',
+      })
+    }),
+
+  registerDriverProfile: (newUser, driver) =>
+    transact((db) => {
+      const existing = db.users.find((u) => u.id === readSession())
+      if (existing?.role === 'DRIVER') return existing
+      const identity = identityToOnboard(db)
+      const user: User = { ...newUser, id: identity.id, email: identity.email, role: 'DRIVER' }
+      db.drivers.push({ ...driver, orgId: undefined, id: newId('d'), userId: user.id, status: 'PENDING', createdAt: now() })
+      return finishOnboarding(db, identity, user)
+    }),
+
+  // Same rules as register_volunteer() (20261104120100_general_volunteers.sql). Never adds a driver profile.
+  registerVolunteer: (volunteer) =>
+    transact((db) => {
+      const existing = signedInUser(db)
+      if (existing?.role === 'VOLUNTEER') return existing
+      if (existing && existing.role !== 'DRIVER') {
+        throw new Error('This account already has a Relay Collective role, so it can’t also register as a volunteer.')
+      }
+      const problem = interestsError(volunteer.interests)
+      if (problem) throw new Error(problem)
+      const interests = normalizeInterests(volunteer.interests)
+      // A driver who also volunteers keeps their role and driver profile
+      if (existing) {
+        if (!db.volunteerProfiles.some((p) => p.userId === existing.id)) {
+          db.volunteerProfiles.push({ id: newId('vp'), userId: existing.id, interests, createdAt: now() })
+        }
+        return existing
+      }
+      const identity = identityToOnboard(db)
+      const name = volunteer.name.trim()
+      const phone = volunteer.phone?.trim() ?? ''
+      if (!name) throw new Error('Your name is required.')
+      if (name.length > MAX_NAME) throw new Error('Your name is too long.')
+      if (phone && !isPhone(phone)) throw new Error('Please enter a 10-digit phone number.')
+      db.volunteerProfiles.push({ id: newId('vp'), userId: identity.id, interests, createdAt: now() })
+      return finishOnboarding(db, identity, { id: identity.id, name, email: identity.email, phone, role: 'VOLUNTEER' })
+    }),
+
+  getVolunteerProfile: (userId) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      if (!me || (me.id !== userId && me.role !== 'PLATFORM_ADMIN')) return undefined
+      return db.volunteerProfiles.find((p) => p.userId === userId)
+    }),
+
+  updateMyVolunteerInterests: (interests) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      const profile = me && db.volunteerProfiles.find((p) => p.userId === me.id)
+      if (!profile) throw new Error('Register as a volunteer first.')
+      const problem = interestsError(interests)
+      if (problem) throw new Error(problem)
+      profile.interests = normalizeInterests(interests)
+      profile.updatedAt = now()
+      return { ...profile, interests: [...profile.interests] }
+    }),
+
+  // Same rules as apply_to_careride() (20261105120000_careride_volunteer_enrollment.sql): the account comes from the
+  // session, the driver profile is always PENDING, and the profile, volunteer profile and interests are kept.
+  applyToCareRide: (application) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      if (!me) throw new Error('Join Relay Collective as a volunteer first.')
+      if (me.role === 'DRIVER') {
+        const existing = db.drivers.find((d) => d.userId === me.id)
+        if (existing) return { driverId: existing.id, status: existing.status, created: false }
+        throw new Error('This account has no driver profile. Contact the Relay Collective team.')
+      }
+      if (!canApplyToCareRide(me)) throw new Error('This account can’t apply to drive with CareRide.')
+      const phoneRequired = needsPhone(me)
+      const problem = careRideApplicationError(application, phoneRequired)
+      if (problem) throw new Error(problem)
+      const { phone, ...details } = toApplication({ ...emptyCareRideDraft, ...application, phone: application.phone ?? '' }, phoneRequired)
+      const driver: Driver = { ...details, id: newId('d'), userId: me.id, background: 'INDEPENDENT', status: 'PENDING', appliedAsVolunteer: true, createdAt: now() }
+      db.drivers.push(driver)
+      if (phone) me.phone = phone
+      me.role = 'DRIVER'
+      return { driverId: driver.id, status: driver.status, created: true }
+    }),
+
+  getOrganizationApplication: (orgId) =>
+    transact((db) => {
+      const user = signedInUser(db)
+      if (user?.role !== 'PLATFORM_ADMIN' && user?.orgId !== orgId) return undefined
+      return db.applications.find((a) => a.orgId === orgId)
+    }),
+
+  createInvitation: (email) =>
+    transact((db) => {
+      const user = signedInUser(db)
+      const org = db.organizations.find((o) => o.id === adminOrgId(db, 'invite colleagues'))
+      if (!user || !org) throw new Error("Only your organization's administrators can invite colleagues.")
+      if (org.status !== 'APPROVED') throw new Error('You can invite colleagues once your organization is approved.')
+      const normalized = normalizeEmail(email)
+      if (!EMAIL.test(normalized)) throw new Error('Enter a valid email address.')
+      const open = (i: Invitation) => i.orgId === org.id && !i.acceptedAt && !i.revokedAt
+      for (const i of db.invitations) if (open(i) && i.email === normalized) i.revokedAt = now()
+      if (db.invitations.filter((i) => open(i) && new Date(i.expiresAt).getTime() > Date.now()).length >= MAX_OPEN_INVITATIONS) {
+        throw new Error(`Your organization has ${MAX_OPEN_INVITATIONS} open invitations. Revoke some before sending more.`)
+      }
+      const bytes = crypto.getRandomValues(new Uint8Array(32))
+      const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+      const invitation: Invitation = {
+        id: newId('invite'),
+        orgId: org.id,
+        email: normalized,
+        role: 'PARTNER',
+        invitedBy: user.id,
+        createdAt: now(),
+        expiresAt: new Date(Date.now() + INVITATION_DAYS * 86_400_000).toISOString(),
+      }
+      db.invitations.push({ ...invitation, token })
+      return { invitation, token }
+    }),
+
+  listInvitations: () =>
+    transact((db) => {
+      const user = signedInUser(db)
+      const mine = (i: Invitation) => user?.role === 'PLATFORM_ADMIN' || (user?.role === 'PARTNER' && user.orgRole === 'ADMIN' && i.orgId === user.orgId)
+      // The token never leaves the backend after creation
+      return db.invitations
+        .filter(mine)
+        .map(withoutToken)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    }),
+
+  revokeInvitation: (invitationId) =>
+    transact((db) => {
+      const user = signedInUser(db)
+      const inv = db.invitations.find((i) => i.id === invitationId)
+      const allowed = inv && (user?.role === 'PLATFORM_ADMIN' || (user?.role === 'PARTNER' && user.orgRole === 'ADMIN' && inv.orgId === user.orgId))
+      if (!inv || !allowed || inv.acceptedAt || inv.revokedAt) {
+        throw new Error("That invitation can't be withdrawn. It may already be used or withdrawn.")
+      }
+      inv.revokedAt = now()
+    }),
+
+  previewInvitation: (token) =>
+    transact((db) => {
+      const id = readSession()
+      if (!id) throw new Error('Please sign in first.')
+      const inv = db.invitations.find((i) => i.token === token)
+      if (!inv) return { state: 'INVALID' as const }
+      const identity = sessionFor(db, id)?.identity
+      const state = invitationState(db, inv, identity)
+      if (state === 'WRONG_ACCOUNT') {
+        const [local, domain] = inv.email.split('@')
+        return { state, emailHint: `${local[0]}•••@${domain}` }
+      }
+      if (state !== 'VALID' && state !== 'HAS_ACCOUNT') return { state }
+      return {
+        state,
+        orgName: db.organizations.find((o) => o.id === inv.orgId)?.name,
+        role: inv.role,
+        invitedBy: db.users.find((u) => u.id === inv.invitedBy)?.name,
+        email: inv.email,
+        expiresAt: inv.expiresAt,
+      }
+    }),
+
+  acceptInvitation: (token) =>
+    transact((db) => {
+      const id = readSession()
+      if (!id) throw new Error('Please sign in first.')
+      const inv = db.invitations.find((i) => i.token === token)
+      if (!inv) throw new Error("This invitation link isn't valid.")
+      const identity = sessionFor(db, id)?.identity
+      const messages: Partial<Record<InvitationState, string>> = {
+        REVOKED: 'This invitation was withdrawn. Ask your organization for a new one.',
+        USED: 'This invitation has already been used.',
+        EXPIRED: 'This invitation has expired. Ask your organization for a new one.',
+        WRONG_ACCOUNT: 'This invitation was sent to a different email address.',
+        HAS_ACCOUNT: 'This account already belongs to Relay Collective, and an account can join one organization.',
+        UNAVAILABLE: "This organization isn't accepting new members right now.",
+      }
+      const state = invitationState(db, inv, identity)
+      if (state !== 'VALID') throw new Error(messages[state])
+      const house = db.houses.find((h) => h.orgId === inv.orgId)
+      if (!house) throw new Error("This organization isn't set up for staff yet. Contact Relay Collective.")
+      const onboarding = identityToOnboard(db)
+      inv.acceptedAt = now()
+      return finishOnboarding(db, onboarding, {
+        id: onboarding.id,
+        name: onboarding.name,
+        email: onboarding.email,
+        phone: '',
+        role: inv.role,
+        orgId: inv.orgId,
+        houseId: house.id,
+        orgRole: 'STAFF',
+      })
+    }),
+
+  searchOrganizations: (query) =>
+    transact((db) => {
+      if (!readSession()) throw new Error('Please sign in first.')
+      if (query.trim().length < MIN_SEARCH_LENGTH) return []
+      const entries = db.organizations
+        .filter((o) => discoverable(db, o))
+        .map((o) => ({ id: o.id, name: o.name, city: db.houses.find((h) => h.orgId === o.id)?.city, description: o.directoryDescription }))
+      return rankDirectory(entries, query)
+    }),
+
+  submitJoinRequest: ({ orgId, requestedPosition, message }) =>
+    transact((db) => {
+      const id = readSession()
+      if (!id) throw new Error('Please sign in first.')
+      const user = sessionFor(db, id)?.user
+      if (user) {
+        if (user.orgId === orgId) throw new Error('You’re already a member of this organization.')
+        throw new Error('This account already has a Relay Collective role, and an account can belong to one organization.')
+      }
+      const identity = identityToOnboard(db)
+      const org = db.organizations.find((o) => o.id === orgId)
+      if (!org || !discoverable(db, org)) throw new Error('This organization isn’t accepting requests to join right now.')
+      const pending = db.joinRequests.find((r) => r.userId === identity.id && r.status === 'pending')
+      if (pending?.orgId === orgId) return toMyJoinRequest(db, pending)
+      if (pending) throw new Error('You already have a request waiting with another organization. Withdraw it first to ask somewhere else.')
+      const today = db.joinRequests.filter((r) => r.userId === identity.id && Date.now() - new Date(r.createdAt).getTime() < 86_400_000)
+      if (today.length >= MAX_REQUESTS_PER_DAY) throw new Error('You’ve sent several requests today. Please try again tomorrow.')
+      const position = optionalText(requestedPosition)
+      const note = optionalText(message)
+      if (position && position.length > MAX_JOIN_POSITION) throw new Error('Keep your role or position under 120 characters.')
+      if (note && note.length > MAX_JOIN_MESSAGE) throw new Error('Keep your message under 1,000 characters.')
+      const request: StoredJoinRequest = { id: newId('join'), orgId, userId: identity.id, requestedPosition: position, message: note, status: 'pending', createdAt: now() }
+      db.joinRequests.push(request)
+      return toMyJoinRequest(db, request)
+    }),
+
+  listMyJoinRequests: () =>
+    transact((db) => {
+      const id = readSession()
+      const me = id ? sessionFor(db, id)?.identity.id : undefined
+      return db.joinRequests
+        .filter((r) => r.userId === me)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 10)
+        .map((r) => toMyJoinRequest(db, r))
+    }),
+
+  cancelJoinRequest: (requestId) =>
+    transact((db) => {
+      const id = readSession()
+      const me = id ? sessionFor(db, id)?.identity.id : undefined
+      const request = db.joinRequests.find((r) => r.id === requestId && r.userId === me && r.status === 'pending')
+      if (!request) throw new Error('This request can’t be withdrawn. It may already have been reviewed.')
+      Object.assign(request, { status: 'cancelled', cancelledAt: now() })
+    }),
+
+  listJoinRequests: (status) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'see requests to join')
+      return db.joinRequests
+        .filter((r) => r.orgId === orgId && (status === 'all' || r.status === status))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((r): JoinRequest => {
+          const applicant = applicantOf(db, r.userId)
+          return {
+            id: r.id,
+            orgId: r.orgId,
+            applicantName: applicant?.name ?? 'Applicant',
+            applicantEmail: applicant?.email ?? '',
+            emailVerified: true, // the demo can't send email, so sign-up counts as confirmed
+            requestedPosition: r.requestedPosition,
+            message: r.message,
+            status: r.status,
+            assignedRole: r.assignedRole,
+            reviewNote: r.reviewNote,
+            reviewedByName: db.users.find((u) => u.id === r.reviewedBy)?.name,
+            reviewedAt: r.reviewedAt,
+            createdAt: r.createdAt,
+          }
+        })
+    }),
+
+  approveJoinRequest: (requestId, role) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'review requests to join')
+      if (role !== 'ADMIN' && role !== 'STAFF') throw new Error('Choose a role for this member.')
+      const request = findJoinRequest(db, requestId, orgId)
+      if (request.status !== 'pending') {
+        const was = { approved: 'approved', rejected: 'declined', cancelled: 'withdrawn' }[request.status]
+        throw new Error(`This request was already ${was}. Refresh to see the latest.`)
+      }
+      if (db.organizations.find((o) => o.id === orgId)?.status !== 'APPROVED') throw new Error('Your organization needs to be approved before it can add members.')
+      const identity = db.identities.find((i) => i.id === request.userId)
+      if (!identity) throw new Error('This person already has a Relay Collective role, so they can’t join through this request.')
+      const house = db.houses.find((h) => h.orgId === orgId)
+      if (!house) throw new Error('Your organization isn’t set up for staff yet. Contact Relay Collective.')
+      finishOnboarding(db, identity, { id: identity.id, name: identity.name, email: identity.email, phone: '', role: 'PARTNER', orgId, houseId: house.id, orgRole: role })
+      Object.assign(request, { status: 'approved', cancelledAt: undefined, assignedRole: role, reviewedBy: readSession(), reviewedAt: now() })
+    }),
+
+  rejectJoinRequest: (requestId, note) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'review requests to join')
+      const text = optionalText(note)
+      if (text && text.length > MAX_REVIEW_NOTE) throw new Error('Keep the note under 500 characters.')
+      const request = findJoinRequest(db, requestId, orgId)
+      if (request.status !== 'pending') throw new Error('This request was already reviewed or withdrawn. Refresh to see the latest.')
+      Object.assign(request, { status: 'rejected', reviewNote: text, reviewedBy: readSession(), reviewedAt: now() })
+    }),
+
+  listOrganizationMembers: (includeFormer = false) =>
+    transact((db) => {
+      const me = signedInUser(db)
+      if (!me || !isActiveMember(db, me)) throw new Error('Only members of a partner organization can see its team.')
+      const admin = me.orgRole === 'ADMIN'
+      return db.users
+        .filter((u) => u.role === 'PARTNER' && u.orgId === me.orgId)
+        .map((u): OrganizationMember => {
+          const removal = db.removals.find((r) => r.userId === u.id)
+          const status = removal ? 'removed' : isActiveMember(db, u) ? 'active' : 'closed'
+          return {
+            id: u.id,
+            name: u.name,
+            email: admin ? u.email : undefined,
+            role: u.orgRole ?? 'STAFF',
+            status,
+            joinedAt: db.applications.find((a) => a.submittedBy === u.id)?.submittedAt ?? db.joinRequests.find((r) => r.userId === u.id && r.status === 'approved')?.reviewedAt ?? '2026-09-01T16:00:00.000Z',
+            removedAt: removal?.at,
+            isYou: u.id === me.id,
+          }
+        })
+        .filter((m) => includeFormer || m.status === 'active')
+        .sort((a, b) => a.status.localeCompare(b.status) || a.name.localeCompare(b.name))
+    }),
+
+  setMemberRole: (profileId, role) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'change roles')
+      if (role !== 'ADMIN' && role !== 'STAFF') throw new Error('Choose a role.')
+      const member = activeMemberOf(db, profileId, orgId)
+      if (member.id === readSession()) throw new Error('You can’t change your own role. Ask another administrator.')
+      if (member.orgRole === role) return
+      if (role === 'STAFF') keepAnAdmin(db, member)
+      member.orgRole = role as OrgRole
+    }),
+
+  removeMember: (profileId) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'remove members')
+      const member = activeMemberOf(db, profileId, orgId)
+      const by = readSession()
+      if (member.id === by) throw new Error('You can’t remove yourself. Ask another administrator.')
+      keepAnAdmin(db, member)
+      // The login moves to a fresh identity with no role; the profile stays on the organization's history
+      const identity: Identity = { id: newId('u'), email: member.email ?? '', name: member.name }
+      db.identities.push(identity)
+      for (const c of db.credentials) if (c.userId === member.id) c.userId = identity.id
+      db.removals.push({ userId: member.id, at: now(), by, identityId: identity.id })
+    }),
+
+  setOrganizationVisibility: (discoverability, description) =>
+    transact((db) => {
+      const orgId = adminOrgId(db, 'change its visibility')
+      if (discoverability !== 'discoverable' && discoverability !== 'invitation_only') throw new Error('Choose who can find your organization.')
+      const text = optionalText(description)
+      if (text && text.length > MAX_DIRECTORY_DESCRIPTION) throw new Error('Keep the description under 280 characters.')
+      const org = findOrThrow(db.organizations, orgId, 'Organization')
+      if (discoverability === 'discoverable' && org.status !== 'APPROVED') {
+        throw new Error('Your organization can be found in search once Relay Collective approves it.')
+      }
+      Object.assign(org, { discoverability, directoryDescription: text })
+    }),
+
   listUsers: () => transact((db) => db.users),
 
   isEmailAvailable: (email) =>
@@ -382,7 +1139,7 @@ export const mockService: DataService = {
 
   registerOrganization: (org, account, location, destinations = []) =>
     transact((db) => {
-      const created: Organization = { ...org, id: newId('org'), status: 'PENDING' }
+      const created: Organization = { ...org, id: newId('org'), status: 'PENDING', createdAt: now() }
       const isPartner = org.type === 'PARTNER_ORG'
       if (isPartner && !location) throw new Error('Add the address where rides start.')
       // A partner organization is one location: its account is shared by the staff there, so it carries the org's name
@@ -396,6 +1153,7 @@ export const mockService: DataService = {
         role: isPartner ? 'PARTNER' : 'ORG_ADMIN',
         orgId: created.id,
         houseId: house?.id,
+        orgRole: isPartner ? 'ADMIN' : undefined,
       }
       addLogin(db, user.id, account.email, account.password)
       db.organizations.push(created)
@@ -459,33 +1217,51 @@ export const mockService: DataService = {
       return { kind: 'NEW_PASSWORD', email: login.email, password }
     }),
 
-  deleteAccount: (userId) =>
+  previewAccountDeletion: (userId) => transact((db) => deletionPreview(db, requireDeletionAdmin(db), userId)),
+
+  // The demo has no Storage or Auth to fail, so every step runs at once and the job completes
+  async startAccountDeletion(userId, { email, password }) {
+    const { job, files } = await transact((db) => {
+      const admin = requireDeletionAdmin(db)
+      checkAdminPassword(db, admin, password)
+      const user = db.users.find((u) => u.id === userId)
+      if (!user || deletedProfile(db, userId)) throw new Error('Account not found. It may already have been deleted.')
+      const login = db.credentials.find((c) => c.userId === userId)
+      if (!emailMatches(email, login?.email)) throw new Error('The email you typed doesn’t match this account.')
+      const plan = deletionPlan(db, admin, user)
+      if (plan.blockers.length) throw new Error(BLOCKER_MESSAGES[plan.blockers[0]!])
+      eraseAccount(db, user)
+      const at = now()
+      const done: AccountDeletionJob = {
+        id: crypto.randomUUID(),
+        profileId: userId,
+        status: 'completed',
+        step: 'done',
+        attempts: 1,
+        plan: plan.categories,
+        startedAt: at,
+        updatedAt: at,
+        completedAt: at,
+      }
+      db.deletionJobs.push(done)
+      return { job: done, files: plan.files }
+    })
+    await Promise.all(files.map((path) => deleteDemoFile(path)))
+    return job
+  },
+
+  retryAccountDeletion: (jobId, password) =>
     transact((db) => {
-      const user = findOrThrow(db.users, userId, 'Account')
-      if (user.role === 'PLATFORM_ADMIN' && db.users.filter((u) => u.role === 'PLATFORM_ADMIN').length === 1) {
-        throw new Error("This is the only Relay Collective admin account, so it can't be deleted.")
-      }
+      checkAdminPassword(db, requireDeletionAdmin(db), password)
+      const job = db.deletionJobs.find((j) => j.id === jobId)
+      if (!job) throw new Error('That deletion wasn’t found.')
+      return job
+    }),
 
-      const driver = db.drivers.find((d) => d.userId === userId)
-      if (driver) {
-        if (db.rides.some((r) => r.driverId === driver.id && r.status === 'PICKED_UP')) {
-          throw new Error('This driver has a client in the car right now. Try again once the ride is finished.')
-        }
-        db.drivers = db.drivers.filter((d) => d.id !== driver.id)
-        // Requests waiting on them move to the next driver
-        for (const offer of db.offers.filter((o) => o.driverId === driver.id && o.status === 'PENDING')) {
-          offer.status = 'EXPIRED'
-          dispatchIfUnanswered(db, offer.rideId)
-        }
-        // Upcoming rides they accepted go back out
-        for (const ride of db.rides.filter((r) => r.driverId === driver.id && r.status === 'ACCEPTED')) {
-          clearDriverProgress(ride)
-          dispatch(db, ride)
-        }
-      }
-
-      db.credentials = db.credentials.filter((c) => c.userId !== userId)
-      db.users = db.users.filter((u) => u.id !== userId)
+  getAccountDeletion: (jobId) =>
+    transact((db) => {
+      requireDeletionAdmin(db)
+      return db.deletionJobs.find((j) => j.id === jobId)
     }),
 
   // Keeps the person on past rides. Only the sign-in goes away.
@@ -494,14 +1270,21 @@ export const mockService: DataService = {
       const userId = readSession()
       const user = db.users.find((u) => u.id === userId)
       if (!user) throw new Error('Please sign in.')
-      if (user.role !== 'DRIVER' && user.role !== 'PARTNER') {
+      if (user.role !== 'DRIVER' && user.role !== 'PARTNER' && user.role !== 'VOLUNTEER') {
         throw new Error("This account can't be closed from here.")
       }
+      // A general volunteer has no rides or organization to hand over: only the sign-in closes
+
+      if (user.role === 'PARTNER') keepAnAdmin(db, user)
 
       if (user.role === 'DRIVER') {
         const driver = db.drivers.find((d) => d.userId === userId)
         if (driver) releaseDriverWork(db, driver.id)
-      } else {
+      } else if (
+        user.role === 'PARTNER' &&
+        // Colleagues who can still sign in keep managing the organization's rides
+        !db.users.some((u) => u.id !== userId && u.orgId === user.orgId && u.role === 'PARTNER' && db.credentials.some((c) => c.userId === u.id))
+      ) {
         for (const ride of db.rides) {
           if (ride.orgId !== user.orgId || !partnerCloseCancelsRide(ride)) continue
           ride.status = 'CANCELLED'
@@ -525,14 +1308,16 @@ export const mockService: DataService = {
   setOrgStatus: (orgId, status) =>
     transact((db) => {
       const org = findOrThrow(db.organizations, orgId, 'Organization')
-      org.status = status
+      Object.assign(org, { status, reviewedAt: now(), reviewedBy: readSession() })
       return org
     }),
 
   setDriverStatus: (driverId, status) =>
     transact((db) => {
+      // Like review_driver(): only a platform admin decides
+      if (signedInUser(db)?.role !== 'PLATFORM_ADMIN') throw new Error('Only a CareRide admin can review drivers.')
       const driver = findOrThrow(db.drivers, driverId, 'Driver')
-      driver.status = status
+      Object.assign(driver, { status, reviewedAt: now(), reviewedBy: readSession() })
       return driver
     }),
 
@@ -658,10 +1443,21 @@ export const mockService: DataService = {
       return db.rides.filter((r) => r.driverId && ids.includes(r.driverId))
     }),
 
+  // Mirrors the database rule: only a platform admin reads every ride
+  listAllRides: () =>
+    transact((db) => {
+      if (signedInUser(db)?.role !== 'PLATFORM_ADMIN') throw new Error('Only a Relay Collective admin can see every ride.')
+      return [...db.rides].sort((a, b) => b.pickupTime.localeCompare(a.pickupTime)).slice(0, ALL_RIDES_LIMIT)
+    }),
+
   respondToOffer: (offerId, accept) =>
     transact((db) => {
       const offer = findOrThrow(db.offers, offerId, 'Offer')
       const ride = findOrThrow(db.rides, offer.rideId, 'Ride')
+      // Like respond_to_offer(): only an approved driver answers, whatever offers exist
+      if (!canDrive(db.drivers.find((d) => d.id === offer.driverId))) {
+        throw new Error('Your driver account needs to be approved before you can answer requests.')
+      }
       if (offer.status !== 'PENDING') {
         throw new Error(ride.driverId ? 'Another driver already accepted this ride.' : 'This request is no longer open.')
       }
@@ -824,6 +1620,40 @@ export const mockService: DataService = {
       if (signedInUser(db)?.role !== 'PLATFORM_ADMIN') throw new Error('Only Relay Collective admins can see feedback.')
       return db.feedback.filter((f) => (!driverId || f.driverId === driverId) && (!orgId || f.orgId === orgId))
     }),
+
+  submitProductFeedback: (feedback, clientRequestId) =>
+    transact((db) => feedbackStore.submitFeedback(db, signedInUser(db), feedback, clientRequestId)),
+
+  // Grant, store the file, then confirm: the same three steps as the real backend
+  attachFeedbackScreenshot: async (feedbackId, file, fileName) => {
+    const grant = await transact((db) => feedbackStore.beginAttachment(db, signedInUser(db), feedbackId, file, fileName))
+    await putDemoFile(grant.storagePath, file)
+    return transact((db) => feedbackStore.confirmAttachment(db, signedInUser(db), grant.id))
+  },
+
+  listMyProductFeedback: () => transact((db) => feedbackStore.listMine(db, signedInUser(db))),
+
+  getMyProductFeedback: (feedbackId) => transact((db) => feedbackStore.getMine(db, signedInUser(db), feedbackId)),
+
+  getFeedbackScreenshotUrl: async (attachment) => {
+    const allowed = await transact((db) => feedbackStore.canReadAttachment(db, signedInUser(db), attachment.storagePath))
+    const file = allowed ? await getDemoFile(attachment.storagePath) : undefined
+    if (!file) throw new Error('This screenshot isn’t available in this browser.')
+    return URL.createObjectURL(file)
+  },
+
+  getFeedbackSummary: () => transact((db) => feedbackStore.summary(db, signedInUser(db))),
+
+  listProductFeedback: (query) => transact((db) => feedbackStore.list(db, signedInUser(db), query)),
+
+  getProductFeedback: (feedbackId) => transact((db) => feedbackStore.detail(db, signedInUser(db), feedbackId)),
+
+  listFeedbackAssignees: () => transact((db) => feedbackStore.assignees(db, signedInUser(db))),
+
+  updateFeedbackTriage: (feedbackId, change) => transact((db) => feedbackStore.updateTriage(db, signedInUser(db), feedbackId, change)),
+
+  addFeedbackMessage: (feedbackId, message, visibility) =>
+    transact((db) => feedbackStore.addMessage(db, signedInUser(db), feedbackId, message, visibility)),
 
   getImpact: () =>
     transact((db) => {

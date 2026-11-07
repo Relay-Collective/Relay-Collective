@@ -1,14 +1,16 @@
 import { ArrowLeft, Mail, MailCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { AuthShell } from '../../components/auth/AuthShell'
+import { AuthLayout } from '../../components/auth/AuthLayout'
+import { FormAlert } from '../../components/auth/FormAlert'
+import { StatusScreen } from '../../components/auth/StatusScreen'
+import { SubmitButton } from '../../components/auth/SubmitButton'
+import { authLead, authTitle, textLink } from '../../components/auth/styles'
 import { TextField } from '../../components/form/TextField'
 import { primaryButton } from '../../components/ui'
 import { EMAIL } from '../../logic/validate'
 import { isNative } from '../../native/platform'
 import { dataService } from '../../services'
-
-const panel = 'animate-fade-up rounded-xl border border-slate-200/80 bg-white p-8 sm:p-10'
 
 // "Forgot your password?": emails a reset link. Says the same thing whether or not the email has an account.
 export function ForgotPassword() {
@@ -20,8 +22,10 @@ export function ForgotPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault()
+    if (busy) return
     if (!EMAIL.test(email.trim())) {
       setFieldError('Enter the email you sign in with.')
+      document.getElementById('email')?.focus()
       return
     }
     setBusy(true)
@@ -37,35 +41,39 @@ export function ForgotPassword() {
   }
 
   return (
-    <AuthShell>
+    <AuthLayout>
       {sent ? (
-        <div className={`${panel} text-center`} role="status">
-          <MailCheck className="mx-auto h-12 w-12 text-brand-600" aria-hidden />
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight">Check your email</h1>
-          <p className="mt-2 text-lg text-slate-600">
-            If <strong className="break-all">{email.trim()}</strong> has a Relay Collective account, we've sent it a link to choose a new
-            password.
+        <StatusScreen
+          icon={<MailCheck className="h-7 w-7" />}
+          title="Check your email"
+          actions={
+            <Link to="/signin" className={`${primaryButton} w-full`}>
+              Back to sign in
+            </Link>
+          }
+        >
+          <p>
+            If <strong className="break-all text-rc-navy">{email.trim()}</strong> has a Relay Collective account, we've sent it a link to choose a
+            new password.
           </p>
-          {isNative && (
-            <p className="mt-4 text-slate-600">The link opens the Relay Collective website. Choose your new password there, then come back here and sign in.</p>
-          )}
-          <p className="mt-4 text-sm text-slate-500">Can't find it? Check your spam folder, or ask your organization's admin.</p>
-          <Link to="/signin" className={`${primaryButton} mt-8 w-full`}>
-            Back to sign in
-          </Link>
-        </div>
+          {isNative && <p>The link opens the Relay Collective website. Choose your new password there, then come back here and sign in.</p>}
+          <p className="text-sm text-slate-500">Can't find it? Check your spam folder. The link works once and expires after a while.</p>
+        </StatusScreen>
       ) : (
-        <form onSubmit={submit} noValidate className={panel}>
-          <h1 className="text-3xl font-extrabold tracking-tight">Reset your password</h1>
-          <p className="mt-2 text-slate-600">Enter the email you sign in with, and we'll send you a link to choose a new password.</p>
+        <form onSubmit={submit} noValidate>
+          <Link to="/signin" className={`mb-8 inline-flex items-center gap-1.5 text-sm ${textLink}`}>
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Back to sign in
+          </Link>
+          <h1 className={authTitle}>Reset your password</h1>
+          <p className={authLead}>Enter the email you sign in with, and we'll send you a link to choose a new password.</p>
           <TextField
             id="email"
-            label="Email"
+            label="Email address"
             type="email"
             inputMode="email"
             autoComplete="email"
             autoFocus
-            className="mt-6"
+            className="mt-8"
             icon={<Mail className="h-5 w-5" />}
             value={email}
             error={fieldError}
@@ -75,19 +83,12 @@ export function ForgotPassword() {
               setError(undefined)
             }}
           />
-          {error && (
-            <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
-              {error}
-            </p>
-          )}
-          <button type="submit" className={`${primaryButton} mt-6 w-full`} disabled={busy}>
-            {busy ? 'Sending…' : 'Send reset link'}
-          </button>
-          <Link to="/signin" className="mt-4 flex items-center justify-center gap-1 text-sm font-semibold text-brand-700 hover:underline">
-            <ArrowLeft className="h-4 w-4" aria-hidden /> Back to sign in
-          </Link>
+          {error && <FormAlert className="mt-5">{error}</FormAlert>}
+          <SubmitButton busy={busy} busyLabel="Sending…" className="mt-6 w-full" arrow={false}>
+            Send reset link
+          </SubmitButton>
         </form>
       )}
-    </AuthShell>
+    </AuthLayout>
   )
 }

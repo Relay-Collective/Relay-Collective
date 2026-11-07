@@ -352,4 +352,14 @@ create trigger drivers_freeze_approved_capacity
   for each row execute function private.freeze_approved_capacity();
 
 -- profiles.email stays off the column grant. Realtime still checks each subscriber's row access.
-alter publication supabase_realtime add table public.profiles;
+-- 20261004120000_live_account_totals already adds profiles, and adding it twice is an error.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'profiles'
+  ) then
+    alter publication supabase_realtime add table public.profiles;
+  end if;
+end;
+$$;

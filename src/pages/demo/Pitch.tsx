@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import logoMark from '../../assets/logo-mark.png'
+import { LogoMark } from '../../components/brand/LogoMark'
 import { tones, type Tone } from '../../components/ui'
 import { LiveScreens } from './LiveScreens'
 import { SLIDES } from './slides'
@@ -49,9 +49,9 @@ export function Pitch({ slide, step, onStep }: Props) {
     <div key={id} className="flex min-h-0 flex-1 animate-fade-up flex-col">
       {id === 'title' && (
         <section className="m-auto flex flex-col items-center py-2 text-center">
-          <img src={logoMark} alt="" className="h-24 w-24 animate-float" />
+          <LogoMark className="h-24 w-24 animate-float" />
           <Wordmark />
-          <p className="mt-4 max-w-5xl text-balance text-3xl font-extrabold text-slate-700 md:text-4xl">
+          <p className="mt-4 max-w-5xl text-balance text-3xl font-bold text-slate-700 md:text-4xl">
             Clients at transitional housing may be unable to use phones. Without the ability to book rides, they can miss the care they need.
           </p>
           <p className="mt-3 text-xl font-bold text-slate-500">Belkin Communities of Hope · The Salvation Army, Vancouver</p>
@@ -71,7 +71,7 @@ export function Pitch({ slide, step, onStep }: Props) {
               { icon: Wallet, tone: 'brand', title: 'Many can’t afford a taxi, or even the bus' },
             ]}
           />
-          <p className="mt-5 text-center text-3xl font-extrabold text-coral-600">Without a ride, they can miss the care they need.</p>
+          <p className="mt-5 text-center text-3xl font-bold text-coral-600">Without a ride, they can miss the care they need.</p>
         </Slide>
       )}
       {id === 'impact' && (
@@ -113,7 +113,7 @@ export function Pitch({ slide, step, onStep }: Props) {
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {TEAM.map(({ name, did }) => (
               <div key={name} className="rounded-xl border border-slate-200/80 bg-white px-6 py-5">
-                <h3 className="text-3xl font-extrabold">{name}</h3>
+                <h3 className="text-3xl font-bold">{name}</h3>
                 <ul className="mt-2 space-y-1 text-lg font-bold text-slate-600">
                   {did.map((d) => (
                     <li key={d}>{d}</li>
@@ -160,9 +160,9 @@ export function Pitch({ slide, step, onStep }: Props) {
 
 function Wordmark() {
   return (
-    <h1 className="mt-4 font-display text-7xl font-black tracking-tight md:text-8xl">
+    <h1 className="mt-4 font-display text-7xl font-bold tracking-tight md:text-8xl">
       <span className="text-ink">Relay</span>{' '}
-      <span className="text-brand-gradient">Collective</span>
+      <span className="text-brand-600">Collective</span>
     </h1>
   )
 }
@@ -171,7 +171,7 @@ function Wordmark() {
 function Slide({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="m-auto w-full max-w-6xl py-2">
-      <h2 className="mx-auto max-w-5xl text-balance text-center text-5xl font-black leading-[1.1] md:text-6xl">{title}</h2>
+      <h2 className="mx-auto max-w-5xl text-balance text-center text-5xl font-bold leading-[1.1] md:text-6xl">{title}</h2>
       <div className="mt-6">{children}</div>
     </section>
   )
@@ -189,7 +189,7 @@ function Points({ items }: { items: { icon: LucideIcon; tone: Tone; title: strin
           <span className={`flex h-16 w-16 items-center justify-center rounded-xl ${tones[tone].tile}`} aria-hidden>
             <Icon className="h-8 w-8" />
           </span>
-          <h3 className="mt-4 text-balance text-3xl font-extrabold leading-snug">{title}</h3>
+          <h3 className="mt-4 text-balance text-3xl font-bold leading-snug">{title}</h3>
         </div>
       ))}
     </div>
@@ -203,7 +203,7 @@ function Heard({ icon: Icon, heard, changed }: { icon: LucideIcon; heard: string
       <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${tones.brand.tile}`} aria-hidden>
         <Icon className="h-6 w-6" />
       </span>
-      <p className="text-2xl font-extrabold">{changed}</p>
+      <p className="text-2xl font-bold">{changed}</p>
     </div>
   )
 }
@@ -212,7 +212,7 @@ function Heard({ icon: Icon, heard, changed }: { icon: LucideIcon; heard: string
 function List({ heading, items, icon: Icon = Check, bare = false }: { heading: string; items: string[]; icon?: LucideIcon; bare?: boolean }) {
   return (
     <div className={bare ? '' : 'rounded-xl border border-slate-200/80 bg-white p-6'}>
-      <h3 className="text-xl font-extrabold text-slate-500">{heading}</h3>
+      <h3 className="text-xl font-bold text-slate-500">{heading}</h3>
       <ul className="mt-4 space-y-3">
         {items.map((item) => (
           <li key={item} className="flex items-start gap-3 text-2xl font-bold">

@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { FEEDBACK_NOT_YET, ISSUE_REQUIRED, RATING_REQUIRED } from '../src/logic/feedback'
 import { formatDayTime } from '../src/logic/formatTime'
 import { backfillRideEvents, rideEventsBetween } from '../src/logic/rideEvents'
-import { rideEventText } from '../src/logic/rideEventText'
+import { rideEventText } from '../src/modules/careride/logic/rideEventText'
 import type { DataService } from '../src/services/dataService'
 import type { Ride, RideEvent } from '../src/types'
 

@@ -1,3 +1,4 @@
+import { volunteerPaths } from '../../volunteer/paths'
 import { CarFront, Home, TriangleAlert } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { DEMO_REFRESH } from '../../context/demoFrame'
@@ -226,7 +227,7 @@ export function LiveScreens({ index, onChange }: Props) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div key={index} className="animate-step-forward text-center" aria-live="polite">
-        <h2 className="text-2xl font-black leading-tight md:text-3xl">
+        <h2 className="text-2xl font-bold leading-tight md:text-3xl">
           {step.title} <span className="font-semibold text-slate-500">· {step.caption}</span>
         </h2>
       </div>
@@ -259,7 +260,7 @@ export function LiveScreens({ index, onChange }: Props) {
               <div className="overflow-hidden rounded-[2rem] border-[6px] border-ink bg-white shadow-xl">
                 <Screen
                   ref={phone}
-                  src={frameSrc('/driver', 'driver')}
+                  src={frameSrc(volunteerPaths.transport, 'driver')}
                   size={PHONE}
                   scale={phoneScale}
                   title="Driver’s phone"

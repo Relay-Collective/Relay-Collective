@@ -1,7 +1,25 @@
 import { ALL_DAY, hoursOn } from '../logic/requestHours'
 import { knownPlace } from '../logic/places'
 import { backfillRideEvents } from '../logic/rideEvents'
-import type { Destination, Driver, House, Organization, Ride, RideEvent, RideFeedback, RideOffer, User } from '../types'
+import { emptyFeedbackStore, type ProductFeedbackStore } from './mockFeedback'
+import type {
+  AccountDeletionJob,
+  Destination,
+  Driver,
+  House,
+  Identity,
+  Invitation,
+  JoinRequestStatus,
+  OrgRole,
+  Organization,
+  OrganizationApplication,
+  Ride,
+  RideEvent,
+  RideFeedback,
+  RideOffer,
+  User,
+  VolunteerProfile,
+} from '../types'
 
 // Demo data. Everything here is fictional except public place names and addresses.
 // House addresses are from https://belkintsa.ca/services/overview.
@@ -36,6 +54,33 @@ export interface Database {
   offers: RideOffer[]
   events: RideEvent[] // each ride's change history, oldest first
   feedback: RideFeedback[]
+  // Signed up, but no role yet (onboarding not finished). Their login is in credentials under the same id.
+  identities: Identity[]
+  applications: OrganizationApplication[]
+  invitations: (Invitation & { token: string })[] // demo only: the real backend keeps a hash, never the token
+  productFeedback: ProductFeedbackStore // Feedback & Suggestions; screenshots themselves live in demoFiles
+  joinRequests: StoredJoinRequest[]
+  // Members an administrator removed. Their profile stays on past rides; their login moved to a new identity.
+  removals: { userId: string; at: string; by: string; identityId: string }[]
+  deletionJobs: AccountDeletionJob[] // permanent deletions; like the database's, they hold no name or email
+  volunteerProfiles: VolunteerProfile[] // general volunteering: interests, by profile. Never a driver profile.
+}
+
+// A request to join an organization, as the demo backend keeps it. userId is the applicant's identity id,
+// which becomes their profile id if they're approved (as with every onboarding path in the demo).
+export interface StoredJoinRequest {
+  id: string
+  orgId: string
+  userId: string
+  requestedPosition?: string
+  message?: string
+  status: JoinRequestStatus
+  assignedRole?: OrgRole
+  reviewNote?: string
+  reviewedBy?: string
+  reviewedAt?: string
+  cancelledAt?: string
+  createdAt: string
 }
 
 // History for rides that don't have any yet (the seed, or demo data saved before the log existed),
@@ -99,16 +144,19 @@ function partner(
   address: string,
   city: string,
   status: Organization['status'] = 'APPROVED',
+  directoryDescription?: string,
 ): { org: Organization; house: House } {
+  // Approved demo partners can be found in organization search; the pending one can't be yet
+  const discoverability = status === 'APPROVED' ? 'discoverable' : 'invitation_only'
   return {
-    org: { id: `org-${id}`, name, type: 'PARTNER_ORG', contactName: name, contactPhone: phone, status },
+    org: { id: `org-${id}`, name, type: 'PARTNER_ORG', contactName: name, contactPhone: phone, status, discoverability, directoryDescription },
     house: { id: `house-${id}`, orgId: `org-${id}`, name, address, city, phone },
   }
 }
 
 const partners = [
-  partner('belkin', 'Belkin House', '604-555-0120', BELKIN_ADDRESS, 'Vancouver'),
-  partner('richmond', 'Richmond House', '604-555-0121', '12040 Horseshoe Way', 'Richmond'),
+  partner('belkin', 'Belkin House', '604-555-0120', BELKIN_ADDRESS, 'Vancouver', 'APPROVED', 'Transitional housing and support for women and families.'),
+  partner('richmond', 'Richmond House', '604-555-0121', '12040 Horseshoe Way', 'Richmond', 'APPROVED', 'Emergency shelter and meals in Richmond.'),
   partner('grace', 'Grace Mansion', '604-555-0122', '596 E Hastings St', 'Vancouver'),
   partner('example', 'Example Shelter Society (Fictional)', '604-555-0130', 'Address to confirm', 'Vancouver', 'PENDING'),
 ]
@@ -123,19 +171,45 @@ const FREQUENT_PLACES: Record<string, string[]> = {
   grace: ['3b', 'raven', 'ground', 'belkin', 'carn', 'kettle', 'junc', 'rcafe', 'mposs', 'south', 'vcc', 'msdpr', 'svc'],
 }
 
+// The seeded general volunteers: no vehicle, no driver profile, no CareRide access. Also added to demo data saved
+// before volunteers existed (see mockService upgrade).
+// Priya doesn't drive and would like to help with food and outreach. Alex is interested in transportation as well,
+// which still doesn't make them a driver.
+export const VOLUNTEER_USER: User = { id: 'u-priya', name: 'Priya', email: 'priya@careride.demo', phone: '', role: 'VOLUNTEER' }
+export const VOLUNTEER_PROFILE: VolunteerProfile = {
+  id: 'vp-priya',
+  userId: VOLUNTEER_USER.id,
+  interests: ['FOOD_DISTRIBUTION', 'COMMUNITY_OUTREACH'],
+  createdAt: '2026-10-01T17:00:00.000Z',
+}
+const ALEX: User = { id: 'u-alex', name: 'Alex Morgan', email: 'alex@careride.demo', phone: '', role: 'VOLUNTEER' }
+// A driver can save interests too: Maya drives and would also help with food. Frank and the others have none
+// (as for every driver from before general volunteering).
+export const SEEDED_VOLUNTEERS: { user?: User; profile: VolunteerProfile }[] = [
+  { user: VOLUNTEER_USER, profile: VOLUNTEER_PROFILE },
+  { user: ALEX, profile: { id: 'vp-alex', userId: ALEX.id, interests: ['TRANSPORTATION', 'COMMUNITY_OUTREACH'], createdAt: '2026-10-02T17:00:00.000Z' } },
+  { profile: { id: 'vp-olive', userId: 'u-olive', interests: ['TRANSPORTATION', 'FOOD_DISTRIBUTION'], createdAt: '2026-10-03T17:00:00.000Z' } },
+]
+
 const demoUsers: User[] = [
   { id: 'u-admin', name: 'Relay Collective Admin', email: ADMIN_EMAIL, phone: '604-555-0100', role: 'PLATFORM_ADMIN' },
-  { id: 'u-belkin', name: 'Belkin House', email: 'belkin@careride.demo', phone: '604-555-0120', role: 'PARTNER', orgId: 'org-belkin', houseId: 'house-belkin' },
-  { id: 'u-richmond', name: 'Richmond House', email: 'richmond@careride.demo', phone: '604-555-0121', role: 'PARTNER', orgId: 'org-richmond', houseId: 'house-richmond' },
-  { id: 'u-grace', name: 'Grace Mansion', email: 'grace@careride.demo', phone: '604-555-0122', role: 'PARTNER', orgId: 'org-grace', houseId: 'house-grace' },
+  { id: 'u-belkin', name: 'Belkin House', email: 'belkin@careride.demo', phone: '604-555-0120', role: 'PARTNER', orgId: 'org-belkin', houseId: 'house-belkin', orgRole: 'ADMIN' },
+  { id: 'u-richmond', name: 'Richmond House', email: 'richmond@careride.demo', phone: '604-555-0121', role: 'PARTNER', orgId: 'org-richmond', houseId: 'house-richmond', orgRole: 'ADMIN' },
+  { id: 'u-grace', name: 'Grace Mansion', email: 'grace@careride.demo', phone: '604-555-0122', role: 'PARTNER', orgId: 'org-grace', houseId: 'house-grace', orgRole: 'ADMIN' },
   { id: 'u-vanshare-admin', name: 'Community Van Share Admin', email: 'vanshare@careride.demo', phone: '604-555-0110', role: 'ORG_ADMIN', orgId: 'org-vanshare' },
   { id: 'u-frank', name: 'Frank', email: 'frank@careride.demo', phone: '604-555-0103', role: 'DRIVER' },
   { id: 'u-olive', name: 'Maya', email: 'maya@careride.demo', phone: '604-555-0104', role: 'DRIVER' },
   { id: 'u-sam', name: 'Sam', email: 'sam@careride.demo', phone: '604-555-0105', role: 'DRIVER', orgId: 'org-vanshare' },
   { id: 'u-jordan', name: 'Jordan', email: 'jordan@careride.demo', phone: '604-555-0106', role: 'DRIVER' },
+  // General volunteers: no vehicle, no driver profile, no CareRide access
+  VOLUNTEER_USER,
+  ALEX,
 ]
 
-const seedBase: Omit<Database, 'events' | 'feedback'> = {
+const seedBase: Omit<
+  Database,
+  'events' | 'feedback' | 'identities' | 'applications' | 'invitations' | 'productFeedback' | 'joinRequests' | 'removals' | 'deletionJobs' | 'volunteerProfiles'
+> = {
   credentials: demoUsers.map((u) => ({ email: u.email!, userId: u.id, password: demoPasswordFor(u.email!) })),
   users: demoUsers,
   organizations: [
@@ -238,4 +312,13 @@ export const seed: Database = {
       at: '2026-09-28T18:00:00.000Z',
     },
   ],
+  identities: [],
+  applications: [],
+  invitations: [],
+  // Starts empty: the admin console shows real submissions only
+  productFeedback: emptyFeedbackStore(),
+  joinRequests: [],
+  removals: [],
+  deletionJobs: [],
+  volunteerProfiles: SEEDED_VOLUNTEERS.map((v) => v.profile),
 }

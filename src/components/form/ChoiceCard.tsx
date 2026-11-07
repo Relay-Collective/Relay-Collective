@@ -54,7 +54,7 @@ export function ChoiceCard({ name, value, checked, onChange, title, description,
         </span>
       )}
       <span className="flex-1">
-        <span className="block font-display text-lg font-extrabold text-ink">{title}</span>
+        <span className="block font-display text-lg font-bold text-ink">{title}</span>
         {description && <span className="mt-0.5 block text-slate-600">{description}</span>}
       </span>
       <span

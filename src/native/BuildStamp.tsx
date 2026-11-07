@@ -12,7 +12,7 @@ function UpdateButton() {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-60"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500"
       aria-label="Get the current website from Cloudflare"
       disabled={status === 'working'}
       onClick={() => {

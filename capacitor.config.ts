@@ -6,7 +6,7 @@ const otaEnabled = process.env.CAPACITOR_OTA !== '0'
 const liveOrigin = (
   process.env.CAPACITOR_OTA_ORIGIN ||
   process.env.VITE_PUBLIC_SITE_URL ||
-  'https://careride-team-1.careride.workers.dev'
+  'https://relay-collective.relay-collective.workers.dev'
 ).replace(/\/+$/, '')
 
 const config: CapacitorConfig = {

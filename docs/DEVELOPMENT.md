@@ -13,8 +13,8 @@ Everything you need to run, demo, build, and deploy Relay Collective. For what R
 ### Run locally
 
 ```bash
-git clone https://github.com/FaithTechGlobalLabs/CareRide-Team-1.git
-cd CareRide-Team-1
+git clone https://github.com/Relay-Collective/Relay-Collective.git
+cd Relay-Collective
 npm ci
 npm run dev
 ```
@@ -33,9 +33,11 @@ Open **Sign in** and choose a one-tap demo account, or use one of the credential
 | --- | --- | --- |
 | Belkin House | `belkin@careride.demo` | Book, change, and track a client's ride. |
 | Frank | `frank@careride.demo` | Accept requests and complete rides. |
+| Priya | `priya@careride.demo` | A general volunteer (not a driver): see and update volunteering interests. |
+| Alex Morgan | `alex@careride.demo` | A general volunteer interested in transportation, which still doesn't make them a driver. |
 | Relay Collective Admin | `admin@careride.com` | Review pending approvals and manage accounts. |
 
-Additional partner and driver accounts appear on the sign-in page. Demo records are fictional except for public place names and addresses. Belkin House, Richmond House, and Grace Mansion use their real addresses, and each starts with saved destinations taken from its case workers' answers in [PARTNER_ORG_NOTES.md](../PARTNER_ORG_NOTES.md).
+Additional partner, driver and volunteer accounts appear on the sign-in page. Demo records are fictional except for public place names and addresses. Belkin House, Richmond House, and Grace Mansion use their real addresses, and each starts with saved destinations taken from its case workers' answers in [PARTNER_ORG_NOTES.md](../PARTNER_ORG_NOTES.md).
 
 ### Walk through a complete ride
 
@@ -43,7 +45,7 @@ Additional partner and driver accounts appear on the sign-in page. Demo records 
 2. **Request an on-demand ride.** Choose St. Paul's Hospital, enter a fictional name, and request one passenger without wheelchair access. Submit the request.
 3. **Open a second tab at the same local URL.** Sign in as **Frank**, who receives requests at any time in the seed data, and accept the offer.
 4. **Return to the Belkin House tab.** Review the confirmation and print the client's ride slip if desired.
-5. **On Frank's Rides page**, follow the trip steps: **I'm on my way** (for an on-demand ride, optionally how far away you are; for a scheduled ride, whether you'll be early or late), **I'm here**, **Client is in the car**, then **Client dropped off**. Watch the trip timeline update in the Belkin House tab.
+5. **In Frank's volunteer workspace, open Transportation** and follow the trip steps: **I'm on my way** (for an on-demand ride, optionally how far away you are; for a scheduled ride, whether you'll be early or late), **I'm here**, **Client is in the car**, then **Client dropped off**. Watch the trip timeline update in the Belkin House tab.
 6. **Check the Belkin House view.** The ride is complete. Choose **Book the return trip** to explore the linked return workflow.
 
 Tabs on the same browser origin share ride data while keeping their own sign-in sessions. Changes synchronize through browser storage events and a four-second refresh while a signed-in tab is visible. Separate browsers, devices, and origins have independent demo data.
@@ -52,7 +54,7 @@ Tabs on the same browser origin share ride data while keeping their own sign-in 
 
 ### Pitch deck
 
-The HACKVAN pitch lives at **[/demo](https://careride-team-1.careride.workers.dev/demo)** (locally, `http://localhost:5173/demo`). It follows the event's [pitch guidelines](../PITCH_GUIDELINES.md), and its "See it in action" slide plays one ride through the real app, with the staff and driver screens side by side.
+The HACKVAN pitch lives at **[/demo](https://relay-collective.relay-collective.workers.dev/demo)** (locally, `http://localhost:5173/demo`). It follows the event's [pitch guidelines](../PITCH_GUIDELINES.md), and its "See it in action" slide plays one ride through the real app, with the staff and driver screens side by side.
 
 - **→ / Space / Page Down** next, **← / Page Up** back, so presentation clickers work. **N** shows speaker notes, **F** goes full screen.
 - Each forward click on the live slide shows a tap on one screen, then the other screen catching up. Going back jumps straight to that step.
@@ -79,11 +81,16 @@ Pages access application data through a typed **`DataService`** contract. [`src/
 
 ```text
 src/
-├── pages/          Role-specific screens: auth, partner, driver, org, admin
-├── components/     Shared UI, forms, ride cards, notices, and printable slips
+├── modules/
+│   └── careride/   CareRide, the transportation module: its layout, pages, ride UI, and rules
+├── workspace/      Module registry, workspace navigation, and addresses
+├── admin/          Admin console navigation and addresses
+├── volunteer/      Volunteer workspace navigation, participation, and verification
+├── pages/          Platform screens: auth, onboarding, workspace, volunteer, admin, legacy providers
+├── components/     Shared UI, forms, shells, notices, and the workspace design kit
 ├── context/        Current user, session state, and refresh coordination
 ├── hooks/          Data loading and current-user helpers
-├── logic/          Driver matching, dispatch, request hours, and ride utilities
+├── logic/          Driver matching, dispatch, request hours, and rules the data layer shares
 ├── services/
 │   ├── dataService.ts      Typed backend contract
 │   ├── index.ts            Active backend selection
@@ -96,7 +103,17 @@ src/
 └── index.css       Global styles and design tokens
 ```
 
+What belongs in the platform and what belongs in a module, and which way imports may point: [architecture/modules.md](architecture/modules.md).
+
 Ride rules live in two places that must stay in step: [`src/logic/dispatch.ts`](../src/logic/dispatch.ts) with [`src/services/mockService.ts`](../src/services/mockService.ts) for the demo, and the SQL functions under [`supabase/migrations`](../supabase/migrations) for the shared backend. Identity comes from Supabase Auth. Row access and ride changes are enforced in the database, not by the screens. The service-role key stays in Edge Functions (`delete-my-account`, `admin-delete-account`) and never in a `VITE_` variable.
+
+**Accounts and onboarding.** Sign-up creates only an identity (the Auth login). A signed-in identity with no profile goes to `/onboarding`, where it registers an organization, signs up as a driver, asks to join an organization, or opens an invitation. Each path is a database function (`submit_organization_application`, `register_driver_profile`, `submit_join_request` + `approve_join_request`, `accept_invitation`) that builds the profile server-side. Organizations and drivers start `PENDING`, and only a platform admin approves them; join requests are decided by the organization's own administrators. Each identity has one profile, so one organization; administrators of an approved organization invite colleagues from **Organization → Team**. Invitation links are single-use, tied to one email, valid for 7 days, and only a hash of the token is stored. Administrator accounts are never self-service. The onboarding pieces live in [`src/onboarding`](../src/onboarding), [`src/pages/onboarding`](../src/pages/onboarding), and [the identity migration](../supabase/migrations/20261024120000_identity_onboarding.sql).
+
+**Organization membership.** People can search organizations that chose to be found and ask to join; organization administrators review requests, pick roles (Administrator or Staff), manage members, and set visibility under **Organization → Team** and **Organization profile**. Schema, access rules, approval, and limitations are in [ORGANIZATION_MEMBERSHIP.md](ORGANIZATION_MEMBERSHIP.md).
+
+**Permanent account deletion.** Platform admins delete an account for good from **Users → (person) → Danger Zone**: a tracked, retryable job that erases the person's login, files and personal records while shared records stay, anonymized. Data decisions, safeguards, recovery and rollout are in [ACCOUNT_DELETION.md](ACCOUNT_DELETION.md).
+
+**Feedback & Suggestions.** Anyone signed in can send product feedback from the sidebar, the account menu, Help, or What's New, and follow it on My feedback. Platform admins manage it under Operations → Feedback. Schema, access rules, storage, and limitations are in [FEEDBACK.md](FEEDBACK.md).
 
 Start with [the service contract](../src/services/dataService.ts), [driver matching](../src/logic/matchDrivers.ts), and [dispatch rules](../src/logic/dispatch.ts).
 
@@ -107,7 +124,12 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 | `npm ci` | Install dependencies from the committed lockfile. |
 | `npm run dev` | Start the local Vite development server. |
 | `npm run lint` | Run ESLint. |
-| `npm test` | Run the ride-rule tests. |
+| `npm test` | Run the unit tests in `tests/` (ride rules, summaries, memberships, onboarding, feedback, account deletion, CareRide). |
+| `npm run test:coverage` | Run the same unit tests with Node's built-in coverage. Prints a table and writes `coverage/lcov.info`. |
+| `npm run test:db` | Run every migration in an embedded Postgres and test the feedback, membership and account-deletion rules against it. |
+| `npm run test:e2e` | Run the Playwright browser tests against a mock build. Run `npx playwright install chromium` once first. See [E2E_TESTING.md](E2E_TESTING.md). |
+| `npm run test:e2e:ui` | Open Playwright's UI mode to run and step through browser tests. `test:e2e:smoke`, `test:e2e:headed` and `test:e2e:report` also exist. |
+| `npm run docs:screenshots` | Retake the README screenshots in `docs/images/` from a mock build, with a few demo rides booked so every overview has something on it. |
 | `npm run build` | Run TypeScript project checks and create the production build in `dist/`. |
 | `npm run preview` | Serve an existing production build locally. |
 | `npm run deploy` | Zip the current `dist/` as an Android live-update bundle, then deploy with Wrangler. Run `npm run build` first. |
@@ -118,7 +140,13 @@ Start with [the service contract](../src/services/dataService.ts), [driver match
 
 `npm test` covers matching, offer expiry, the give-up clock, no-shows, and which rides a closing partner account cancels. Those checks run against the TypeScript rules the demo uses. The SQL functions are the rules for the shared backend, so a change to one side needs the same change on the other. For ride behavior, also exercise the partner and driver workflows in separate tabs, including declines, cancellations, and uncovered requests.
 
+### Continuous integration
+
+**Relay Collective CI** ([ci.yml](../.github/workflows/ci.yml)) runs on every pull request into `main`, on every push to `main`, and from **Actions → Run workflow**. It has three jobs: `quality` (lint, unit tests with coverage, type-check and build), `database-tests`, and `e2e-tests` (Playwright browser tests on the mock backend). It uses no secrets and never deploys. The Android APK workflow runs separately. Jobs, coverage baseline, database-test limits, branch protection, Dependabot and the deployment plan are in [CI_CD.md](CI_CD.md).
+
 ### Deployment
+
+Cloudflare Workers Builds deploys `main` from this repository; GitHub Actions does not deploy. See [CI_CD.md](CI_CD.md#deployment).
 
 The repository includes [wrangler.jsonc](../wrangler.jsonc) for Cloudflare Workers. Static files still serve from `dist/` with single-page application fallback. A Worker script is included so the Cloudflare dashboard can attach variables and secrets. `/api/*` is reserved for that Worker.
 
@@ -152,7 +180,7 @@ The same Vite build is packaged as an Android app with Capacitor. A default buil
 VITE_DATA_BACKEND=supabase
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_KEY
-VITE_PUBLIC_SITE_URL=https://careride-team-1.careride.workers.dev
+VITE_PUBLIC_SITE_URL=https://relay-collective.relay-collective.workers.dev
 ```
 
 `VITE_PUBLIC_SITE_URL` is the website that confirmation and reset-password emails open. The app's own address (`https://localhost`) can't be opened from an email, so people confirm or reset on the website, then sign in in the app. Add that address with `/**` under Supabase **Authentication → URL Configuration → Redirect URLs**. Sign-ins stay on the phone until the person signs out.
@@ -221,6 +249,7 @@ This MVP demonstrates the coordination workflow. The following details matter wh
 | **Accounts and permissions** | The demo stores passwords in browser storage. Supabase builds use Auth, row-level access, and database functions. Passwords shorter than 8 characters are rejected. The local config file has no switch for breached passwords. | Turn on leaked-password protection for the hosted project under Authentication → Providers → Email before a pilot. |
 | **Client information** | Staff enter a name. The assigned driver sees the notes and destination while the ride is theirs. A driver who declined, or who lost the race, does not keep that access. | Agree on the minimum identifying information needed for a pilot. |
 | **Driver verification** | Administrators can approve profiles; document inputs retain file names only. This is a demo stand-in. Real verification is a separate process. | Define that process outside the demo approval buttons. |
+| **Team invitations** | Invitation links are shown once to the person who creates them, and they send the link themselves. Each account belongs to one organization. | Email invitations from an Edge Function, and add a memberships table if people need to belong to several organizations. |
 | **Updates and notifications** | Supabase builds push table changes, including profile updates, and run deadlines on the server. The demo polls browser storage. There is no SMS. | Add booking notifications when a pilot needs them. |
 | **Matching** | Rule-based eligibility and offer handling; no live vehicle location or route optimization. | Validate dispatch rules with operators and add location-aware matching if needed. |
 | **Impact** | Each completed trip counts as one adult one-zone Vancouver bus fare (**$2.58**), not once per passenger. The dashboards say so. | Keep that meaning unless a pilot asks for a per-passenger total. |
@@ -230,7 +259,7 @@ Relay Collective covers essential, non-emergency transportation. Booking screens
 
 ## Contributing
 
-Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm test`, `npm run lint`, and `npm run build` before submitting code changes.
+Issues and pull requests are welcome. Describe the affected role and workflow, keep changes focused, and include steps for a reviewer to reproduce the result. Run `npm run lint`, `npm test`, `npm run test:db`, `npm run build`, and `npm run test:e2e` before submitting code changes. Relay Collective CI runs the same checks on your pull request. If you change a label, heading or flow, update the browser test that uses it ([E2E_TESTING.md](E2E_TESTING.md)).
 
 Use fictional data when developing or sharing screenshots. For product changes, prioritize clear language, usable mobile layouts, and an explicit next step when a ride cannot be covered.
 

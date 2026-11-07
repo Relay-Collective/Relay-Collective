@@ -8,6 +8,8 @@ import {
   nextRequestStart,
 } from '../logic/requestHours'
 import type { Driver } from '../types'
+import { volunteerPaths } from '../volunteer/paths'
+import { panel } from './workspace/styles'
 
 interface Props {
   driver: Driver
@@ -23,64 +25,45 @@ function describeStart(start: Date, now: Date): string {
   return `${day} at ${formatTime(start.toTimeString().slice(0, 5))}`
 }
 
-// Whether the driver is getting requests right now. There's no pause switch: drivers just decline what doesn't suit them.
+// Whether the driver is getting requests right now, and when that changes. There's no pause switch: drivers just decline what doesn't suit them.
 export function RequestStatusCard({ driver, showSettingsLink = false }: Props) {
   const now = new Date()
   const window = driver.requestHours[now.getDay()]
   const inHours = isWithinRequestHours(driver.requestHours, now)
   const next = nextRequestStart(driver.requestHours, now)
 
-  const state = inHours ? 'live' : 'off'
-  const look = {
-    live: {
-      box: 'bg-teal-700 text-white',
-      icon: <BellRing className="h-6 w-6" aria-hidden />,
-      title: 'Taking requests now',
-      detail: window && window.to === ALL_DAY.to && window.from === ALL_DAY.from ? 'All day today.' : window ? `Until ${formatTime(window.to)} today.` : '',
-      heading: 'text-white',
-      sub: 'text-teal-50',
-    },
-    off: {
-      box: 'bg-ink text-white',
-      icon: <MoonStar className="h-6 w-6" aria-hidden />,
-      title: 'Outside your request hours',
-      detail: next ? `We'll start sending requests ${describeStart(next, now)}.` : 'Add some request hours to start getting requests.',
-      heading: 'text-white',
-      sub: 'text-brand-100',
-    },
-  }[state]
-
   return (
-    <section className={`overflow-hidden rounded-xl p-5 sm:p-6 ${look.box}`} aria-live="polite">
-      <div className="flex items-start gap-4">
-        <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/20">
-          {look.icon}
-          {state === 'live' && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3" aria-hidden>
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
-            </span>
-          )}
-        </span>
-        <div>
-          <h2 className={`text-xl font-extrabold ${look.heading}`}>{look.title}</h2>
-          <p className={look.sub}>{look.detail}</p>
-        </div>
+    <section className={`${panel} flex flex-wrap items-center gap-3 p-5`} aria-live="polite">
+      <span
+        className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${inHours ? 'bg-rc-mint text-rc-teal-ink' : 'bg-slate-100 text-slate-600'}`}
+        aria-hidden
+      >
+        {inHours ? <BellRing className="h-5 w-5" /> : <MoonStar className="h-5 w-5" />}
+        {inHours && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rc-teal" />}
+      </span>
+      <div className="min-w-[13rem] flex-1">
+        <h2 className="font-heading text-base font-bold text-rc-navy">{inHours ? 'Taking requests now' : 'Outside your request hours'}</h2>
+        <p className="text-sm text-slate-600">
+          {inHours
+            ? window && window.to === ALL_DAY.to && window.from === ALL_DAY.from
+              ? 'All day today.'
+              : window
+                ? `Until ${formatTime(window.to)} today.`
+                : ''
+            : next
+              ? `We'll start sending requests ${describeStart(next, now)}.`
+              : 'Add some request hours to start getting requests.'}{' '}
+          <span className="text-slate-500">Hours: {describeRequestHours(driver.requestHours)}</span>
+        </p>
       </div>
-
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/20 pt-4 text-sm text-white/90">
-        <span>
-          <span className="font-semibold">Hours:</span> {describeRequestHours(driver.requestHours)}
-        </span>
-        {showSettingsLink && (
-          <Link
-            to="/driver/settings"
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-semibold text-white underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-white"
-          >
-            <Settings2 className="h-4 w-4" aria-hidden /> Change settings
-          </Link>
-        )}
-      </div>
+      {showSettingsLink && (
+        <Link
+          to={volunteerPaths.availability}
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-rc-blue hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-rc-blue"
+        >
+          <Settings2 className="h-4 w-4" aria-hidden /> Change availability
+        </Link>
+      )}
     </section>
   )
 }

@@ -6,14 +6,16 @@ import { useApp } from '../hooks/useApp'
 import { dataService } from '../services'
 import type { User } from '../types'
 
-const EFFECTS: Record<'DRIVER' | 'PARTNER', string> = {
+const EFFECTS: Record<'DRIVER' | 'PARTNER' | 'VOLUNTEER', string> = {
   DRIVER:
     "You won't be able to sign in, and Relay Collective will stop sending you requests. Rides you've already finished stay on record. Requests waiting on you go to the next driver, and upcoming rides you accepted go back out to other drivers.",
+  VOLUNTEER:
+    "You won't be able to sign in any more. Your volunteer profile and the interests you saved stay with the closed account until the Relay Collective team deletes it.",
   PARTNER:
-    "Staff won't be able to sign in for this organization. Past rides stay on record. Rides that haven't started are cancelled, so drivers aren't sent to a pickup nobody is managing. A ride already on the way finishes as usual.",
+    "You won't be able to sign in any more. Past rides stay on record. If you're the last member of your organization who can sign in, rides that haven't started are cancelled, so drivers aren't sent to a pickup nobody is managing. A ride already on the way finishes as usual.",
 }
 
-// Asks the signed-in driver or partner to type their name before closing the account.
+// Asks the signed-in driver, volunteer or partner to type their name before closing the account.
 export function DeleteMyAccount({ user, onClose }: { user: User; onClose: () => void }) {
   const { signOut } = useApp()
   const dialog = useRef<HTMLDialogElement>(null)
@@ -21,7 +23,7 @@ export function DeleteMyAccount({ user, onClose }: { user: User; onClose: () => 
   const [error, setError] = useState<string>()
   const [busy, setBusy] = useState(false)
   const matches = typed.trim().toLowerCase() === user.name.trim().toLowerCase()
-  const role = user.role === 'PARTNER' ? 'PARTNER' : 'DRIVER'
+  const role = user.role === 'PARTNER' || user.role === 'VOLUNTEER' ? user.role : 'DRIVER'
 
   useEffect(() => {
     const node = dialog.current
@@ -52,7 +54,7 @@ export function DeleteMyAccount({ user, onClose }: { user: User; onClose: () => 
     <dialog
       ref={dialog}
       aria-labelledby="delete-my-account-title"
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-6 text-ink shadow-xl backdrop:bg-slate-900/50"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[20px] border border-slate-200 bg-white p-6 text-ink rc-dialog shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
       onCancel={(e) => {
         if (busy) e.preventDefault()
         else onClose()

@@ -15,26 +15,26 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with:
           # The obsolete "tools" package is gone; installing it fails CI.
           packages: platform-tools platforms;android-36 build-tools;36.0.0 build-tools;35.0.0
 
+      # Lint and unit tests run in ci.yml (Relay Collective CI) on the same pull
+      # requests. The APK build below still runs `tsc -b` through `npm run build`.
       - run: npm ci
-      - run: npm test
-      - run: npm run lint
       # Vite bakes VITE_* into the APK. Fork PRs do not receive secrets, so those
       # builds stay on demo data. Same-repo PRs and workflow_dispatch use secrets
       # when they are set. Never add the Supabase service-role key here.
@@ -58,7 +58,7 @@ jobs:
           fi
           npm run android:apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: careride-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
@@ -73,23 +73,23 @@ jobs:
   #   if: false
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
+  #     - uses: actions/checkout@v7
+  #     - uses: actions/setup-node@v7
   #       with:
   #         node-version-file: .nvmrc
   #         cache: npm
-  #     - uses: actions/setup-java@v4
+  #     - uses: actions/setup-java@v6
   #       with:
   #         distribution: temurin
   #         java-version: '21'
-  #     - uses: android-actions/setup-android@v3
+  #     - uses: android-actions/setup-android@v4
   #     - run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
   #     - run: npm ci
   #     - run: npm run android:sync
   #     - run: |
   #         echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release.keystore
   #         cd android && ./gradlew bundleRelease
-  #     - uses: actions/upload-artifact@v4
+  #     - uses: actions/upload-artifact@v7
   #       with:
   #         name: careride-release-aab
   #         path: android/app/build/outputs/bundle/release/app-release.aab

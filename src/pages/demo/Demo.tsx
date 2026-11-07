@@ -50,9 +50,9 @@ export function Demo() {
 
   return (
     <div className="mx-auto flex h-dvh max-w-[1500px] flex-col gap-3 px-4 py-3 font-display lg:px-6">
-      <header className="no-print grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+      <header className="no-print grid grid-cols-[1fr_auto] items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
         <Logo size="sm" to="/demo" />
-        <div key={slide} className="animate-fade-up text-center text-lg font-extrabold text-brand-600">
+        <div key={slide} className="hidden animate-fade-up text-center text-lg font-bold text-brand-600 sm:block">
           {SLIDES[slide].kicker}
         </div>
         <div className="flex items-center justify-self-end">

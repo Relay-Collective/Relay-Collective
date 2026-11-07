@@ -4,9 +4,11 @@ export function returnPath(value: unknown): string | undefined {
   if (!value.startsWith('/') || value.startsWith('//')) return undefined
   if (
     value.startsWith('/signin') ||
+    value.startsWith('/signed-in') ||
     value.startsWith('/register') ||
     value.startsWith('/forgot-password') ||
-    value.startsWith('/reset-password')
+    value.startsWith('/reset-password') ||
+    value.startsWith('/welcome')
   ) {
     return undefined
   }

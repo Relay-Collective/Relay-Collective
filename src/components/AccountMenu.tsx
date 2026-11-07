@@ -1,23 +1,18 @@
-import { ChevronDown, LogOut, Repeat, Trash2 } from 'lucide-react'
+import { ChevronDown, LogOut, MessageSquarePlus, MessagesSquare, Repeat, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { myFeedbackPaths } from '../feedback/paths'
 import { useApp } from '../hooks/useApp'
+import { useFeedback } from '../hooks/useFeedback'
 import { ROLE_LABELS } from '../logic/homeFor'
+import { initials } from '../logic/initials'
 import { BuildStamp } from '../native/BuildStamp'
 import { DeleteMyAccount } from './DeleteMyAccount'
 import { ROLE_TONE, tones } from './ui'
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join('')
-}
-
 export function AccountMenu() {
   const { currentUser, signOut } = useApp()
+  const { openFeedback } = useFeedback()
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -40,7 +35,7 @@ export function AccountMenu() {
 
   if (!currentUser) return null
   const tone = tones[ROLE_TONE[currentUser.role]]
-  const canDelete = currentUser.role === 'DRIVER' || currentUser.role === 'PARTNER'
+  const canDelete = currentUser.role === 'DRIVER' || currentUser.role === 'PARTNER' || currentUser.role === 'VOLUNTEER'
 
   return (
     <div ref={ref} className="relative">
@@ -49,19 +44,20 @@ export function AccountMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-3 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+        className="flex min-h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white py-1 pl-1.5 pr-3 shadow-[0_1px_2px_rgb(17_24_32/0.05)] transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2"
       >
         <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${tone.solid}`} aria-hidden>
           {initials(currentUser.name)}
         </span>
-        <span className="hidden max-w-40 truncate text-sm font-semibold text-ink sm:block">{currentUser.name}</span>
+        {/* Visually hidden on small screens, but still the button's name for screen readers */}
+        <span className="sr-only max-w-40 truncate text-sm font-semibold text-ink sm:not-sr-only sm:block">{currentUser.name}</span>
         <ChevronDown className={`h-4 w-4 text-slate-500 transition ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-72 origin-top-right animate-fade-up rounded-xl border border-slate-200 bg-white p-2 [animation-duration:200ms]"
+          className="absolute right-0 z-40 mt-2 w-72 origin-top-right animate-fade-up rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[var(--shadow-lift)] [animation-duration:200ms]"
         >
           <div className="px-3 py-2">
             <p className="truncate font-semibold text-ink">{currentUser.name}</p>
@@ -70,6 +66,26 @@ export function AccountMenu() {
               {ROLE_LABELS[currentUser.role]}
             </p>
           </div>
+          <div className="my-1 border-t border-slate-100" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              openFeedback()
+            }}
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <MessageSquarePlus className="h-4 w-4" aria-hidden /> Send feedback
+          </button>
+          <Link
+            to={myFeedbackPaths(currentUser.role).list}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <MessagesSquare className="h-4 w-4" aria-hidden /> {currentUser.role === 'PLATFORM_ADMIN' ? 'All feedback' : 'My feedback'}
+          </Link>
           <div className="my-1 border-t border-slate-100" />
           {canDelete && (
             <button

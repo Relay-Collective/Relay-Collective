@@ -21,7 +21,7 @@ const FALLBACK_WINDOW: TimeWindow = { from: '09:00', to: '17:00' }
 const TIMES = [...Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`), ALL_DAY.to]
 
 const timeSelect =
-  'min-h-11 w-full appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-base text-ink transition focus:border-teal-500 focus:outline-none focus:ring-[3px] focus:ring-teal-100 aria-[invalid=true]:border-red-500'
+  'min-h-11 w-full appearance-none rounded-xl border border-slate-300 bg-white pl-3 pr-8 text-base text-ink transition focus:border-brand-500 focus:outline-none focus:ring-[3px] focus:ring-brand-100 aria-[invalid=true]:border-red-500'
 
 function TimeSelect({ label, value, invalid, onChange }: { label: string; value: string; invalid: boolean; onChange: (time: string) => void }) {
   // Keep times saved before half-hour steps, e.g. 8:45, selectable
@@ -78,25 +78,25 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
                 aria-pressed={active}
                 onClick={() => onChange(p.hours.map((w) => w && { ...w }))}
                 className={`rounded-xl border-2 px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                  active ? 'border-teal-600 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-300'
+                  active ? 'border-brand-600 bg-brand-50' : 'border-slate-200 bg-white hover:border-brand-300'
                 }`}
               >
                 <span className="flex items-center gap-1 text-sm font-bold text-ink">
-                  {active && <Check className="h-4 w-4 text-teal-600" strokeWidth={3} aria-hidden />}
+                  {active && <Check className="h-4 w-4 text-brand-600" strokeWidth={3} aria-hidden />}
                   {p.label}
                 </span>
-                <span className="block text-xs text-slate-500">{p.detail}</span>
+                <span className={`block text-xs ${active ? 'text-slate-700' : 'text-slate-500'}`}>{p.detail}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <fieldset aria-describedby="request-hours-message">
+      <fieldset aria-describedby="request-hours-message" className="@container">
         <legend className="mb-2 text-sm font-semibold text-ink">Your week</legend>
 
-        {/* Hour marks over the bars, wide screens only */}
-        <div className="hidden grid-cols-[5.5rem_1fr_20rem] gap-4 px-3 text-xs font-medium text-slate-400 md:grid" aria-hidden>
+        {/* Hour marks over the bars, only when the editor itself is wide (it also sits in narrow cards) */}
+        <div className="hidden grid-cols-[5.5rem_1fr_20rem] gap-4 px-3 text-xs font-medium text-slate-400 @2xl:grid" aria-hidden>
           <span />
           <div className="relative h-4">
             {['12 AM', '6 AM', '12 PM', '6 PM'].map((t, i) => (
@@ -108,14 +108,14 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
           <span />
         </div>
 
-        <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+        <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white shadow-[var(--shadow-rest)]">
           {DAY_ORDER.map((day) => {
             const w = value[day]
             const name = DAY_NAMES[day]
             const span = w && windowSpan(w)
             const invalid = day === badDay
             return (
-              <li key={day} className="grid grid-cols-[5.5rem_1fr] items-center gap-3 p-3 md:grid-cols-[5.5rem_1fr_20rem] md:gap-4">
+              <li key={day} className="grid grid-cols-[5.5rem_1fr] items-center gap-3 p-3 @2xl:grid-cols-[5.5rem_1fr_20rem] @2xl:gap-4">
                 <button
                   type="button"
                   role="switch"
@@ -123,28 +123,28 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
                   aria-label={`Requests on ${name}`}
                   onClick={() => setDay(day, w ? null : { ...lastWindow() })}
                   className={`inline-flex min-h-11 w-[5.5rem] items-center justify-center gap-1 rounded-full border-2 font-semibold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
-                    w ? 'border-teal-600 bg-teal-700 text-white' : 'border-slate-200 bg-white text-slate-500 hover:border-teal-300'
+                    w ? 'border-brand-600 bg-brand-700 text-white' : 'border-slate-200 bg-white text-slate-500 hover:border-brand-300'
                   }`}
                 >
                   {w && <Check className="h-4 w-4" strokeWidth={3} aria-hidden />}
                   {WEEKDAYS[day]}
                 </button>
 
-                <div className="relative h-6 overflow-hidden rounded-lg bg-slate-100 md:h-8" aria-hidden>
+                <div className="relative h-6 overflow-hidden rounded-lg bg-slate-100 @2xl:h-8" aria-hidden>
                   {[25, 50, 75].map((left) => (
                     <span key={left} className="absolute inset-y-0 w-px bg-slate-200" style={{ left: `${left}%` }} />
                   ))}
                   {span && span.width > 0 && (
                     <span
-                      className="absolute inset-y-0 rounded-lg bg-teal-600 shadow-sm"
+                      className="absolute inset-y-0 rounded-lg bg-brand-600 shadow-sm"
                       style={{ left: `${span.start * 100}%`, width: `${span.width * 100}%` }}
                     />
                   )}
                 </div>
 
-                {/* Phones: times get their own row under the bar. Wide screens: last column. */}
+                {/* Narrow: times get their own row under the bar. Wide: last column. */}
                 {w ? (
-                  <div className="col-span-2 flex items-center gap-2 md:col-span-1">
+                  <div className="col-span-2 flex items-center gap-2 @2xl:col-span-1">
                     <TimeSelect
                       label={`${name} from`}
                       value={w.from}
@@ -165,13 +165,13 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
                       onClick={() => copyToAll(w)}
                       title="Use these hours on every day that's on"
                       aria-label={`Use ${name}'s hours on every day that's on`}
-                      className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 sm:inline-flex transition hover:bg-teal-50 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                      className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 sm:inline-flex transition hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                     >
                       <Copy className="h-4 w-4" aria-hidden />
                     </button>
                   </div>
                 ) : (
-                  <span className="hidden text-right text-sm text-slate-500 md:block">No requests</span>
+                  <span className="hidden text-right text-sm text-slate-500 @2xl:block">No requests</span>
                 )}
               </li>
             )

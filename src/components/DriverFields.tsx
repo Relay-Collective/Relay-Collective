@@ -56,7 +56,7 @@ export function DriverAboutFields({ value, onChange, errors = {} }: SectionProps
   )
 }
 
-export function DriverVehicleFields({ value, onChange, errors = {}, lockCapacity = false }: SectionProps & { lockCapacity?: boolean }) {
+export function DriverVehicleFields({ value, onChange, errors = {}, lockCapacity = false, showCities = true }: SectionProps & { lockCapacity?: boolean; showCities?: boolean }) {
   return (
     <div className="space-y-5">
       <TextField
@@ -105,45 +105,52 @@ export function DriverVehicleFields({ value, onChange, errors = {}, lockCapacity
           </fieldset>
         </>
       )}
-      <fieldset aria-describedby="cities-message">
-        <legend className={labelClass}>Cities you can drive in</legend>
-        <p className="-mt-1 mb-3 text-sm text-slate-500">You’ll get requests for rides that start in these cities.</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {CITIES.map((city) => {
-            const on = value.serviceCities.includes(city)
-            return (
-              <label
-                key={city}
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 ${
-                  on ? 'border-brand-600 bg-brand-50/60' : 'border-slate-200 bg-white hover:border-brand-300'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={on}
-                  onChange={() => onChange({ ...value, serviceCities: toggle(value.serviceCities, city) })}
-                />
-                <MapPin className={`mt-0.5 h-5 w-5 shrink-0 ${on ? 'text-brand-600' : 'text-slate-400'}`} aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-lg font-extrabold text-ink">{city}</span>
-                  <span className="mt-0.5 block text-sm text-slate-600">{CITY_TRIPS[city]}</span>
-                </span>
-                <span
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                    on ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
-                  }`}
-                  aria-hidden
-                >
-                  {on && <Check className="h-4 w-4" strokeWidth={3} />}
-                </span>
-              </label>
-            )
-          })}
-        </div>
-        <FieldMessage id="cities-message" error={errors.serviceCities} />
-      </fieldset>
+      {showCities && <DriverCityFields value={value} onChange={onChange} errors={errors} />}
     </div>
+  )
+}
+
+// The cities a driver takes rides in. Requests are only sent for rides that start there.
+export function DriverCityFields({ value, onChange, errors = {} }: SectionProps) {
+  return (
+    <fieldset aria-describedby="cities-message">
+      <legend className={labelClass}>Cities you can drive in</legend>
+      <p className="-mt-1 mb-3 text-sm text-slate-500">You’ll get requests for rides that start in these cities.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {CITIES.map((city) => {
+          const on = value.serviceCities.includes(city)
+          return (
+            <label
+              key={city}
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 ${
+                on ? 'border-brand-600 bg-brand-50/60' : 'border-slate-200 bg-white hover:border-brand-300'
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={on}
+                onChange={() => onChange({ ...value, serviceCities: toggle(value.serviceCities, city) })}
+              />
+              <MapPin className={`mt-0.5 h-5 w-5 shrink-0 ${on ? 'text-brand-600' : 'text-slate-400'}`} aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-lg font-bold text-ink">{city}</span>
+                <span className="mt-0.5 block text-sm text-slate-600">{CITY_TRIPS[city]}</span>
+              </span>
+              <span
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                  on ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
+                }`}
+                aria-hidden
+              >
+                {on && <Check className="h-4 w-4" strokeWidth={3} />}
+              </span>
+            </label>
+          )
+        })}
+      </div>
+      <FieldMessage id="cities-message" error={errors.serviceCities} />
+    </fieldset>
   )
 }
 
@@ -188,15 +195,15 @@ export function DriverFields({ value, onChange, errors }: SectionProps) {
     <div className="space-y-8">
       <DriverAboutFields value={value} onChange={onChange} errors={errors} />
       <section className="space-y-4">
-        <h3 className="text-lg font-extrabold">Vehicle</h3>
+        <h3 className="text-lg font-bold">Vehicle</h3>
         <DriverVehicleFields value={value} onChange={onChange} errors={errors} />
       </section>
       <section className="space-y-4">
-        <h3 className="text-lg font-extrabold">Ride requests</h3>
+        <h3 className="text-lg font-bold">Ride requests</h3>
         <DriverRequestFields value={value} onChange={onChange} errors={errors} />
       </section>
       <section className="space-y-4">
-        <h3 className="text-lg font-extrabold">Documents</h3>
+        <h3 className="text-lg font-bold">Documents</h3>
         <DriverDocumentFields value={value} onChange={onChange} errors={errors} />
       </section>
     </div>

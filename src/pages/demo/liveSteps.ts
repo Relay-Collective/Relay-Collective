@@ -2,13 +2,14 @@
 // The driver is Maya in the demo data; the slide just says "the driver".
 // Every moment is made with the real data service, so the screens always match the current app.
 import { ridePath } from '../../logic/homeFor'
-import { parseLocalInput, quickPicks } from '../../logic/pickupTime'
+import { parseLocalInput, quickPicks } from '../../modules/careride/domain'
 import { ALL_DAY, hoursOn, isWithinRequestHours } from '../../logic/requestHours'
 import { estimateFare } from '../../logic/estimateFare'
 import { DEFAULT_PICKUP_INSTRUCTIONS } from '../../constants'
 import { dataService } from '../../services'
 import { STORAGE_KEY, resetDemoData } from '../../services/mockService'
 import type { NewRide } from '../../services/dataService'
+import { paths } from '../../workspace/paths'
 
 const PARTNER = 'u-belkin'
 const DRIVER = 'u-olive' // Maya, the driver shown
@@ -239,12 +240,12 @@ async function build(): Promise<LiveDemo> {
   }
 }
 
-export const staffPath = (demo: LiveDemo, step: LiveStep) => (step.staff === 'request' ? '/partner/request' : ridePath(demo.rideId))
+export const staffPath = (demo: LiveDemo, step: LiveStep) => (step.staff === 'request' ? paths.newRide : ridePath(demo.rideId))
 
 // Where a step starts from: where the step before left off. The first starts on the staff dashboard, before the form is opened.
 export function startOf(demo: LiveDemo, index: number): { moment: Moment; staffPath: string } {
   const before = LIVE_STEPS[index - 1]
-  return before ? { moment: before.moment, staffPath: staffPath(demo, before) } : { moment: 'start', staffPath: '/partner' }
+  return before ? { moment: before.moment, staffPath: staffPath(demo, before) } : { moment: 'start', staffPath: paths.transport }
 }
 
 // The booking form opens blank, to be filled in on screen, or already filled in

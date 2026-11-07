@@ -36,7 +36,7 @@ export function ConfirmButton({
       </button>
       <dialog
         ref={dialog}
-        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl p-6 text-ink shadow-xl backdrop:bg-slate-900/50"
+        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[20px] p-6 text-ink rc-dialog shadow-[0_24px_48px_-12px_rgb(17_24_32/0.25)]"
       >
         <h2 className="text-xl font-bold">{title}</h2>
         {body && <div className="mt-2 text-slate-700">{body}</div>}

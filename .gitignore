@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
+# Playwright: the mock build it serves, and its results and reports
+dist-e2e
+test-results
+playwright-report
+blob-report
 /*.zip
 *.local
 .dev.vars

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { dataService, isDemoBackend } from '../services'
-import type { User } from '../types'
+import type { Session } from '../services/dataService'
+import type { Identity, User } from '../types'
 import { AppContext } from './appContext'
+import { clearOnboardingDrafts } from '../onboarding/drafts'
 import { DEMO_FRAME_USER as FRAME_USER, DEMO_REFRESH } from './demoFrame'
 
 // The demo has no server, so frequent polling is what moves timed-out requests on and syncs tabs.
@@ -13,8 +15,12 @@ const LIVE_UPDATE_DEBOUNCE_MS = 300
 export function AppProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<User>()
+  const [identity, setIdentity] = useState<Identity>()
   const [ready, setReady] = useState(false)
   const [sessionError, setSessionError] = useState<string>()
+  const [sessionExpired, setSessionExpired] = useState(false)
+  // Who was signed in last, so a session that disappears on its own can be told apart from signing out
+  const signedInAs = useRef<string | undefined>(undefined)
   const [sessionVersion, setSessionVersion] = useState(0)
   const [version, setVersion] = useState(0)
   // Failed loads, keyed by the screen part that failed, so one recovering doesn't hide another's error
@@ -34,58 +40,80 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
   const retrySession = useCallback(() => setSessionVersion((v) => v + 1), [])
 
-  // Ask the backend who is signed in: on start, and whenever the session changes elsewhere.
-  useEffect(() => {
+  const applySession = useCallback((session: Session | undefined) => {
+    const id = session?.identity.id
+    // Someone was signed in and now nobody is, without signOut() clearing signedInAs first: the session ended
+    if (!id && signedInAs.current) setSessionExpired(true)
+    if (id) setSessionExpired(false)
+    signedInAs.current = id
+    setIdentity(session?.identity)
+    setCurrentUser(session?.user)
+    if (!session?.user && !isDemoBackend) setUsers([])
+    setSessionError(undefined)
+  }, [])
+
+  // Ask the backend who is signed in. Only the latest check may update state, e.g. a sign-in beats a slower restore.
+  const checkSession = useCallback(async () => {
     const request = ++sessionRequest.current
-    dataService
-      .restoreSession()
-      .then(
-        (user) => {
-          if (request !== sessionRequest.current) return
-          setCurrentUser(user)
-          if (!user && !isDemoBackend) setUsers([])
-          setSessionError(undefined)
-        },
-        (err: Error) => {
-          if (request !== sessionRequest.current) return
-          setCurrentUser(undefined)
-          setSessionError(err.message)
-        },
-      )
-      .finally(() => {
-        if (request === sessionRequest.current) setReady(true)
-      })
-  }, [sessionVersion])
+    try {
+      const session = await dataService.restoreSession()
+      if (request === sessionRequest.current) applySession(session)
+      return session
+    } catch (err) {
+      if (request === sessionRequest.current) {
+        setIdentity(undefined)
+        setCurrentUser(undefined)
+        setSessionError((err as Error).message)
+      }
+      throw err
+    } finally {
+      if (request === sessionRequest.current) setReady(true)
+    }
+  }, [applySession])
+
+  // On start, and whenever the session changes elsewhere
+  useEffect(() => {
+    checkSession().catch(() => {}) // shown through sessionError
+  }, [sessionVersion, checkSession])
+
+  const reloadSession = useCallback(async () => {
+    const session = await checkSession()
+    refresh()
+    return session
+  }, [checkSession, refresh])
 
   useEffect(() => dataService.onSessionChange(retrySession), [retrySession])
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       const request = ++sessionRequest.current
-      let user: User
+      let session: Session
       try {
-        user = await dataService.signIn(email, password)
+        session = await dataService.signIn(email, password)
       } catch (err) {
         retrySession() // this attempt cancelled any session check in flight; run it again
         throw err
       }
       if (request === sessionRequest.current) {
-        setCurrentUser(user)
-        setSessionError(undefined)
+        applySession(session)
         setReady(true)
       }
       refresh()
-      return user
+      return session
     },
-    [refresh, retrySession],
+    [refresh, retrySession, applySession],
   )
 
   const signOut = useCallback(async () => {
     ++sessionRequest.current
+    signedInAs.current = undefined // on purpose, so not an expired session
     try {
       await dataService.signOut()
     } finally {
       // Clear this screen even if the backend call failed, so private data doesn't linger
+      clearOnboardingDrafts()
+      setSessionExpired(false)
+      setIdentity(undefined)
       setCurrentUser(undefined)
       setSessionError(undefined)
       setUsers([])
@@ -159,8 +187,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadError = Object.values(loadErrors)[0]
 
   const value = useMemo(
-    () => ({ users, currentUser, ready, sessionError, signIn, signOut, retrySession, version, refresh, loadError, setLoadError }),
-    [users, currentUser, ready, sessionError, signIn, signOut, retrySession, version, refresh, loadError, setLoadError],
+    () => ({
+      users,
+      identity,
+      currentUser,
+      ready,
+      sessionError,
+      sessionExpired,
+      signIn,
+      signOut,
+      retrySession,
+      reloadSession,
+      version,
+      refresh,
+      loadError,
+      setLoadError,
+    }),
+    [users, identity, currentUser, ready, sessionError, sessionExpired, signIn, signOut, retrySession, reloadSession, version, refresh, loadError, setLoadError],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -5,29 +5,73 @@
    question never restyles. Match the attribute only. */
 @custom-variant open (&[open]);
 
-/* Brand tokens, taken from the Relay Collective heart-road logo */
+/* Relay Collective 1.6: one light system for the whole product (see DESIGN.md).
+   Porcelain ground, white surfaces, midnight ink type and primary actions, electric blue for selection,
+   active navigation and links, cantaloupe for warmth. Small text in a brand hue always uses an -ink or
+   600+ shade that passes AA on white. */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Nunito', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-display);
 
-  --color-ink: #0b1557; /* wordmark navy */
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #dbe7ff;
-  --color-brand-200: #bcd3ff;
-  --color-brand-300: #8cb4ff;
-  --color-brand-400: #5a8cfb;
-  --color-brand-500: #2f67f2;
-  --color-brand-600: #1d4fe0;
-  --color-brand-700: #1a3fba;
-  --color-brand-800: #1b3794;
-  --color-brand-900: #1a2f74;
-  --color-aqua-300: #7deaf1;
-  --color-aqua-400: #2ad4e3;
-  --color-aqua-500: #14bdd0;
-  --color-violet-brand: #3b2fd6; /* logo only */
+  --color-ink: #111820; /* midnight ink: headings, strong text, primary actions */
+
+  /* Electric blue. 500 is the brand colour (graphics, focus rings); 600 and up carry text and fills */
+  --color-brand-50: #eef8fd;
+  --color-brand-100: #d9f0fb;
+  --color-brand-200: #b3e0f5;
+  --color-brand-300: #7cc9ee;
+  --color-brand-400: #3bafe5;
+  --color-brand-500: #0297de;
+  --color-brand-600: #0272a8; /* 5.3:1 with white */
+  --color-brand-700: #035c87;
+  --color-brand-800: #054a6c;
+  --color-brand-900: #083b55;
+
+  /* Older names still used across the signed-in app, pointed at the 1.6 palette */
+  --color-rc-navy: #111820;
+  --color-rc-navy-deep: #0b1015;
+  --color-rc-blue: #0272a8;
+  --color-rc-blue-dark: #035c87;
+  --color-rc-cyan: #0297de;
+  --color-rc-canvas: #f8f9f7;
+  --color-rc-line: #e5e9ec;
+  /* The old secondary accent (teal) now speaks electric: section icons, progress, identity tints.
+     Success states use the emerald scale explicitly, so green always means done or approved. */
+  --color-rc-teal: #0272a8;
+  --color-rc-teal-ink: #035c87;
+  --color-rc-mint: #eef8fd;
+
+  /* Neutrals: the slate scale, with the 1.6 border and soft surface */
+  --color-slate-100: #f1f4f5;
+  --color-slate-200: #e5e9ec;
+
+  /* The 1.6 palette by name (the public site uses these directly; the app reaches them through the tokens above).
+     Electric and cantaloupe are graphic colours: small text on light grounds uses the -ink shades, and display-size
+     cantaloupe words use cantaloupe-display (3.35:1 on porcelain). */
+  --font-grotesk: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-dm: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-editorial: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+  --color-midnight: #111820;
+  --color-midnight-soft: #3a4553; /* body text, 9.2:1 on porcelain */
+  --color-hush: #64748b; /* small supporting text, 4.5:1 on porcelain */
+  --color-hairline: #e5e9ec;
+  --color-electric: #0297de;
+  --color-electric-wash: #e6f4fc;
+  --color-electric-ink: #0272a8;
+  --color-cantaloupe: #fc734d;
+  --color-cantaloupe-wash: #fff0eb;
+  --color-cantaloupe-display: #e85a30;
+  --color-cantaloupe-ink: #b8441f;
+  --color-porcelain: #f8f9f7;
 
   /* Flat app background. One step below white cards, so a card reads by its edge, not a shadow */
-  --color-canvas: oklch(0.982 0.005 260);
+  --color-canvas: #f8f9f7; /* porcelain */
+
+  /* Console 2.0 depth: a hairline of contact and a soft, offset fall. Cards rest; interactive cards lift. */
+  --shadow-rest: 0 1px 2px rgb(17 24 32 / 0.04), 0 6px 20px -14px rgb(17 24 32 / 0.14);
+  --shadow-lift: 0 1px 2px rgb(17 24 32 / 0.05), 0 18px 36px -18px rgb(17 24 32 / 0.26);
+  --shadow-press: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(17 24 32 / 0.24), 0 6px 14px -8px rgb(17 24 32 / 0.4);
 
   /* Care red and sun yellow: seasoning beside the blue, never side by side (see DESIGN.md) */
   --color-care-red: oklch(0.56 0.2 30);
@@ -35,20 +79,20 @@
   --color-sun-100: oklch(0.962 0.059 95);
   --color-sun-400: oklch(0.837 0.164 84);
 
-  /* Supporting accents: warm coral for care, teal for going, sunny amber for welcome */
-  --color-coral-50: #fff3f1;
-  --color-coral-100: #ffe3de;
-  --color-coral-200: #ffc9c0;
-  --color-coral-300: #ffa293;
-  --color-coral-400: #fd7a66;
-  --color-coral-500: #f5573f;
-  --color-coral-600: #e03c24;
-  --color-coral-700: #bb2f1a;
+  /* Cantaloupe: warm emphasis and "needs action". Errors stay red. */
+  --color-coral-50: #fff0eb;
+  --color-coral-100: #ffe3d8;
+  --color-coral-200: #fec3af;
+  --color-coral-300: #fda185;
+  --color-coral-400: #fc734d; /* cantaloupe */
+  --color-coral-500: #f0602f;
+  --color-coral-600: #c9471f; /* white text passes AA */
+  --color-coral-700: #a83a18;
 
   --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-step-forward: step-forward 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-step-back: step-back 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-pop: pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-float: float 6s ease-in-out infinite;
   --animate-shake: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   --animate-confetti: confetti 2.6s cubic-bezier(0.25, 0.6, 0.5, 1) forwards;
@@ -57,6 +101,17 @@
   --animate-status-in: status-in 0.9s ease-out both;
   --animate-ring-fill: ring-fill 1s linear both; /* duration set where it's used */
   --animate-dim-in: dim-in 0.4s ease-out both;
+  --animate-check-draw: check-draw 0.45s cubic-bezier(0.65, 0, 0.35, 1) both; /* on a path with pathLength 1 */
+
+  /* Console motion: quick and quiet. Presses 140ms, hovers 180ms, sidebar 220ms, dialogs 240ms. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
+
+  @keyframes check-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
 
   /* On a circle with pathLength 100: fills most of the way, the rest when the work is done */
   @keyframes ring-fill {
@@ -112,14 +167,404 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
+
+  /* Landing network: dashes running along a connection, and a ring breathing out of a node */
+  @keyframes rc-flow {
+    to { stroke-dashoffset: -28; }
+  }
+  @keyframes rc-pulse {
+    0% { opacity: 0.55; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.9); }
+  }
+  @keyframes rc-spin {
+    to { transform: rotate(360deg); }
+  }
 }
 
-/* Logo wordmark only. UI chrome uses solid colour. */
-@utility text-brand-gradient {
-  background-image: linear-gradient(90deg, #1d4fe0 0%, #1f8ff0 55%, #22d3e6 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* A phone tab bar (SidebarShell's bottomBar) is 4rem tall. Things floating outside the shell, like the
+   version chip, sit above it. */
+@media (max-width: 767px) {
+  html:has([data-bottom-bar]) {
+    --app-bottom-bar: 4rem;
+  }
+}
+
+/* Consoles: dialogs settle in from just below and fade back out; the phone drawer slides from the left.
+   Both use the native <dialog> top layer, so focus and Escape stay the browser's job.
+   Closed dialogs keep display: none; allow-discrete lets the exit play before it applies. */
+.rc-dialog,
+.rc-drawer {
+  transition:
+    opacity 180ms var(--ease-out-quart),
+    translate 240ms var(--ease-out-expo),
+    scale 240ms var(--ease-out-expo),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+.rc-dialog {
+  opacity: 0;
+  translate: 0 8px;
+  scale: 0.98;
+}
+.rc-dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+.rc-drawer {
+  translate: -100% 0;
+}
+.rc-drawer[open] {
+  translate: 0 0;
+}
+@starting-style {
+  .rc-dialog[open] {
+    opacity: 0;
+    translate: 0 8px;
+    scale: 0.98;
+  }
+  .rc-drawer[open] {
+    translate: -100% 0;
+  }
+}
+.rc-dialog::backdrop,
+.rc-drawer::backdrop {
+  background-color: rgb(17 24 32 / 0);
+  transition:
+    background-color 240ms var(--ease-out-quart),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+.rc-dialog[open]::backdrop,
+.rc-drawer[open]::backdrop {
+  background-color: rgb(17 24 32 / 0.4);
+}
+@starting-style {
+  .rc-dialog[open]::backdrop,
+  .rc-drawer[open]::backdrop {
+    background-color: rgb(17 24 32 / 0);
+  }
+}
+
+/* Consoles: thin scrollbars in the palette, and figures that line up in columns */
+.workspace {
+  scrollbar-color: var(--color-slate-300) transparent;
+  caret-color: var(--color-electric-ink);
+}
+.workspace * {
+  scrollbar-width: thin;
+}
+.workspace table {
+  font-variant-numeric: tabular-nums;
+}
+.workspace ::selection {
+  background: var(--color-electric);
+  color: #fff;
+}
+.workspace p {
+  text-wrap: pretty;
+}
+/* Headings in the consoles sit tighter than their size's default, as Space Grotesk wants */
+.workspace :is(h2, h3) {
+  letter-spacing: -0.02em;
+}
+/* Console 2.1: the landing's ground at work. A still hairline midnight grid (the hero mesh's pitch and weight)
+   behind the top of every page, fading out before the content gets dense. Lines only: no glow, no colour field. */
+.rc-grid {
+  background-image:
+    linear-gradient(to right, rgb(17 24 32 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(17 24 32 / 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: -1px -1px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
+}
+@media (max-width: 639px) {
+  .rc-grid {
+    background-size: 44px 44px;
+  }
+}
+
+/* The sidebar route: one electric line through the navigation, a station per link, and the relay point (the
+   logo's cantaloupe centre on a white ring) that travels to the current page. */
+.rc-relay {
+  transition:
+    translate 360ms var(--ease-out-expo),
+    opacity 200ms var(--ease-out-quart);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-relay {
+    transition: none;
+  }
+}
+
+/* Console 2.0: each page settles into the sheet as you arrive. Short and small, so it never holds up the task;
+   the page is fully visible from the first frame (opacity starts at 0.001 only to let the browser composite). */
+@media (prefers-reduced-motion: no-preference) {
+  .rc-page > * {
+    animation: rc-settle 320ms var(--ease-out-expo) backwards; /* backwards: nothing lingers once it lands, so fixed bars inside keep the viewport */
+  }
+}
+@keyframes rc-settle {
+  from {
+    opacity: 0.4;
+    translate: 0 6px;
+  }
+}
+
+/* A route that draws itself once, on a path with pathLength 1 (the CareRide hero card). The stops wait for it. */
+.rc-route-draw {
+  stroke-dasharray: 1;
+  animation: rcl-draw 0.85s cubic-bezier(0.65, 0, 0.35, 1) 100ms both;
+}
+.rc-stop-in {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rc-pop 0.5s var(--ease-out-expo) var(--stop-delay, 0ms) both;
+}
+@keyframes rc-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-route-draw,
+  .rc-stop-in {
+    animation: none;
+  }
+}
+
+/* Landing page: sections fade up once as they scroll into view (see Reveal.tsx).
+   Reduced motion shows everything in place straight away. */
+.rc-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.rc-reveal[data-revealed] {
+  opacity: 1;
+  transform: none;
+}
+.rc-flow {
+  stroke-dasharray: 3 11;
+  animation: rc-flow 1.6s linear infinite;
+}
+.rc-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rc-pulse 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.rc-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rc-spin 40s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .rc-flow,
+  .rc-pulse,
+  .rc-spin {
+    animation: none;
+  }
+}
+
+/* Landing page (v3). Everything is prefixed rcl- and only components/landing uses it.
+   The hero draws the platform once on load; later sections reveal once as they scroll into view.
+   Content is visible by default: reduced motion shows everything in its final place and nothing loops. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.rcl-page) {
+    scroll-behavior: smooth;
+  }
+}
+/* No one-word last lines in running text, and no lopsided small headings */
+.rcl-page p,
+.rcl-page dd {
+  text-wrap: pretty;
+}
+.rcl-page h3 {
+  text-wrap: balance;
+}
+.rcl-page ::selection {
+  background: var(--color-electric);
+  color: #fff;
+}
+.rcl-enter {
+  animation: rcl-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+/* Opacity only: a transform would make the sticky header the containing block for its fixed menu */
+.rcl-fade {
+  animation: rcl-fade 0.6s ease-out both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+.rcl-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.rcl-reveal[data-revealed] {
+  opacity: 1;
+  transform: none;
+}
+/* Hero ecosystem: the workspace settles first, then each connector draws out and its card settles in,
+   each at its own --enter-delay. */
+.rcl-card {
+  animation: rcl-settle 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+.rcl-route {
+  stroke-dasharray: 1;
+  animation: rcl-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+/* "together." arrives last and a little more slowly, settling onto its baseline from a slight tilt */
+.rcl-flourish {
+  transform-origin: left bottom;
+  animation: rcl-flourish 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+/* A relay point that travels a hero connector once, then fades: coordination, shown a single time */
+.rcl-traveller {
+  offset-rotate: 0deg;
+  animation: rcl-travel 1.1s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+/* The Relay Loop: each layer drifts with the pointer by its --depth (offsets set in HeroProductEcosystem) */
+.rcl-depth {
+  translate: calc(var(--px, 0) * var(--depth, 0) * 1em) calc(var(--py, 0) * var(--depth, 0) * 1em);
+  transition: translate 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* A station lights and lifts as the relay point runs under it (class added by useRelay). No fill mode, so hover
+   still works afterwards. */
+.rcl-pass {
+  animation: rcl-pass 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* The workspace showcase: the chosen role's picture settles in when its tab is picked */
+.rcl-swap {
+  animation: rcl-settle 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* The capability headings sit under the sticky header when the hero cards link to them */
+.rcl-page [id^='cap-'] {
+  scroll-margin-top: 7rem;
+}
+/* A line that draws across once its parent is revealed (How it works) */
+.rcl-line {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s;
+}
+[data-revealed] .rcl-line {
+  transform: none;
+}
+@media (max-width: 1023px) {
+  .rcl-line {
+    transform: scaleY(0);
+    transform-origin: center top;
+  }
+}
+/* The hero mesh (HeroMesh.tsx) fades in from under the header and out into the next section, and from xl
+   steps back behind the headline, so it frames the copy and gathers around the Relay Loop. Below xl the copy
+   comes first, so the mesh stays faint behind it and comes up to full strength around the loop. */
+.rcl-mesh {
+  mask-image: linear-gradient(to bottom, transparent 0, rgb(0 0 0 / 0.4) 140px, rgb(0 0 0 / 0.45) 40%, #000 60%, #000 85%, transparent 100%);
+}
+@media (min-width: 1280px) {
+  .rcl-mesh {
+    mask-image:
+      linear-gradient(to bottom, transparent 0, #000 140px, #000 72%, transparent 100%),
+      linear-gradient(to right, rgb(0 0 0 / 0.35) 0%, rgb(0 0 0 / 0.55) 30%, #000 52%);
+    mask-composite: intersect;
+  }
+}
+/* The hero CTA capsule: a hairline of contact and a soft, wide shadow, so it sits on porcelain as one object */
+.rcl-cta-capsule {
+  box-shadow:
+    0 1px 2px rgb(17 24 32 / 0.04),
+    0 14px 32px -18px rgb(17 24 32 / 0.25);
+}
+/* Hero ecosystem cards: the same soft lift, a touch deeper while their link is hovered or focused */
+.rcl-card-lift {
+  box-shadow:
+    0 1px 2px rgb(17 24 32 / 0.04),
+    0 10px 28px -14px rgb(17 24 32 / 0.16);
+}
+.group:hover > .rcl-card-lift,
+.group:focus-visible > .rcl-card-lift {
+  box-shadow:
+    0 1px 2px rgb(17 24 32 / 0.05),
+    0 18px 36px -16px rgb(17 24 32 / 0.24);
+}
+/* Raised surfaces: a soft, offset shadow that deepens a little on hover */
+.rcl-lift {
+  box-shadow:
+    0 1px 2px rgb(17 24 32 / 0.04),
+    0 12px 32px -12px rgb(17 24 32 / 0.14);
+}
+.rcl-lift-lg {
+  box-shadow:
+    0 1px 2px rgb(17 24 32 / 0.05),
+    0 40px 80px -32px rgb(17 24 32 / 0.28);
+}
+@keyframes rcl-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rcl-settle {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes rcl-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes rcl-flourish {
+  from { opacity: 0; transform: translateY(0.3em) rotate(-4deg); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes rcl-travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  15%, 80% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+@keyframes rcl-fade {
+  from { opacity: 0; }
+}
+@keyframes rcl-pass {
+  25% { border-color: var(--color-electric); translate: 0 -0.25em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcl-enter,
+  .rcl-fade,
+  .rcl-swap,
+  .rcl-card,
+  .rcl-route,
+  .rcl-flourish {
+    animation: none;
+  }
+  .rcl-traveller {
+    display: none;
+  }
+  .rcl-depth {
+    translate: none;
+  }
+  .rcl-pass {
+    animation: none;
+  }
+  .rcl-reveal,
+  .rcl-line {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 @layer base {
@@ -154,11 +599,13 @@
 
   body {
     @apply font-sans text-slate-800 antialiased;
+    font-optical-sizing: auto;
     @apply bg-canvas;
   }
 
   h1, h2, h3 {
     @apply font-display text-ink;
+    text-wrap: balance;
   }
 
   ::selection {
@@ -167,22 +614,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto !important; }
-  /* Looping and travelling motion stops. State changes keep a short fade so they are still noticed. */
-  .animate-float, .animate-travel-x, .animate-travel-y, .animate-confetti, .animate-shake, .animate-ring-fill {
-    animation: none !important;
-  }
-  .animate-fade-up, .animate-step-forward, .animate-step-back, .animate-pop, .animate-status-in, .animate-dim-in {
-    animation: reduced-fade 0.2s ease-out both !important;
-  }
   *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-
-@keyframes reduced-fade {
-  from { opacity: 0.3; }
-  to { opacity: 1; }
 }
 
 @media print {
@@ -196,14 +633,6 @@ html.native-keyboard-open .native-bottom-chrome {
 }
 
 /* Same open-state styling, written out so it still applies if the open variant is dropped. */
-details.faq[open] {
-  border-color: var(--color-brand-300);
-}
-details.faq[open] .faq-icon {
-  rotate: 45deg;
-  background-color: var(--color-brand-600);
-  color: white;
-}
 details[open] > summary .details-chevron {
   rotate: 180deg;
 }

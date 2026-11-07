@@ -1,7 +1,7 @@
 import { RefreshCw } from 'lucide-react'
 import type { Ride, RideOffer } from '../types'
 import { useDriverLocation } from '../hooks/useMaps'
-import { RideCard } from './RideCard'
+import { RideCard } from '../modules/careride'
 import { primaryButton, secondaryButton } from './ui'
 import { formatTime } from '../logic/formatTime'
 import { isRealAddress } from '../logic/maps'

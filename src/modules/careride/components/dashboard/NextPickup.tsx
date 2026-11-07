@@ -73,7 +73,7 @@ export function NextPickup({ ride, driverName, vehicle, now }: Props) {
               <CarFront className="mt-0.5 h-4 w-4 shrink-0 text-aqua-300" aria-hidden />
               <span>
                 {acceptedMessage(ride, driverName)}
-                {vehicle && <span className="block text-white/60">{vehicle}</span>}
+                {vehicle && <span className="block text-white/80">{vehicle}</span>}
               </span>
             </p>
           )}

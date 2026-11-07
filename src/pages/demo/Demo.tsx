@@ -56,7 +56,7 @@ export function Demo() {
           {SLIDES[slide].kicker}
         </div>
         <div className="flex items-center justify-self-end">
-          <span className="mr-2 text-sm font-semibold text-slate-400">
+          <span className="mr-2 text-sm font-semibold text-slate-500">
             {slide + 1} / {SLIDES.length}
           </span>
           <button
@@ -96,7 +96,7 @@ export function Demo() {
             key={s.id}
             type="button"
             onClick={() => update({ slide: i, step: 0 })}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${i === slide ? 'bg-ink text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-ink'}`}
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${i === slide ? 'bg-ink text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-ink'}`}
             aria-current={i === slide ? 'step' : undefined}
           >
             {s.label}

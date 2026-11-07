@@ -71,7 +71,7 @@ export function IncomingRequests() {
             </Link>
           )}
         </div>
-        <button type="button" className="rounded-lg p-1 text-slate-500 hover:bg-slate-100" aria-label="Close" onClick={() => setAnswered(undefined)}>
+        <button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Close" onClick={() => setAnswered(undefined)}>
           <X className="h-5 w-5" />
         </button>
       </div>

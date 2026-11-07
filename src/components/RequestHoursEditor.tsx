@@ -171,7 +171,7 @@ export function RequestHoursEditor({ value, onChange, error }: Props) {
                     </button>
                   </div>
                 ) : (
-                  <span className="hidden text-right text-sm text-slate-400 @2xl:block">No requests</span>
+                  <span className="hidden text-right text-sm text-slate-500 @2xl:block">No requests</span>
                 )}
               </li>
             )

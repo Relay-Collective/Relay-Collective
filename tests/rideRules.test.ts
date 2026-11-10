@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { hoursOn, ALL_DAY } from '../src/logic/requestHours'
+import { hoursOn, ALL_DAY, DEFAULT_REQUEST_HOURS, isWithinRequestHours } from '../src/logic/requestHours'
 import { matchDrivers } from '../src/logic/matchDrivers'
 import {
   canMarkNoShow,
   canWaitForDrivers,
+  driversToAddToOpenRide,
   driversToAsk,
   editSendsRideAgain,
   isExpired,
@@ -126,6 +127,95 @@ test('a preferred driver is asked alone, and someone already asked is skipped', 
     driversToAsk(preferred, house, [frank, maya], asked).map((d) => d.id),
     ['frank'],
   )
+})
+
+// Stakeholder testing, 2026-11-09: a request already out to one driver never reached drivers who became able to take
+// it afterwards (approved later, request hours turned on, city added), so only the first driver ever saw it.
+test('drivers who can take a request that is already out are added to it', () => {
+  const out = ride({ status: 'OFFERED' })
+  const firstAsked = [offer({ driverId: 'frank' })]
+  const drivers = [driver('frank'), driver('stakeholder'), driver('brand-new')]
+  assert.deepEqual(
+    driversToAddToOpenRide(out, house, drivers, firstAsked).map((d) => d.id),
+    ['stakeholder', 'brand-new'],
+  )
+})
+
+test('every driver with the same settings is asked about the same request, however late they became eligible', () => {
+  const out = ride({ status: 'OFFERED' })
+  const offers = [offer({ driverId: 'frank' })]
+  const twins = ['frank', 'a', 'b', 'c'].map((id) => driver(id))
+  const added = driversToAddToOpenRide(out, house, twins, offers).map((d) => d.id)
+  // Everyone who isn't already deciding is asked; nobody with identical settings is left out
+  assert.deepEqual([...offers.map((o) => o.driverId), ...added].sort(), twins.map((d) => d.id).sort())
+})
+
+test('drivers who still cannot take it, or already answered, are not added to a request that is out', () => {
+  const out = ride({ status: 'OFFERED' })
+  const offers = [offer({ driverId: 'frank' }), offer({ id: 'o2', driverId: 'declined', status: 'DECLINED' })]
+  const drivers = [
+    driver('frank'),
+    driver('declined'),
+    driver('pending', { status: 'PENDING' }),
+    driver('off', { requestHours: never }),
+    driver('richmond', { serviceCities: ['Richmond'] }),
+    driver('busy'),
+  ]
+  assert.deepEqual(driversToAddToOpenRide(out, house, drivers, offers, ['busy']), [])
+})
+
+test('nobody joins while a preferred driver is being asked alone, or once the ride is no longer out', () => {
+  const returnTrip = ride({ status: 'OFFERED', preferredDriverId: 'frank' })
+  const drivers = [driver('frank'), driver('maya')]
+  assert.deepEqual(driversToAddToOpenRide(returnTrip, house, drivers, [offer({ driverId: 'frank' })]), [])
+  // Once the preferred driver has said no, everyone else can be asked
+  assert.deepEqual(
+    driversToAddToOpenRide(returnTrip, house, drivers, [offer({ driverId: 'frank', status: 'DECLINED' })]).map((d) => d.id),
+    ['maya'],
+  )
+  for (const status of ['SEARCHING', 'ACCEPTED', 'NEEDS_ATTENTION', 'CANCELLED'] as const) {
+    assert.deepEqual(driversToAddToOpenRide(ride({ status }), house, drivers, []), [], status)
+  }
+})
+
+test('drivers with identical settings all match, however their account was made or how long ago', () => {
+  const ways: Partial<Driver>[] = [
+    {}, // driver sign-up
+    { appliedAsVolunteer: true }, // general volunteer who applied from their workspace
+    { background: 'TAXI' },
+    { background: 'RIDESHARE' },
+    { background: 'ORG_DRIVER', orgId: 'provider' }, // added by a transport provider
+    { reviewedAt: '2026-01-01T00:00:00.000Z' }, // an account from long before today
+  ]
+  const drivers = ways.map((extra, i) => driver(`d${i}`, extra))
+  for (const type of ['ON_DEMAND', 'SCHEDULED'] as const) {
+    const ids = matchDrivers(ride({ type }), house, drivers, [], at).map((d) => d.id)
+    assert.deepEqual(ids.sort(), drivers.map((d) => d.id).sort(), type)
+    // The order they're stored in doesn't decide who is asked
+    const reversed = matchDrivers(ride({ type }), house, [...drivers].reverse(), [], at).map((d) => d.id)
+    assert.deepEqual(reversed.sort(), ids)
+  }
+})
+
+test('everyone who fits is asked at once, not only the first match', () => {
+  const twins = [driver('mine'), driver('stakeholder'), driver('new-account')]
+  assert.deepEqual(
+    driversToAsk(ride(), house, twins, []).map((d) => d.id).sort(),
+    ['mine', 'new-account', 'stakeholder'],
+  )
+})
+
+test('a busy driver is skipped, and only that driver', () => {
+  const twins = [driver('busy'), driver('free')]
+  assert.deepEqual(driversToAsk(ride(), house, twins, [], ['busy']).map((d) => d.id), ['free'])
+})
+
+test('new drivers start with weekday daytime request hours, so evenings and weekends get no requests', () => {
+  // Local times, like the app: Monday 9 November 2026
+  assert.equal(isWithinRequestHours(DEFAULT_REQUEST_HOURS, new Date(2026, 10, 9, 10, 0)), true, 'Monday 10 AM')
+  assert.equal(isWithinRequestHours(DEFAULT_REQUEST_HOURS, new Date(2026, 10, 9, 18, 0)), false, 'Monday 6 PM')
+  assert.equal(isWithinRequestHours(DEFAULT_REQUEST_HOURS, new Date(2026, 10, 8, 10, 0)), false, 'Sunday 10 AM')
+  assert.equal(isWithinRequestHours(anytime, new Date(2026, 10, 9, 18, 0)), true, 'an any-time driver still gets it')
 })
 
 test('a scheduled ride can wait for a driver whose request hours are closed right now', () => {

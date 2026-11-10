@@ -63,7 +63,7 @@ npm run test:e2e
 
 ## Unit tests
 
-- **Where:** `tests/*.test.ts`, one file per area (ride rules, ride history, request, volunteer and admin summaries, memberships, onboarding, feedback, account deletion, the CareRide module).
+- **Where:** `tests/*.test.ts`, one file per area (ride rules and who a request reaches, ride history, request, volunteer and admin summaries, memberships, onboarding, feedback, account deletion, the CareRide module).
 - **How:** Node's built-in test runner, run through `tsx` so tests import TypeScript directly. Use `node:test` and `node:assert/strict`.
 - **Add a test:** create `tests/<area>.test.ts`. `npm test` and CI pick it up automatically. Test pure rules directly, and use `src/services/mockService.ts` or `seed.ts` when a test needs data. Don't use real accounts, network calls, or the real clock: pass a fixed `now`, as the existing ride-rule tests do.
 
@@ -100,7 +100,7 @@ How [`tests/db/harness.ts`](../tests/db/harness.ts) builds each test database:
 3. Applies every file in `supabase/migrations/` in filename order. `pg_cron` lines are removed, because PGlite doesn't have the extension.
 4. `as(db, actor, …)` runs a query in its own transaction as `anon` or `authenticated`, with that person's JWT subject, the way PostgREST does. Row-level security and `security definer` functions apply as they do in production.
 
-The tests cover organization membership (discovery, join requests, approval, roles, isolation between organizations, invitations), permanent account deletion (who may delete, safeguards, the retryable job, anonymization), and product feedback (who can send and read it, admin triage).
+The tests cover organization membership (discovery, join requests, approval, roles, isolation between organizations, invitations), permanent account deletion (who may delete, safeguards, the retryable job, anonymization), product feedback (who can send and read it, admin triage), and ride dispatch in [`rideDispatch.test.ts`](../tests/db/rideDispatch.test.ts): every approved driver a request fits is asked, however and whenever their account was made, including drivers approved or changing their hours or cities after it went out; the unfinished-ride rule; request hours read in Vancouver time; and a driver never seeing a request they weren't sent.
 
 **Limits compared with real Supabase:** no PostgREST, Auth server, Storage server, Realtime or `pg_cron`; Edge Functions don't run; the stub only imitates the Supabase schemas the migrations use. A migration that passes here can still fail on the hosted project because of something the stub doesn't model. `npm run db:push` against the real project remains a manual, reviewed step, and CI never runs it.
 

@@ -64,7 +64,7 @@ await rm(otaDir, { recursive: true, force: true })
 const version = `1.0.0-${gitVersion()}`
 const zipName = `${version}.zip`
 const { stdout, stderr } = await runCapgoZip([
-  'org.careride.app',
+  'org.relaycollective.app',
   '--path',
   distDir,
   '--bundle',

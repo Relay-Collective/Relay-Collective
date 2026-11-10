@@ -30,7 +30,7 @@ export function RideProgress({ status }: { status: RideStatus }) {
             >
               {reached && <Check className="h-2.5 w-2.5" strokeWidth={4} />}
             </span>
-            <span className={`whitespace-nowrap px-0.5 text-[11px] font-semibold ${reached ? 'text-white' : 'text-white/50'}`}>
+            <span className={`whitespace-nowrap px-0.5 text-xs font-semibold ${reached ? 'text-white' : 'text-white/75'}`}>
               {step}
               <span className="sr-only">{reached ? ' (done)' : ''}</span>
             </span>

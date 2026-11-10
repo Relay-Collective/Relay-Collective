@@ -327,7 +327,7 @@ export function DriverTripActions({ ride, house, driverId, onDone, onCompleted, 
               )}
               <span
                 className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                  done ? 'bg-emerald-700 text-white' : now ? 'bg-brand-600 text-white ring-[3px] ring-brand-100' : 'bg-slate-100 text-slate-400'
+                  done ? 'bg-emerald-700 text-white' : now ? 'bg-brand-600 text-white ring-[3px] ring-brand-100' : 'bg-slate-100 text-slate-500'
                 }`}
                 aria-hidden
               >
@@ -335,7 +335,7 @@ export function DriverTripActions({ ride, house, driverId, onDone, onCompleted, 
               </span>
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex flex-wrap items-center justify-between gap-x-3">
-                  <h3 className={`font-semibold ${now ? 'text-lg text-ink' : done ? 'text-ink' : 'text-slate-400'}`}>
+                  <h3 className={`font-semibold ${now ? 'text-lg text-ink' : done ? 'text-ink' : 'text-slate-500'}`}>
                     {step.title}
                     <span className="sr-only">{done ? ' (done)' : now ? ' (current step)' : ' (later)'}</span>
                   </h3>

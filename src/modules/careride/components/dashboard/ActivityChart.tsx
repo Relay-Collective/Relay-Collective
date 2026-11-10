@@ -134,7 +134,7 @@ export function ActivityChart({ days, today, title, subtitle }: Props) {
           </div>
 
           {/* X axis: a label each week, lined up with today */}
-          <div className="mt-2 flex text-[11px] font-medium text-slate-500" aria-hidden>
+          <div className="mt-2 flex text-xs font-medium text-slate-500" aria-hidden>
             {days.map((d, i) => (
               <span key={d.start} className="relative h-4 flex-1">
                 {(i - today) % 7 === 0 && (

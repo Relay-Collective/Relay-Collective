@@ -102,3 +102,36 @@ test('an approved driver can change their vehicle description, not how many peop
   assert.equal(pending.seats, 2)
   assert.equal(pending.wheelchairAccessible, true)
 })
+
+// Stakeholder testing, 2026-11-09: a request reached the driver who could take it at booking, but never a driver approved
+// (or whose settings changed) while it was out. The demo backend must ask them too, like the database does.
+test('a driver approved after a request went out is asked about it too', async () => {
+  const anyTime = Array.from({ length: 7 }, () => ({ from: '00:00', to: '23:59' }))
+  await mockService.signIn('jordan@careride.demo', PASSWORD)
+  await mockService.updateDriver('d-jordan', { requestHours: anyTime, serviceCities: ['Richmond'] })
+
+  await mockService.signIn('richmond@careride.demo', PASSWORD)
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60_000).toISOString()
+  const booked = await mockService.requestRide({
+    ...booking(tomorrow),
+    type: 'SCHEDULED',
+    orgId: 'org-richmond',
+    houseId: 'house-richmond',
+    requestedBy: 'u-richmond',
+    pickupAddress: '7000 Westminster Hwy, Richmond',
+  })
+  assert.equal(booked.status, 'OFFERED')
+  const before = await mockService.listOffersForRide(booked.id)
+  assert.ok(before.some((o) => o.driverId === 'd-frank' && o.status === 'PENDING'), 'the driver eligible at booking is asked')
+  assert.ok(!before.some((o) => o.driverId === 'd-jordan'), 'a driver still pending review is not')
+
+  await mockService.signIn('admin@careride.com', 'abcd1234')
+  await mockService.setDriverStatus('d-jordan', 'APPROVED')
+
+  await mockService.signIn('jordan@careride.demo', PASSWORD)
+  const jordans = await mockService.listMyOffers('d-jordan')
+  assert.ok(jordans.some((o) => o.rideId === booked.id), 'the newly approved driver now sees the request')
+  await mockService.signIn('frank@careride.demo', PASSWORD)
+  const franks = await mockService.listMyOffers('d-frank')
+  assert.ok(franks.some((o) => o.rideId === booked.id), 'the first driver keeps their request')
+})

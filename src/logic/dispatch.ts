@@ -43,6 +43,23 @@ export function driversToAsk(
   return preferred ? [preferred] : matches
 }
 
+// Drivers to add to a request that's already out: anyone who can take it now but wasn't asked when it went out,
+// because they were approved since, their request hours opened, or they started serving the pickup city.
+// They're asked alongside everyone still deciding. A preferred driver being asked alone first keeps it to themselves.
+// Matches private.ask_new_drivers() in the database.
+export function driversToAddToOpenRide(
+  ride: Ride,
+  house: House | undefined,
+  drivers: Driver[],
+  offers: RideOffer[],
+  busyDriverIds: string[] = [],
+): Driver[] {
+  if (ride.status !== 'OFFERED') return []
+  const preferredDeciding = offers.some((o) => o.rideId === ride.id && o.driverId === ride.preferredDriverId && o.status === 'PENDING')
+  if (preferredDeciding) return []
+  return driversToAsk(ride, house, drivers, offers, busyDriverIds)
+}
+
 // An on-demand ride nobody has accepted after this long is called off, so the partner can make other plans.
 export const ON_DEMAND_GIVE_UP_MINUTES = 30
 

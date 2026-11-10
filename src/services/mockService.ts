@@ -7,6 +7,7 @@ import {
   UNDO_FINISH_MINUTES,
   canMarkNoShow,
   canWaitForDrivers,
+  driversToAddToOpenRide,
   driversToAsk,
   editSendsRideAgain,
   isExpired,
@@ -275,6 +276,11 @@ function dispatch(db: Database, ride: Ride): void {
     else ride.status = 'NEEDS_ATTENTION'
     return
   }
+  sendOffers(db, ride, drivers)
+  ride.status = 'OFFERED'
+}
+
+function sendOffers(db: Database, ride: Ride, drivers: Driver[]): void {
   const sentAt = now()
   for (const driver of drivers) {
     db.offers.push({
@@ -286,7 +292,12 @@ function dispatch(db: Database, ride: Ride): void {
       expiresAt: offerExpiry(ride.type),
     })
   }
-  ride.status = 'OFFERED'
+}
+
+// Asks drivers who can take a request that's already out but weren't asked when it went out (see driversToAddToOpenRide)
+function askNewDrivers(db: Database, ride: Ride): void {
+  const house = db.houses.find((h) => h.id === ride.houseId)
+  sendOffers(db, ride, driversToAddToOpenRide(ride, house, db.drivers, db.offers, busyDriverIds(db, ride)))
 }
 
 // Moves a driver's open work to other drivers. Throws if a client is in the car.
@@ -310,8 +321,8 @@ function dispatchIfUnanswered(db: Database, rideId: string): void {
   if (ride?.status === 'OFFERED' && !hasPendingOffers(db, rideId)) dispatch(db, ride)
 }
 
-// Moves timed-out offers on, asks drivers whose request hours just opened,
-// and cancels rides nobody accepted in time (see noDriverDeadline).
+// Moves timed-out offers on, asks drivers whose request hours just opened (or who were approved, or started
+// serving the pickup city, since a request went out), and cancels rides nobody accepted in time (see noDriverDeadline).
 function checkDeadlines(db: Database): void {
   const expired = db.offers.filter((o) => isExpired(o))
   for (const offer of expired) offer.status = 'EXPIRED'
@@ -327,6 +338,8 @@ function checkDeadlines(db: Database): void {
         ride.type === 'ON_DEMAND' ? 'No driver accepted in time.' : 'No driver accepted before the pickup time.'
     } else if (ride.status === 'SEARCHING') {
       dispatch(db, ride)
+    } else if (ride.status === 'OFFERED') {
+      askNewDrivers(db, ride)
     }
   }
 }

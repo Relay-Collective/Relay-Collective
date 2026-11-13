@@ -9,6 +9,9 @@ import { useLoadable } from './hooks/useLoadable'
 import { HOME_FOR } from './logic/homeFor'
 import { homePath, onboardingPaths } from './onboarding/routing'
 import { dataService } from './services'
+import { WebAppChrome } from './pwa/WebAppChrome'
+import { InstallGuide } from './pwa/Install'
+import { isInstalled } from './pwa/browser'
 import { NativeBridge } from './native/NativeBridge'
 import { isNative } from './native/platform'
 import { adminPaths } from './admin/paths'
@@ -49,7 +52,7 @@ import { Demo } from './pages/demo/Demo'
 import { MyFeedback } from './pages/feedback/MyFeedback'
 import { MyFeedbackDetail } from './pages/feedback/MyFeedbackDetail'
 import { Bookings } from './pages/org/Bookings'
-import { CareRideLayout, Dashboard, Destinations, RequestRide, Requests, RideDetail } from './modules/careride'
+import { CareRideLayout, Dashboard, Destinations, Notifications, NotificationsEntry, RequestRide, Requests, RideDetail } from './modules/careride'
 import { Drivers } from './pages/org/Drivers'
 import { OrgHome } from './pages/org/OrgHome'
 import { Help } from './pages/workspace/Help'
@@ -89,9 +92,9 @@ function RoleHome() {
 // The website keeps the marketing page at "/". The app skips it: signed-in people
 // go to their role home, everyone else to sign-in. Native RequireAuth also uses
 // /signin so unsigned users are not bounced back to "/" and into a redirect loop.
-function NativeEntry() {
+function AppEntry() {
   const { ready, identity } = useApp()
-  if (!ready) return null
+  if (!ready) return <FullPageLoader />
   return <Navigate to={identity ? '/home' : '/signin'} replace />
 }
 
@@ -120,8 +123,12 @@ export default function App() {
     // Feedback & Suggestions is one dialog for the whole signed-in app, so every page (and What's New) can open it
     <FeedbackProvider>
       <NativeBridge />
+      <WebAppChrome />
       <Routes>
-        <Route path="/" element={isNative ? <NativeEntry /> : <Landing />} />
+        <Route path="/" element={(isNative || isInstalled()) ? <AppEntry /> : <Landing />} />
+        <Route path="/launch" element={<AppEntry />} />
+        <Route path="/install/:platform" element={<InstallGuide />} />
+        <Route path="/install" element={<InstallGuide />} />
         <Route path="/signin" element={<SignIn />} />
         {/* Right after sign-in: says so plainly, then one way into the workspace */}
         <Route path={signedInPath} element={<SignedIn />} />
@@ -144,6 +151,7 @@ export default function App() {
           <Route path={onboardingPaths.joinStatus} element={<JoinRequestStatus />} />
 
           <Route element={<RequireAccount />}>
+            <Route path="/notifications" element={<NotificationsEntry />} />
             <Route path="/home" element={<RoleHome />} />
             {/* Partner organizations: the organization workspace, with CareRide (transportation) as its first module */}
             <Route element={<RequireRole roles={['PARTNER']} />}>
@@ -164,6 +172,7 @@ export default function App() {
                       <Route index element={<Dashboard />} />
                       <Route path="new" element={<RequestRide />} />
                       <Route path="rides/:id" element={<RideDetail />} />
+                      <Route path="notifications" element={<Notifications />} />
                       <Route path="destinations" element={<Destinations />} />
                     </Route>
                   </Route>
@@ -204,6 +213,7 @@ export default function App() {
               {/* Transport providers: hidden from sign-up for now, but existing ones still work */}
               <Route element={<RequireRole roles={['ORG_ADMIN']} />}>
                 <Route path="/org" element={<OrgHome />} />
+                <Route path="/org/notifications" element={<Notifications />} />
                 <Route path="/org/drivers" element={<Drivers />} />
                 <Route path="/org/bookings" element={<Bookings />} />
                 <Route path="/org/feedback" element={<MyFeedback />} />
@@ -227,6 +237,7 @@ export default function App() {
                 <Route path={`${volunteerPaths.feedback}/:id`} element={<MyFeedbackDetail />} />
                 {/* CareRide driving (CARERIDE_PATHS in src/volunteer/navigation.ts) */}
                 <Route element={<RequireRole roles={['DRIVER']} />}>
+                  <Route path={volunteerPaths.notifications} element={<Notifications />} />
                   <Route path={volunteerPaths.opportunities} element={<Opportunities />} />
                   <Route path={volunteerPaths.commitments} element={<Commitments />} />
                   <Route path={volunteerPaths.transport} element={<VolunteerTransportation />} />
@@ -251,7 +262,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {/* After the page in the DOM, so keyboard users reach Skip to content first */}
-      {pathname !== '/demo' && <VersionBadge />}
+      {pathname !== '/demo' && !pathname.startsWith('/install') && <VersionBadge />}
     </FeedbackProvider>
   )
 }

@@ -36,7 +36,7 @@ function Panel({ id, title, children }: { id: string; title: string; children: R
 }
 
 // Account settings that work today. Nothing here is a switch that doesn't save: where something
-// isn't supported yet (notification choices, changing email), the page says so instead.
+// isn't supported yet (such as changing email), the page says so instead.
 export function Settings() {
   const { currentUser, signOut } = useApp()
   const { driver } = useVolunteer()
@@ -91,7 +91,11 @@ export function Settings() {
                   <li>Replies to feedback you send show in My feedback, with a count beside it in the menu.</li>
                 </ul>
               )}
-              <Notice tone="info">Email, text, and push notifications aren't available yet, so there are no notification choices to set.</Notice>
+              {driver && (
+                <Link to={volunteerPaths.notifications} className={secondaryButton}>
+                  Open CareRide notifications <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              )}
             </div>
           </Panel>
 

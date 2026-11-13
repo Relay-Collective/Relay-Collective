@@ -5,6 +5,7 @@ const TRANSPORT = `${ROOT}/transportation`
 
 export const volunteerPaths = {
   overview: ROOT,
+  notifications: `${ROOT}/notifications`,
   opportunities: `${ROOT}/opportunities`,
   commitments: `${ROOT}/commitments`,
   transport: TRANSPORT,

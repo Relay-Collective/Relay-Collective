@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, MessageSquarePlus, MessagesSquare, Repeat, Trash2 } from 'lucide-react'
+import { ChevronDown, LogOut, MessageSquarePlus, MessagesSquare, Repeat, Smartphone, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { myFeedbackPaths } from '../feedback/paths'
@@ -6,12 +6,16 @@ import { useApp } from '../hooks/useApp'
 import { useFeedback } from '../hooks/useFeedback'
 import { ROLE_LABELS } from '../logic/homeFor'
 import { initials } from '../logic/initials'
+import { isNative } from '../native/platform'
+import { preferredInstallPath } from '../pwa/browser'
+import { useInstalled } from '../pwa/useInstall'
 import { BuildStamp } from '../native/BuildStamp'
 import { DeleteMyAccount } from './DeleteMyAccount'
 import { ROLE_TONE, tones } from './ui'
 
 export function AccountMenu() {
   const { currentUser, signOut } = useApp()
+  const installed = useInstalled()
   const { openFeedback } = useFeedback()
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -57,7 +61,7 @@ export function AccountMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-72 origin-top-right animate-fade-up rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[var(--shadow-lift)] [animation-duration:200ms]"
+          className="absolute right-0 z-40 mt-2 max-h-[calc(100dvh-6rem-var(--safe-top)-var(--safe-bottom))] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto origin-top-right animate-fade-up rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[var(--shadow-lift)] [animation-duration:200ms]"
         >
           <div className="px-3 py-2">
             <p className="truncate font-semibold text-ink">{currentUser.name}</p>
@@ -74,7 +78,7 @@ export function AccountMenu() {
               setOpen(false)
               openFeedback()
             }}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center gap-2 rounded-xl min-h-11 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <MessageSquarePlus className="h-4 w-4" aria-hidden /> Send feedback
           </button>
@@ -82,7 +86,7 @@ export function AccountMenu() {
             to={myFeedbackPaths(currentUser.role).list}
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-xl min-h-11 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <MessagesSquare className="h-4 w-4" aria-hidden /> {currentUser.role === 'PLATFORM_ADMIN' ? 'All feedback' : 'My feedback'}
           </Link>
@@ -95,7 +99,7 @@ export function AccountMenu() {
                 setOpen(false)
                 setDeleting(true)
               }}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+              className="flex w-full items-center gap-2 rounded-xl min-h-11 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
             >
               <Trash2 className="h-4 w-4" aria-hidden /> Delete account
             </button>
@@ -104,7 +108,7 @@ export function AccountMenu() {
             to="/signin"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-2 rounded-xl min-h-11 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <Repeat className="h-4 w-4" aria-hidden /> Switch account
           </Link>
@@ -112,10 +116,16 @@ export function AccountMenu() {
             type="button"
             role="menuitem"
             onClick={() => void signOut()}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+            className="flex w-full items-center gap-2 rounded-xl min-h-11 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
           >
             <LogOut className="h-4 w-4" aria-hidden /> Sign out
           </button>
+          {!isNative && !installed && (
+            <Link to={preferredInstallPath()} role="menuitem" onClick={() => setOpen(false)}
+              className="flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <Smartphone className="size-4" aria-hidden /> Install Relay
+            </Link>
+          )}
           <BuildStamp className="mt-1 border-t border-slate-100 px-3 py-2" />
         </div>
       )}

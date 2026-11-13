@@ -24,7 +24,7 @@ export function ShellHeader({ onOpenMenu, menuOpen, context, title, children }: 
         scrolled ? 'border-slate-200/80 bg-white' : 'border-transparent bg-transparent'
       }`}
     >
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-10">
+      <div className="flex h-16 items-center gap-2 pl-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))] sm:gap-3 sm:px-6 lg:px-10">
         <button
           type="button"
           onClick={onOpenMenu}

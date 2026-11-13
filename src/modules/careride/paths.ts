@@ -11,6 +11,7 @@ export const careRidePaths = {
   transport: TRANSPORT,
   requests: REQUESTS,
   newRide: `${TRANSPORT}/new`,
+  notifications: `${TRANSPORT}/notifications`,
   destinations: `${TRANSPORT}/destinations`,
   ride: (rideId: string) => `${TRANSPORT}/rides/${rideId}`,
   // The booking form also edits a ride, books its return, or starts again from an old one

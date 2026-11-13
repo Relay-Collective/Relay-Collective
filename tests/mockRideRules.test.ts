@@ -21,7 +21,7 @@ function memoryStorage() {
 Object.defineProperty(globalThis, 'localStorage', { value: memoryStorage(), configurable: true })
 Object.defineProperty(globalThis, 'sessionStorage', { value: memoryStorage(), configurable: true })
 
-const { mockService } = (await import('../src/services/mockService')) as { mockService: DataService }
+const { mockService, resetDemoData } = await import('../src/services/mockService')
 
 const PASSWORD = 'careride'
 
@@ -134,4 +134,33 @@ test('a driver approved after a request went out is asked about it too', async (
   await mockService.signIn('frank@careride.demo', PASSWORD)
   const franks = await mockService.listMyOffers('d-frank')
   assert.ok(franks.some((o) => o.rideId === booked.id), 'the first driver keeps their request')
+})
+
+test('CareRide inbox routes a new offer and confirmation to separate signed-in accounts', async () => {
+  resetDemoData()
+  await mockService.signIn('belkin@careride.demo', PASSWORD)
+  const booked = await mockService.requestRide(booking(new Date().toISOString()))
+  await mockService.signIn('frank@careride.demo', PASSWORD)
+  const item = (await mockService.loadNotifications()).items.find((note) => note.ride_id === booked.id)
+  assert.equal(item?.kind, 'OFFER')
+  assert.equal(item.read_at, null)
+  assert.equal(await mockService.countUnreadNotifications(), 1)
+  assert.doesNotMatch(JSON.stringify(item), /1081 Burrard|Alex/)
+  const offer = (await mockService.listMyOffers('d-frank')).find((note) => note.rideId === booked.id)
+  assert.ok(offer)
+  await mockService.respondToOffer(offer.id, true)
+
+  await mockService.signIn('richmond@careride.demo', PASSWORD)
+  assert.ok(!(await mockService.loadNotifications()).items.some((note) => note.ride_id === booked.id))
+  await mockService.markNotificationsRead(item.id)
+  await mockService.signIn('frank@careride.demo', PASSWORD)
+  assert.equal((await mockService.loadNotifications()).items.find((note) => note.id === item.id)?.read_at, null)
+  await mockService.markNotificationsRead(item.id)
+  assert.ok((await mockService.loadNotifications()).items.find((note) => note.id === item.id)?.read_at)
+  assert.equal(await mockService.countUnreadNotifications(), 0)
+
+  await mockService.signIn('belkin@careride.demo', PASSWORD)
+  const partner = (await mockService.loadNotifications()).items.find((note) => note.ride_id === booked.id)
+  assert.equal(partner?.kind, 'DRIVER_ACCEPTED')
+  assert.equal(partner.read_at, null)
 })

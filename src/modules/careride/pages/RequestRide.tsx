@@ -519,7 +519,7 @@ function RideForm({ mode, source, house, user }: FormProps) {
             </FormSection>
 
             <FormSection id="when" step={2} title="When do you need the ride?" done={done.when}>
-              <fieldset>
+              <fieldset className="min-w-0">
                 <legend className="sr-only">When does the client need the ride?</legend>
                 <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
                   <WhenOption
@@ -623,7 +623,7 @@ function RideForm({ mode, source, house, user }: FormProps) {
               <FieldMessage id="passengers-message" error={shown.passengers} />
               <InlineMatchHint match={match} checks={['seats']} />
 
-              <fieldset className="mt-6" aria-describedby="rider-names-message">
+              <fieldset className="mt-6 min-w-0" aria-describedby="rider-names-message">
                 <legend className={label}>
                   {form.passengers === 1 ? "Passenger's name" : "Passengers' names"}
                   <span className="ml-1 font-normal text-slate-600">(optional)</span>
@@ -649,7 +649,7 @@ function RideForm({ mode, source, house, user }: FormProps) {
                 <FieldMessage id="rider-names-message" error={shown.riderNames} hint="A first name helps the driver find the right person." />
               </fieldset>
 
-              <fieldset className="mt-6">
+              <fieldset className="mt-6 min-w-0">
                 <legend className={label}>Accessibility needs</legend>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <OptionTile

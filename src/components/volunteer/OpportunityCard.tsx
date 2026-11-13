@@ -1,6 +1,8 @@
 import { Accessibility, CalendarClock, HandHelping, LoaderCircle, MapPin, RefreshCw, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useDriverLocation } from '../../hooks/useMaps'
+import { useApp } from '../../hooks/useApp'
+import { suggestInstallAfterAcceptance } from '../../pwa/browser'
 import { formatDayTime, formatTime } from '../../logic/formatTime'
 import { isRealAddress } from '../../logic/maps'
 import { passengersLabel } from '../../modules/careride/domain'
@@ -28,6 +30,7 @@ interface Props {
 // A ride request as a driver decides on it: where, when, and what the passengers need, then Accept or Decline.
 // Eligibility was decided by the backend before the request was sent; answering is checked again there.
 export function OpportunityCard({ offer, ride, from, changed, showMap = false, onAnswered }: Props) {
+  const { currentUser } = useApp()
   const [busy, setBusy] = useState<'accept' | 'decline'>()
   const [error, setError] = useState<string>()
   const pickup = isRealAddress(ride.pickupAddress) ? ride.pickupAddress : undefined
@@ -39,6 +42,7 @@ export function OpportunityCard({ offer, ride, from, changed, showMap = false, o
     setError(undefined)
     try {
       const result = await dataService.respondToOffer(offer.id, accept)
+      if (accept && currentUser?.role === 'DRIVER') suggestInstallAfterAcceptance(currentUser.id)
       onAnswered({ accepted: accept, ride: result })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
@@ -120,12 +124,12 @@ export function OpportunityCard({ offer, ride, from, changed, showMap = false, o
           )}
 
           <div className="grid grid-cols-2 gap-3 sm:flex">
-            <button type="button" className={primaryButton} disabled={!!busy} onClick={() => respond(true)}>
-              {busy === 'accept' && <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />}
+            <button type="button" className={`${primaryButton} px-2 whitespace-normal text-center sm:px-5`} disabled={!!busy} onClick={() => respond(true)}>
+              {busy === 'accept' && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden />}
               {changed ? 'Keep the ride' : 'Accept'}
             </button>
-            <button type="button" className={secondaryButton} disabled={!!busy} onClick={() => respond(false)}>
-              {busy === 'decline' && <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />}
+            <button type="button" className={`${secondaryButton} px-2 sm:px-5`} disabled={!!busy} onClick={() => respond(false)}>
+              {busy === 'decline' && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" aria-hidden />}
               Decline
             </button>
           </div>

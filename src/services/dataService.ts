@@ -1,3 +1,4 @@
+import type { CareRideNotification } from '../types/notifications'
 import type { DriverEtaHint } from '../logic/driverEta'
 import type {
   AccountDeletionJob,
@@ -206,6 +207,9 @@ export interface DataService {
   restoreSession(): Promise<Session | undefined>
   signIn(email: string, password: string): Promise<Session> // starts a session; throws if they don't match
   signOut(): Promise<void>
+  loadNotifications(update?: string): Promise<{ items: CareRideNotification[]; unread: number }>
+  countUnreadNotifications(): Promise<number>
+  markNotificationsRead(id?: string): Promise<void>
   // Calls back when the session changes outside this screen (another tab, expiry, demo reset). Returns unsubscribe.
   onSessionChange(listener: () => void): () => void
   // Calls back when shared data this person can see changes elsewhere (live updates). Returns unsubscribe.

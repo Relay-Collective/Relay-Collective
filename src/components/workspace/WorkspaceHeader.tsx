@@ -1,3 +1,4 @@
+import { NotificationBell } from '../../modules/careride'
 import { CalendarPlus } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useWorkspace } from '../../hooks/useWorkspace'
@@ -14,7 +15,8 @@ import { compactButton, focusRing } from './styles'
 export function WorkspaceHeader({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
   const { pathname } = useLocation()
   const { org } = useWorkspace()
-  const showRequest = !pathname.startsWith(paths.newRide) && pathname !== paths.requests && pathname !== paths.transport
+  const showRequest = ![paths.requests, paths.transport, paths.notifications].some((route) => pathname === route) &&
+    !pathname.startsWith(paths.newRide)
 
   return (
     <ShellHeader
@@ -33,13 +35,14 @@ export function WorkspaceHeader({ onOpenMenu, menuOpen }: { onOpenMenu: () => vo
       title={workspaceTitle(pathname)}
     >
       {showRequest && (
-        <Link to={paths.newRide} className={`${primaryButton} ${compactButton} max-sm:px-3.5`}>
+        <Link to={paths.newRide} className={`${primaryButton} ${compactButton} max-sm:min-h-11 max-sm:px-3`}>
           <CalendarPlus className="h-4 w-4 shrink-0" aria-hidden />
           {/* Phones keep a short visible label: an icon alone hides the main action */}
           <span className="sm:hidden">Request</span>
           <span className="max-sm:hidden">Request a ride</span>
         </Link>
       )}
+      <NotificationBell />
       <AccountMenu />
     </ShellHeader>
   )

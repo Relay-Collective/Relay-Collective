@@ -1,3 +1,5 @@
+import type { CareRideNotification } from '../types/notifications'
+import { unlinkPushOnSignOut } from './pushDevice'
 import { FunctionsHttpError, type AuthError, type PostgrestError, type User as AuthUser } from '@supabase/supabase-js'
 import { MIN_PASSWORD_LENGTH } from '../constants'
 import { faresSavedFor } from '../logic/estimateFare'
@@ -836,7 +838,7 @@ function rideDetails(ride: Partial<Ride>) {
 }
 
 // Tables whose changes should refresh open screens. Realtime only sends rows this person may read.
-const LIVE_TABLES = ['rides', 'ride_offers', 'organizations', 'drivers', 'destinations', 'profiles', 'organization_join_requests']
+const LIVE_TABLES = ['careride_notifications', 'rides', 'ride_offers', 'organizations', 'drivers', 'destinations', 'profiles', 'organization_join_requests']
 
 // The website that email links (confirm, reset password) open. On the website that's wherever the person is,
 // so localhost and the live site both work. The Android app's own address is https://localhost, which a
@@ -904,6 +906,33 @@ async function runAccountDeletion(body: Record<string, string>): Promise<Account
 }
 
 export const supabaseService: DataService = {
+  async loadNotifications(update) {
+    const client = getSupabase()
+    const list = client.from('careride_notifications').select('id,ride_id,kind,created_at,read_at')
+    const [recent, unread, selected] = await Promise.all([
+      list.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(50).returns<CareRideNotification[]>(),
+      client.from('careride_notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
+      update
+        ? client.from('careride_notifications').select('id,ride_id,kind,created_at,read_at').eq('id', update).maybeSingle<CareRideNotification>()
+        : null,
+    ])
+    if (recent.error || unread.error || selected?.error) throw new Error('CareRide notifications couldn’t load.')
+    const items = recent.data ?? []
+    if (selected?.data && !items.some((item) => item.id === update)) items.unshift(selected.data)
+    return { items, unread: unread.count ?? 0 }
+  },
+
+  async countUnreadNotifications() {
+    const { count, error } = await getSupabase().from('careride_notifications')
+      .select('id', { count: 'exact', head: true }).is('read_at', null)
+    if (error) throw new Error('CareRide notifications couldn’t load.')
+    return count ?? 0
+  },
+
+  async markNotificationsRead(id) {
+    const { error } = await getSupabase().rpc('careride_mark_notifications_read', { p_id: id ?? null })
+    if (error) throw new Error(error.message)
+  },
   async restoreSession() {
     const { data, error } = await getSupabase().auth.getSession()
     if (error) throw new Error(`We couldn't check your sign-in. ${CONNECTION}`)
@@ -920,6 +949,7 @@ export const supabaseService: DataService = {
   },
 
   async signOut() {
+    await unlinkPushOnSignOut()
     // 'local' signs out this browser only, not the person's other devices.
     const { error } = await getSupabase().auth.signOut({ scope: 'local' })
     if (error) throw new Error("We couldn't sign you out. Please try again.")

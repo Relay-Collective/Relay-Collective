@@ -22,3 +22,6 @@ export { NextPickup } from './components/dashboard/NextPickup'
 export { RideCard } from './components/RideCard'
 export { RideHistory } from './components/RideHistory'
 export { StatusBadge } from './components/StatusBadge'
+
+export { NotificationBell } from './notifications/NotificationBell'
+export { Notifications, NotificationsEntry } from './notifications/Notifications'

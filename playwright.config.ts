@@ -31,7 +31,14 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'on-first-retry',
   },
-  projects: [{ name: 'chromium' }],
+  projects: [
+    { name: 'chromium' },
+    ...(process.env.RELAY_MOBILE_WEBKIT ? [{
+      name: 'mobile-webkit',
+      testMatch: '**/mobile-pwa.spec.ts',
+      use: { ...devices['iPhone 13'], browserName: 'webkit' as const },
+    }] : []),
+  ],
   webServer: {
     // A separate dist-e2e/ folder, so a mock build never ends up in the dist/ that npm run deploy uploads.
     // --strictPort fails instead of quietly moving to a port the tests don't know about.
@@ -48,6 +55,7 @@ export default defineConfig({
       VITE_PUBLIC_SITE_URL: '',
       VITE_GOOGLE_MAPS_API_KEY: '',
       VITE_GOOGLE_MAPS_MAP_ID: '',
+      VITE_WEB_PUSH_PUBLIC_KEY: '',
     },
   },
 })

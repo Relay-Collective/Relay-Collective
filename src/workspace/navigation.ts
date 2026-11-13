@@ -31,6 +31,7 @@ export const MY_FEEDBACK_NAV: NavEntry = { to: paths.feedback, label: 'My feedba
 // The section name in the workspace header, from the most specific matching address.
 // Inside CareRide the header names the module; each page's h1 names the page.
 const TITLES: [prefix: string, title: string][] = [
+  [paths.notifications, 'Notifications'],
   ...CARERIDE_PAGES.map((p): [string, string] => [p, 'CareRide']),
   [paths.services, 'Modules'],
   [paths.organization, 'Organization profile'],

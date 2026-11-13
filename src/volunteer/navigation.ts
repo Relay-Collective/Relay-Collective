@@ -92,6 +92,7 @@ export function volunteerTabs(ws: VolunteerWorkspace): TabEntry[] {
 
 // The page name shown in the header, from the most specific matching address
 const TITLES: [prefix: string, title: string][] = [
+  [paths.notifications, 'Notifications'],
   [paths.rides, 'My rides'],
   [paths.transport, 'CareRide'],
   [paths.opportunities, 'Opportunities'],

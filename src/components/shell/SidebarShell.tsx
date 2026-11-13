@@ -89,7 +89,7 @@ export function SidebarShell({ storageKey, sidebar, header, banner, footer, bott
           <div className="rc-grid pointer-events-none absolute inset-x-0 top-0 h-[440px] max-sm:h-[300px]" aria-hidden />
           {header({ onOpenMenu: () => setDrawerOpen(true), menuOpen: drawerOpen })}
           {banner && <div className="relative">{banner}</div>}
-          <main id="app-main" tabIndex={-1} className={`rc-page relative mx-auto w-full ${maxWidth} flex-1 px-4 pb-24 pt-6 focus:outline-none sm:px-6 lg:px-10 lg:pt-10`}>
+          <main id="app-main" tabIndex={-1} className={`rc-page relative mx-auto w-full ${maxWidth} flex-1 pb-24 pl-[max(1rem,var(--safe-left))] pr-[max(1rem,var(--safe-right))] pt-6 focus:outline-none sm:px-6 lg:px-10 lg:pt-10`}>
             {children}
           </main>
           {footer && <div className={`relative mx-auto w-full ${maxWidth} px-4 pb-10 sm:px-6 lg:px-10`}>{footer}</div>}
@@ -99,7 +99,7 @@ export function SidebarShell({ storageKey, sidebar, header, banner, footer, bott
       {bottomBar && (
         <div
           data-bottom-bar
-          className="native-bottom-chrome no-print fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/80 bg-white pb-[var(--safe-bottom)] shadow-[0_-10px_30px_-22px_rgb(17_24_32/0.35)] md:hidden"
+          className="native-bottom-chrome no-print fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/80 bg-white pb-[var(--safe-bottom)] pl-[var(--safe-left)] pr-[var(--safe-right)] shadow-[0_-10px_30px_-22px_rgb(17_24_32/0.35)] md:hidden"
         >
           {bottomBar}
         </div>

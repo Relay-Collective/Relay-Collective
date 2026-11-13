@@ -105,3 +105,7 @@ Relay Collective is an independent platform. The Salvation Army is our partner, 
   <b>Stronger communities. Built together.</b><br />
   <sub><a href="LICENSE">MIT License</a></sub>
 </p>
+
+### Install Relay and enable CareRide notifications
+
+Relay works as a Home Screen app on iPhone, iPad, and Android. Use **Install Relay** in the account menu for the device guide. See the [PWA and notifications handoff](docs/PWA_NOTIFICATIONS.md) for the Supabase SQL file, Web Push setup, and mobile checks.

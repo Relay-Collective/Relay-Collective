@@ -1,3 +1,4 @@
+import type { NotificationKind } from '../types/notifications'
 import { MIN_PASSWORD_LENGTH } from '../constants'
 import { DEMO_FRAME_USER } from '../context/demoFrame'
 import { CAPACITY_LOCKED, maxPassengers } from '../logic/capacity'
@@ -608,12 +609,40 @@ function logEvent(db: Database, rideId: string, actor: User | undefined, { kind,
   db.events.push({ id: newId('event'), rideId, kind, at: now(), actorRole: actor?.role, actorName: actor?.name, detail })
 }
 
+function notify(db: Database, userId: string, rideId: string, kind: NotificationKind) {
+  db.notifications ??= []
+  db.notifications.unshift({ id: crypto.randomUUID(), userId, ride_id: rideId, kind, created_at: now(), read_at: null })
+}
+
 // Runs a change and writes what it did to each ride's history, the way the database trigger does.
 function logChanges<T>(db: Database, actor: User | undefined, change: () => T): T {
   const before = new Map(db.rides.map((r) => [r.id, structuredClone(r)]))
+  const oldOffers = new Set(db.offers.map((offer) => offer.id))
   const result = change()
+  for (const offer of db.offers) {
+    if (oldOffers.has(offer.id) || offer.status !== 'PENDING') continue
+    const driver = db.drivers.find((d) => d.id === offer.driverId)
+    for (const user of db.users) {
+      if ((user.role === 'DRIVER' && user.id === driver?.userId) ||
+          (user.role === 'ORG_ADMIN' && driver?.orgId && user.orgId === driver.orgId)) {
+        notify(db, user.id, offer.rideId, 'OFFER')
+      }
+    }
+  }
   for (const ride of db.rides) {
-    for (const event of rideEventsBetween(before.get(ride.id), ride)) logEvent(db, ride.id, actor, event)
+    for (const event of rideEventsBetween(before.get(ride.id), ride)) {
+      logEvent(db, ride.id, actor, event)
+      const driver = db.drivers.find((d) => d.id === (ride.driverId ?? before.get(ride.id)?.driverId))
+      for (const user of db.users) {
+        if (user.id === actor?.id) continue
+        if ((user.role === 'PARTNER' && user.orgId === ride.orgId) ||
+            (user.role === 'ORG_ADMIN' && driver?.orgId && user.orgId === driver.orgId) ||
+            (user.role === 'DRIVER' && user.id === driver?.userId &&
+              ['DRIVER_ACCEPTED', 'EDITED', 'CANCELLED', 'DRIVER_REMOVED', 'STEP_UNDONE'].includes(event.kind))) {
+          notify(db, user.id, ride.id, event.kind)
+        }
+      }
+    }
   }
   return result
 }
@@ -674,6 +703,25 @@ function driverIdsForOrg(db: Database, orgId: string): string[] {
 }
 
 export const mockService: DataService = {
+  loadNotifications: (update) => transact((db) => {
+    const user = signedInUser(db)
+    const notes = user ? (db.notifications ?? []).filter((n) => n.userId === user.id) : []
+    const items = notes.slice(0, 50)
+    const selected = update && notes.find((note) => note.id === update)
+    if (selected && !items.includes(selected)) items.unshift(selected)
+    return { items, unread: notes.filter((n) => !n.read_at).length }
+  }),
+  countUnreadNotifications: () => transact((db) => {
+    const user = signedInUser(db)
+    return user ? (db.notifications ?? []).filter((note) => note.userId === user.id && !note.read_at).length : 0
+  }),
+  markNotificationsRead: (id) => transact((db) => {
+    const user = signedInUser(db)
+    if (!user) return
+    for (const item of db.notifications ?? []) {
+      if (item.userId === user.id && (!id || id === item.id)) item.read_at ??= now()
+    }
+  }),
   restoreSession: () =>
     transact((db) => {
       const id = readSession()

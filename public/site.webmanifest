@@ -1,7 +1,10 @@
 {
   "name": "Relay Collective",
   "short_name": "Relay",
-  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "start_url": "/launch",
+  "description": "Your Relay Collective workspace, including CareRide transportation.",
   "display": "standalone",
   "background_color": "#f8f9f7",
   "theme_color": "#f8f9f7",

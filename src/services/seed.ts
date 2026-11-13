@@ -1,3 +1,4 @@
+import type { CareRideNotification } from '../types/notifications'
 import { ALL_DAY, hoursOn } from '../logic/requestHours'
 import { knownPlace } from '../logic/places'
 import { backfillRideEvents } from '../logic/rideEvents'
@@ -44,6 +45,7 @@ export function demoPasswordFor(email: string): string {
 }
 
 export interface Database {
+  notifications?: (CareRideNotification & { userId: string })[]
   credentials: Credential[]
   users: User[]
   organizations: Organization[]

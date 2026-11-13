@@ -1,8 +1,9 @@
+import { Link } from 'react-router-dom'
+import { notificationPath } from '../../logic/notificationPaths'
 import { OfferCard } from '../../components/OfferCard'
 import { RideCard } from '../../modules/careride'
 import { pageTitle } from '../../components/ui'
 import { useApp } from '../../hooks/useApp'
-import { useCurrentOrg } from '../../hooks/useCurrent'
 import { useData } from '../../hooks/useData'
 import { isDriverLate } from '../../modules/careride/domain'
 import { dataService } from '../../services'
@@ -13,7 +14,6 @@ import type { Ride } from '../../types'
 // and sees its drivers' upcoming and recent rides.
 export function Bookings() {
   const { currentUser, users, refresh } = useApp()
-  const org = useCurrentOrg()
   const orgId = currentUser?.orgId ?? ''
 
   const drivers = useData(() => dataService.listDrivers(orgId), orgId) ?? []
@@ -46,11 +46,9 @@ export function Bookings() {
   return (
     <div className="space-y-8">
       <h1 className={pageTitle}>Bookings</h1>
-      {org?.bookingNotifications && (
-        <p className="text-slate-600">
-          New bookings are sent to {org.bookingNotifications}. (Demo: notifications aren't actually sent.)
-        </p>
-      )}
+      <p className="text-slate-600">
+        Follow requests and ride changes in <Link className="font-semibold text-rc-blue underline underline-offset-2" to={notificationPath('ORG_ADMIN')}>CareRide notifications</Link>.
+      </p>
 
       <section>
         <h2 className="mb-3 text-xl font-bold">New requests</h2>

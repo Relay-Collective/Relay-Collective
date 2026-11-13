@@ -4,9 +4,11 @@ import { VolunteerProvider } from '../../context/VolunteerProvider'
 import { useApp } from '../../hooks/useApp'
 import { useFeedback } from '../../hooks/useFeedback'
 import { useVolunteer } from '../../hooks/useVolunteer'
+import { NotificationBell } from '../../modules/careride'
 import { initials } from '../../logic/initials'
 import { VOLUNTEER_FEEDBACK_NAV, VOLUNTEER_HELP_NAV, volunteerNav, volunteerTabs, volunteerTitle } from '../../volunteer/navigation'
 import { identityLabel } from '../../volunteer/workspace'
+import { FirstRideInstall } from '../../pwa/Install'
 import { volunteerPaths } from '../../volunteer/paths'
 import { AccountMenu } from '../AccountMenu'
 import { SidebarNav } from '../shell/SidebarNav'
@@ -43,6 +45,7 @@ function ShellFrame() {
       footer={<AppFooter />}
     >
       <RideNotices />
+      <FirstRideInstall />
       <LoadErrorBanner />
       <Outlet />
     </SidebarShell>
@@ -80,6 +83,7 @@ function VolunteerHeader({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; men
   const { pathname } = useLocation()
   return (
     <ShellHeader onOpenMenu={onOpenMenu} menuOpen={menuOpen} context="Volunteer workspace" title={volunteerTitle(pathname)}>
+      <NotificationBell />
       <AccountMenu />
     </ShellHeader>
   )
@@ -93,7 +97,7 @@ function VolunteerTabBar() {
     <nav aria-label="Quick">
       <ul className="flex">
         {volunteerTabs(workspace).map(({ to, label, icon: Icon, end, badge }) => (
-          <li key={to} className="flex-1">
+          <li key={to} className="min-w-0 flex-1">
             <NavLink
               to={to}
               end={end}
@@ -107,7 +111,7 @@ function VolunteerTabBar() {
                 <>
                   {/* The current tab is marked by shape as well as colour: a midnight pill behind its icon, as in the sidebar */}
                   <span
-                    className={`relative flex h-8 w-14 items-center justify-center rounded-full transition-[background-color,scale] duration-200 ease-out-expo group-active/tab:scale-95 ${
+                    className={`relative flex h-8 w-[min(3.5rem,100%)] items-center justify-center rounded-full transition-[background-color,scale] duration-200 ease-out-expo group-active/tab:scale-95 ${
                       isActive ? 'bg-ink text-brand-300 shadow-[var(--shadow-press)]' : ''
                     }`}
                   >

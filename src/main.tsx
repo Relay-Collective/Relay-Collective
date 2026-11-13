@@ -14,9 +14,11 @@ import '@fontsource/space-grotesk/latin-600.css'
 import '@fontsource/space-grotesk/latin-700.css'
 import '@fontsource/instrument-serif/latin-400-italic.css'
 import { notifyOtaReady } from './native/platform'
+import { canRegisterWorker, registerWorker } from './pwa/browser'
 import './index.css'
 
 void notifyOtaReady()
+if (canRegisterWorker()) void registerWorker().catch(() => { /* The site still works without installation. */ })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

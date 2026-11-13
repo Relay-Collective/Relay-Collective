@@ -1,3 +1,4 @@
+import { NotificationBell } from '../modules/careride'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { useCurrentOrg } from '../hooks/useCurrent'
@@ -60,7 +61,7 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="no-print sticky top-0 z-30 border-b border-slate-200 bg-white pt-[var(--safe-top)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <Logo size="sm" to={role ? HOME_FOR[role] : '/'} />
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
             {links.map((l) => (
@@ -83,7 +84,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <AccountMenu />
+          <div className="flex shrink-0 items-center gap-2"><NotificationBell /><AccountMenu /></div>
         </div>
         <nav className="mx-auto flex max-w-5xl flex-wrap gap-2 px-4 pb-3 sm:px-6 lg:hidden" aria-label="Main">
           {links.map((l) => (

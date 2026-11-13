@@ -1,3 +1,4 @@
+import { preferredInstallPath } from '../../../pwa/browser'
 import { LINKS, MISSION, PARTNER, TAGLINE } from '../content'
 import { SmartLink, Wordmark } from '../primitives'
 import { container, focusRing } from '../styles'
@@ -29,6 +30,7 @@ const COLUMNS: { title: string; id?: string; links: { label: string; href: strin
     title: 'Resources',
     id: 'resources',
     links: [
+      { label: 'Install Relay', href: preferredInstallPath() },
       { label: 'CareRide tour', href: LINKS.transportTour },
       { label: 'GitHub', href: LINKS.github },
       { label: 'Source code', href: LINKS.repo },

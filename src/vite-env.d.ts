@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_COMMIT_SHA?: string
   /** Which backend the app talks to. Defaults to 'mock' when unset. */
   readonly VITE_DATA_BACKEND?: 'mock' | 'supabase'
+  readonly VITE_WEB_PUSH_PUBLIC_KEY?: string
   readonly VITE_SUPABASE_URL?: string
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
   /** The website email links open (confirm, reset password). Needed for the Android app; the website uses its own address. */

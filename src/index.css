@@ -628,7 +628,8 @@
   }
 }
 
-html.native-keyboard-open .native-bottom-chrome {
+html.native-keyboard-open .native-bottom-chrome,
+html.web-keyboard-open .native-bottom-chrome {
   display: none !important;
 }
 

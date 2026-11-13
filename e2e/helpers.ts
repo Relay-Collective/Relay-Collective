@@ -36,8 +36,13 @@ export async function bookRide(page: Page, booking: Booking): Promise<string> {
   } else {
     await page.getByRole('group', { name: 'Quick picks' }).getByRole('button', { name: booking.when }).click()
   }
-  await page.getByLabel('Passenger 1 name').fill(booking.passenger)
-  await page.getByRole('button', { name: 'Request ride' }).click()
+  const passenger = page.getByLabel('Passenger 1 name')
+  await passenger.fill(booking.passenger)
+  // The phone's submit bar moves out of the way while a text field has focus.
+  await passenger.blur()
+  const submit = page.getByRole('button', { name: 'Request ride', exact: true })
+  await expect(submit).toBeVisible()
+  await submit.click()
   await expect(page.getByRole('status').getByRole('heading', { name: 'Ride requested' })).toBeVisible()
   await expect(page).toHaveURL(/\/workspace\/transportation\/rides\/[^/]+$/)
   return new URL(page.url()).pathname.split('/').pop()!

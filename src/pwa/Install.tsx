@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, Ellipsis, Share, Smartphone, SquarePlus } from 'lucide-react'
+import { ArrowLeft, Download, Ellipsis, Share, Smartphone, SquarePlus, type LucideIcon } from 'lucide-react'
 import { useState, useSyncExternalStore } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { ghostButton, primaryButton, secondaryButton } from '../components/ui'
@@ -6,8 +6,21 @@ import { PageHeader } from '../components/workspace/PageHeader'
 import { panel } from '../components/workspace/styles'
 import { useApp } from '../hooks/useApp'
 import { isNative } from '../native/platform'
-import { dismissFirstRideInstall, firstRideInstallState, installPath, preferredInstallPath, promptInstall, watchInstall } from './browser'
+import { dismissFirstRideInstall, firstRideInstallState, installPath, preferredInstallPath, promptInstall, watchInstall, type MobilePlatform } from './browser'
 import { useCanInstall, useInstalled } from './useInstall'
+
+const installSteps: Record<MobilePlatform, { icon: LucideIcon; label: string }[]> = {
+  ios: [
+    { icon: Smartphone, label: 'Open Relay Collective in Safari.' },
+    { icon: Share, label: 'Tap Share. Depending on your Safari layout, tap More first.' },
+    { icon: SquarePlus, label: 'Choose Add to Home Screen. Turn on Open as Web App if shown, then tap Add.' },
+  ],
+  android: [
+    { icon: Smartphone, label: 'Open Relay Collective in Chrome.' },
+    { icon: Ellipsis, label: 'Tap More (⋮) beside the address bar.' },
+    { icon: SquarePlus, label: 'Choose Install app or Install and create shortcut → Install. Some versions say Add to Home screen. Follow the on-screen steps.' },
+  ],
+}
 
 export function InstallGuide() {
   const { platform } = useParams()
@@ -44,17 +57,9 @@ export function InstallGuide() {
           </button>
         )}
         <ol className="space-y-4">
-          {(ios ? [
-            [Smartphone, 'Open Relay Collective in Safari.'],
-            [Share, 'Tap Share. Depending on your Safari layout, tap More first.'],
-            [SquarePlus, 'Choose Add to Home Screen. Turn on Open as Web App if shown, then tap Add.'],
-          ] : [
-            [Smartphone, 'Open Relay Collective in Chrome.'],
-            [Ellipsis, 'Tap More (⋮) beside the address bar.'],
-            [SquarePlus, 'Choose Install app or Install and create shortcut → Install. Some versions say Add to Home screen. Follow the on-screen steps.'],
-          ] as const).map(([StepIcon, label], index) => {
+          {installSteps[platform].map(({ icon: StepIcon, label }, index) => {
             return (
-              <li key={index} className="flex items-start gap-3 text-sm text-slate-700 sm:text-base">
+              <li key={label} className="flex items-start gap-3 text-sm text-slate-700 sm:text-base">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-rc-mint text-rc-teal-ink"><StepIcon className="size-4" aria-hidden /></span>
                 <span className="pt-1">{index + 1}. {label}</span>
               </li>

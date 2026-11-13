@@ -342,7 +342,7 @@ export function DestinationPicker(props: Props) {
               {loading ? 'Loading saved places' : q ? `${matches.length} saved ${matches.length === 1 ? 'place matches' : 'places match'}. Press the down arrow to choose.` : ''}
             </p>
 
-            <fieldset className="mt-2" aria-describedby={describedBy.replace('destination-results', '').trim() || undefined}>
+            <fieldset className="mt-2 min-w-0" aria-describedby={describedBy.replace('destination-results', '').trim() || undefined}>
               <legend className="sr-only">Destination</legend>
               <ul ref={listRef} id="destination-options" className="-mx-1 space-y-0.5" aria-busy={loading || undefined}>
                 {loading &&
@@ -405,7 +405,7 @@ export function DestinationPicker(props: Props) {
                 )}
 
                 {!loading && q && matches.length === 0 && (
-                  <li className="px-3 py-2 text-sm text-slate-600">No saved place matches “{q}”.</li>
+                  <li className="break-words px-3 py-2 text-sm text-slate-600">No saved place matches “{q}”.</li>
                 )}
                 {!loading && !q && sorted.length === 0 && (
                   <li className="px-3 py-2 text-sm text-slate-600">No saved places yet. Search for the address below.</li>
@@ -430,8 +430,8 @@ export function DestinationPicker(props: Props) {
             </fieldset>
 
             {chosen && picking && !destinationError && (
-              <button type="button" className={`${textButton} -ml-3 mt-1`} onClick={() => (setPicking(false), setQuery(''), setFocusNext('change'))}>
-                Keep {chosen.name}
+              <button type="button" className={`${textButton} -ml-3 mt-1 max-w-full break-words text-left`} onClick={() => (setPicking(false), setQuery(''), setFocusNext('change'))}>
+                <span className="min-w-0">Keep {chosen.name}</span>
               </button>
             )}
           </div>

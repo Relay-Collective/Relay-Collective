@@ -144,12 +144,12 @@ export function Pitch({ slide, step, onStep }: Props) {
           <div className="grid gap-5 sm:grid-cols-2">
             <List
               heading="Built since user testing"
-              items={['A shared database and an Android app', 'Drive times and route previews for drivers', 'Live hospital wait times when booking']}
+              items={['A shared database, and apps for Android and iPhone', 'Notifications for each new request and ride update', 'Drive times, route previews and live hospital waits']}
             />
             <List
               heading="Next"
               icon={ArrowRight}
-              items={['A pilot at Belkin House, then Richmond House and Grace Mansion', 'Start with professional drivers', 'Text updates when a ride is booked']}
+              items={['A pilot at Belkin House, then Richmond House and Grace Mansion', 'Start with professional drivers', 'Text updates for residents and staff without the app']}
             />
           </div>
         </Slide>

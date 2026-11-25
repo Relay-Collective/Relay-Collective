@@ -53,8 +53,10 @@ export const SLIDES: { id: SlideId; label: string; kicker: string; steps?: numbe
     kicker: 'See it in action',
     steps: LIVE_STEPS.length,
     notes: [
-      'What we built: booking for staff, an app for drivers, and approvals for the admin.',
+      'What we built: booking for staff, a volunteer workspace for drivers, and approvals for the admin. CareRide is the first service on it.',
       'Back to our resident. Each click plays one moment: the tap on one screen, then the other screen catching up.',
+      'Watch the bell at the top of each screen: drivers are notified of a new request, and staff of each step. Installed on a phone, these come as device alerts.',
+      'A driver who becomes free after the ride is booked is asked too, so a request doesn’t wait on one driver.',
       'If there’s time, switch to the app and show a step live. The data is left at the last step.',
     ],
   },
@@ -83,7 +85,7 @@ export const SLIDES: { id: SlideId; label: string; kicker: string; steps?: numbe
     kicker: 'Thank you',
     notes: [
       'Payoff: the resident from the start got to St. Paul’s, and didn’t need a phone to do it.',
-      'Since user testing: a real database, drive times and route previews for drivers, live hospital wait times when booking, and an Android app in testing.',
+      'Since user testing: a real database, drive times and route previews for drivers, live hospital wait times when booking, notifications, and apps for Android and iPhone in testing. It also installs from the browser.',
       'Next: pilot with the houses we talked to, start with professional drivers, and send ride updates by text. Say what you’d like from the audience, then take questions.',
     ],
   },

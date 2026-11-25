@@ -47,7 +47,7 @@ export const LIVE_STEPS: LiveStep[] = [
   {
     short: 'Needs a ride',
     title: 'A resident needs a ride',
-    caption: 'They ask staff at Belkin House.',
+    caption: 'Staff book it in three questions: where, when, and who.',
     moment: 'start',
     staff: 'request',
     driverFocus: 'requests-title',
@@ -66,7 +66,7 @@ export const LIVE_STEPS: LiveStep[] = [
   {
     short: 'Booked',
     title: 'Staff book the ride',
-    caption: 'It goes to drivers who can take it.',
+    caption: 'Every driver who can take it is notified.',
     moment: 'booked',
     staff: 'ride',
     driverFocus: 'requests-title',
@@ -75,7 +75,7 @@ export const LIVE_STEPS: LiveStep[] = [
   {
     short: 'Accepted',
     title: 'A driver accepts',
-    caption: 'Staff are told right away.',
+    caption: 'Staff get a notification right away.',
     moment: 'accepted',
     staff: 'ride',
     staffFocus: 'Trip progress',
